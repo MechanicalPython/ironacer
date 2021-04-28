@@ -21,9 +21,12 @@ class Camera:
 
     """
     def __init__(self, output_dir):
-        if not os.path.exists(output_dir):
-            os.mkdir(output_dir)
-        self.output_dir = os.path.abspath(output_dir)
+        if not output_dir.endswith('/'):
+            output_dir = f'{output_dir}/'
+        self.output_dir = os.path.expanduser(output_dir)
+
+        if not os.path.exists(self.output_dir):
+            os.mkdir(self.output_dir)
         self.camera = PiCamera()
         self.camera.rotation = 180
         self.camera.resolution = (2592, 1944)  # Max resolution requires 15 fps.
@@ -58,6 +61,10 @@ class FlickrDownload:
     be saved in the ironacer directory.
 
     Use: FlickrDownload([image tag to be searches], max_downloads=2000).main()
+    Files saved to working directory as
+        data/tag1/tag_1.jpg
+                 /tag_2.jpg
+            /tag2/...
 
     NB: Must be run with python 3.7 for deprecation reasons.
 
@@ -138,7 +145,9 @@ def resize_images(dir, max_size=(1080, 1080)):
     :param max_size:
     :return:
     """
-    dir = os.path.abspath(dir)
+    if not dir.endswith('/'):
+        dir = f'{dir}/'
+    dir = os.path.expanduser(dir)
     endings = ['jpg', 'jpeg', 'png']
     for image in os.listdir(dir):
         if any(image.endswith(end.lower()) for end in endings):
