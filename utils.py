@@ -1,0 +1,152 @@
+#! /usr/local/bin/python3.9
+
+try:
+    from picamera import PiCamera
+except ImportError:
+    pass
+from time import sleep
+from datetime import datetime
+from os.path import expanduser
+from flickrapi import FlickrAPI
+import requests
+import os
+import time
+from PIL import Image
+
+
+class Camera:
+    """
+    Basic camera module that, when initiated, will open the camera ready for photos to be taken.
+    Init Camera when starting the program to avoid time taken to adjust for brightness, etc.
+
+    """
+    def __init__(self, output_dir):
+        if not os.path.exists(output_dir):
+            os.mkdir(output_dir)
+        self.output_dir = os.path.abspath(output_dir)
+        self.camera = PiCamera()
+        self.camera.rotation = 180
+        self.camera.resolution = (2592, 1944)  # Max resolution requires 15 fps.
+        self.camera.framerate = 15
+        self.camera.start_preview()
+        sleep(3)  # Sleep to allow camera to adjust to the light
+
+    def __exit__(self):
+        self.camera.stop_preview()
+
+    def take_photo(self):
+        """
+        Takes single photo called YYYYMMdd-HHMMSS-f.jpg to given directory.
+        :return:
+        """
+        now = datetime.now().strftime('%Y%m%d-%H%M%S,%f')
+        self.camera.capture(f'{self.output_dir}{now}.jpg')
+        return f'{self.output_dir}{now}.jpg'
+
+    def take_burst(self, number):
+        """
+        Takes a burst of photos as fast as possible.
+        """
+        for i in range(number):
+            photo_path = self.take_photo()
+        return photo_path
+
+
+class FlickrDownload:
+    """
+    A basic class to download images from a flickr search. Uses flickr api so requires public and private keys to
+    be saved in the ironacer directory.
+
+    Use: FlickrDownload([image tag to be searches], max_downloads=2000).main()
+
+    NB: Must be run with python 3.7 for deprecation reasons.
+
+    """
+    def __init__(self, image_tags, max_downloads=2000):
+        try:
+            self.KEY = open("flickr_key", 'r').read()
+            self.SECRET = open("flickr_secret", 'r').read()
+        except FileNotFoundError as e:
+            raise(e, 'Public or private flickr api key not found as: flickr_key and flickr_secret')
+        self.sizes = ["url_o", "url_k", "url_h", "url_l", "url_c"]
+        self.image_tags = image_tags
+        self.max = max_downloads
+
+    def get_photos(self, image_tag):
+        extras = ','.join(self.sizes)
+        flickr = FlickrAPI(self.KEY, self.SECRET)
+        photos = flickr.walk(text=image_tag,
+                             extras=extras,
+                             privacy_filter=1,
+                             per_page=50,
+                             sort='relevance')
+        return photos
+
+    def get_url(self, photo):
+        for i in range(len(self.sizes)):
+            url = photo.get(self.sizes[i])
+            if url:
+                return url
+
+    def get_urls(self, image_tag):
+        photos = self.get_photos(image_tag)
+        counter = 0
+        urls = []
+
+        for photo in photos:
+            if counter < self.max:
+                url = self.get_url(photo)
+                if url:
+                    urls.append(url)
+                    counter += 1
+            else:
+                break
+        return urls
+
+    @staticmethod
+    def download_images(urls, path):
+        if not os.path.isdir(path):
+            os.makedirs(path)
+
+        for url in urls:
+            image_name = url.split("/")[-1]
+            image_path = os.path.join(path, image_name)
+
+            if not os.path.isfile(image_path):  # ignore if already downloaded
+                response = requests.get(url, stream=True)
+
+                with open(image_path, 'wb') as outfile:
+                    outfile.write(response.content)
+
+    def main(self):
+        start = time.time()
+        for tag in self.image_tags:
+            print('Getting urls for ', tag)
+            urls = self.get_urls(tag)
+
+            print(f'Downloading {len(urls)} images for {tag}')
+            path = os.path.join('data', tag)
+            self.download_images(urls, path)
+
+        print(f'Took {round(time.time() - start, 2)} seconds')
+
+
+def resize_images(dir, max_size=(1080, 1080)):
+    """
+    Used to resize a directory of images to a max dimentions
+    :param dir: Directory of photos.
+    :param max_size:
+    :return:
+    """
+    dir = os.path.abspath(dir)
+    endings = ['jpg', 'jpeg', 'png']
+    for image in os.listdir(dir):
+        if any(image.endswith(end.lower()) for end in endings):
+            print(f'{dir}{image}')
+            im = Image.open(f'{dir}{image}')
+            im.thumbnail(max_size)
+            im.save(f'{dir}{image}')
+
+
+if __name__ == '__main__':
+    pass

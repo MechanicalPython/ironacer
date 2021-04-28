@@ -1,5 +1,5 @@
 /venv/
 /.idea/
-/KEY
-/SECRET
+/flickr_key
+/flickr_secret
 /telegram_token

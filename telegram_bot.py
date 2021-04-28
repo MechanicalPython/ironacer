@@ -2,7 +2,7 @@
 
 
 from telegram.ext import Updater, CommandHandler, Filters, MessageHandler
-import camera
+from utils import Camera
 
 # todo - Docs, send photo to only the one who asked for it, increasing robustness and control,
 
@@ -13,7 +13,7 @@ class TelegramBot:
         self.updater = Updater(self.token, use_context=True)
         self.dispatcher = self.updater.dispatcher
         self.bot = self.updater.bot
-        self.camera = camera.Camera()
+        self.camera = Camera()
         self.mb_chat_id = 1706759043
         self.jb_chat_id = 1738114081
 
