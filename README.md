@@ -7,6 +7,6 @@ Create a bot that will use yolo to take photos of squirrels it sees and send it 
 
 ## Project structure
 - utils.py - Holds useful classes for use across the project. 
-- telegram_bot.py
+- telegram_bot.py - Class to open and then post messages with a telegram bot. 
 - 
 

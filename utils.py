@@ -1,4 +1,4 @@
-#! /usr/local/bin/python3.9
+#! /usr/local/bin/python3.7
 
 try:
     from picamera import PiCamera

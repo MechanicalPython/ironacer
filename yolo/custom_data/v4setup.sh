@@ -11,9 +11,11 @@ mkdir  ../darknetv4/build/darknet/x64/data/obj/
 cp -r ./images/*.jpg  ../darknetv4/build/darknet/x64/data/obj/  
 cp -r ./labels/*.txt ../darknetv4/build/darknet/x64/data/obj/
 
+
 cd ../darknetv4/
 #wget "https://github.com/AlexeyAB/darknet/releases/download/darknet_yolo_v3_optimal/yolov4.conv.137"
 sed -i.bu 's/OPENCV=0/OPENCV=1/' Makefile
+sed -i.bu 'sOPENMP=0/OPENMP=1/' Makefile
 #sed -i.bu 's/CUDNN=0/CUDNN=1/' Makefile 
 #sed -i.bu 's/GPU=0/GPU=1/' Makefile 
 #sed -i.bu 's/CUDNN_HALF=0/CUDNN_HALF=1/' Makefile 
