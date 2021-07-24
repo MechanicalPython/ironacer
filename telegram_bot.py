@@ -43,6 +43,9 @@ class TelegramBot:
         cam.__exit__()
         self.bot.sendPhoto(self.chat_id, open(last_photo_path, 'rb'), timeout=300)
 
+    def send_photo(self, photo_path):
+        self.bot.sendPhoto(self.chat_id, open(photo_path, 'rb'), timeout=300)
+
     def error(self, update: object, context: CallbackContext):
         self.logger.error(msg="Exception while handling an update:", exc_info=context.error)
         tb_list = traceback.format_exception(None, context.error, context.error.__traceback__)
