@@ -5,25 +5,29 @@ Main.py controls all the sub methods and classes that do the heavy lifting.
 """
 
 import camera
-import screen
 import find
 import strike
 import telegram_bot
 
 
+# todo - False negative finder: when a squirrel is missed
+
+
 def main():
-    # cam = camera.Camera('photos/')
+    cam = camera.Camera()
     bot = telegram_bot.TelegramBot()
+    detector = find.Detector()
     while True:
         # Take photo
-        # photo = cam.take_photo()
-        photo = 'yolo/custom_data/test.jpg'
-        if screen.screener(photo):
+        photo = cam.take_photo()
+        # Select random from pre-list for testing.
+
+        squirrels = detector.darknet_detect(photo)
+        if squirrels is not False:
             # Squirrel is present
-            squirrel_loc_stat = find.position_locater()
-            bot.send_photo(photo_path=photo)
-            strike.javelin(squirrel_loc_stat)
-            quit()
+            detector.save_image(squirrels, photo, 'positive.jpg')
+            bot.send_photo(photo_path='positive.jpg')
+            strike.claymore()
 
 
 if __name__ == '__main__':

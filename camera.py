@@ -2,11 +2,10 @@
 
 try:
     from picamera import PiCamera
+    from picamera.array import PiRGBArray
 except ImportError:
     pass
 from time import sleep
-from datetime import datetime
-import os
 
 
 class Camera:
@@ -14,15 +13,11 @@ class Camera:
     Basic camera module that, when initiated, will open the camera ready for photos to be taken.
     Init Camera when starting the program to avoid time taken to adjust for brightness, etc.
 
+    Use camera stream to avoid writing to jpg constantly.
     """
-    def __init__(self, output_dir):
-        if not output_dir.endswith('/'):
-            output_dir = f'{output_dir}/'
-        self.output_dir = os.path.expanduser(output_dir)
-
-        if not os.path.exists(self.output_dir):
-            os.mkdir(self.output_dir)
+    def __init__(self):
         self.camera = PiCamera()
+        self.raw_caputre = PiRGBArray(self.camera)
         self.camera.rotation = 180
         self.camera.resolution = (2592, 1944)  # Max resolution requires 15 fps.
         self.camera.framerate = 15
@@ -34,17 +29,9 @@ class Camera:
 
     def take_photo(self):
         """
-        Takes single photo called YYYYMMdd-HHMMSS-f.jpg to given directory.
+        Takes single photo as image array to be passed to opencv.
         :return:
         """
-        now = datetime.now().strftime('%Y%m%d-%H%M%S,%f')
-        self.camera.capture(f'{self.output_dir}{now}.jpg')
-        return f'{self.output_dir}{now}.jpg'
-
-    def take_burst(self, number):
-        """
-        Takes a burst of photos as fast as possible.
-        """
-        for i in range(number):
-            photo_path = self.take_photo()
-        return photo_path
+        self.camera.capture(self.raw_caputre, format='bgr')
+        image = self.raw_caputre.array
+        return image

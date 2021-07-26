@@ -3,15 +3,17 @@ A project to deter squirrels from eating the garden acer by using darknet's yolo
 controlled water hose. 
 
 ## General structure
-Take a photo every second, analyse the photo to squirrels, detect the location of the squirrel, 
-operate the anti-squirrel measure.
+Take a photo every second, analyse the photo to squirrels, darknet_detect the location of the squirrel, 
+operate the anti-squirrel measure: darknet_detect, find, strike. 
 
 
-## Next Step
-Create a bot that will use yolo to take photos of squirrels it sees and send it to the telegram chat. 
+## Finding the squirrel. 
+From a single image, to find the location of the squirrel I need the distance from the camera, and the angle from 
+the center the squirrel is. 
 
-## Project structure
-- utils.py - Holds useful classes for use across the project. 
-- telegram_bot.py - Class to open and then post messages with a telegram bot. 
-- 
+### Distance
+The height of a squirrel is relatively consistent. So, in theory, the short side of the bounding box should be the 
+consistent height of the squirrel. The 
 
+### Angle
+pi camera: 62.2 degrees horizontal, 48.8 degrees vertical.
