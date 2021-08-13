@@ -19,7 +19,7 @@ def main():
     camera = PiCamera()
     camera.resolution = (2592, 1944)
     camera.framerate = 30
-    rawCapture = PiRGBArray(camera, size=(2592, 1944))
+    rawCapture = PiRGBArray(camera, size=(2592, 1952))
 
     bot = telegram_bot.TelegramBot()
     detector = find.Detector()
@@ -27,6 +27,7 @@ def main():
     for frame in camera.capture_continuous(rawCapture, format='bgr', use_video_port=True):
         image = frame.array
         squirrels = detector.darknet_detect(image)
+        print(squirrels)
         if squirrels is not False:
             # Squirrel is present
             detector.save_image(squirrels, image, 'positive.jpg')
@@ -34,14 +35,6 @@ def main():
             strike.claymore()
 
         rawCapture.truncate(0)
-
-
-
-    while True:
-        # Take photo
-        photo = cam.stream_photo()
-
-
 
 
 if __name__ == '__main__':
