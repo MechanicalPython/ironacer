@@ -27,7 +27,7 @@ class Camera:
     def __exit__(self):
         self.camera.stop_preview()
 
-    def take_photo(self):
+    def stream_photo(self):
         """
         Takes single photo as image array to be passed to opencv.
         :return:

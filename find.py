@@ -39,7 +39,7 @@ class Detector:
         :param: photo (either file path of rb in RAM)
         :return: [class, confidence, boxes] for each found object.
         """
-        photo = cv2.imread(photo)
+        # photo = cv2.imshow(photo)
         classes, confidence, boxes = self.net.detect(photo)
         if len(classes) == 0:
             return False
