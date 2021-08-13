@@ -77,9 +77,11 @@ class FlickrDownload:
 
             if not os.path.isfile(image_path):  # ignore if already downloaded
                 response = requests.get(url, stream=True)
-
-                with open(image_path, 'wb') as outfile:
-                    outfile.write(response.content)
+                try:
+                    with open(image_path, 'wb') as outfile:
+                        outfile.write(response.content)
+                except requests.exceptions.ChunkedEncodingError as e:
+                    print(f'{e} for {url}')
 
     def main(self):
         start = time.time()
@@ -114,4 +116,5 @@ def resize_images(dir, max_size=(1080, 1080)):
 
 
 if __name__ == '__main__':
-    pass
+    # FlickrDownload(['heron']).main()
+    resize_images('data/heron/')
