@@ -38,7 +38,7 @@ class Claymore:
 
     def detonate(self):
         self.firing_pin.on()
-        sleep(5)
+        sleep(2)
         self.firing_pin.off()
 
 
@@ -49,3 +49,10 @@ def javelin(loc_stat):
     :return:
     """
     pass
+
+
+if __name__ == '__main__':
+    claymore = Claymore()
+    while True:
+        claymore.detonate()
+        sleep(5)
