@@ -7,18 +7,19 @@ Strike.py - employ the anti-squirrel measures.
 # todo - convert camera distance and angle to target to gun distance and angle.
 # todo - locstat to trajectory required
 
-import RPi.GPIO as GPIO
+try:
+    import RPi.GPIO as GPIO
+except ImportError:
+    pass
 from time import sleep
-
-
-GPIO.setmode(GPIO.BOARD)
-GPIO.setwarnings(False)
 
 
 class Relay:
     relay_pins = {"R1": 31, "R2": 33, "R3": 35, "R4": 37}
 
     def __init__(self, pins):
+        GPIO.setmode(GPIO.BOARD)
+        GPIO.setwarnings(False)
         self.pin = self.relay_pins[pins]
         self.pins = pins
         GPIO.setup(self.pin, GPIO.OUT)
