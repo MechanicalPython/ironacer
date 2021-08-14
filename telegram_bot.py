@@ -38,7 +38,7 @@ class TelegramBot:
 
     def photo(self, update, context):
         update.message.reply_text('Taking test image...')
-        cam = camera.Camera('photos')
+        cam = camera.Camera()
         last_photo_path = cam.stream_photo()
         cam.__exit__()
         self.bot.sendPhoto(self.chat_id, open(last_photo_path, 'rb'), timeout=300)

@@ -19,13 +19,16 @@ class Camera:
         self.camera = PiCamera()
         self.raw_caputre = PiRGBArray(self.camera)
         self.camera.rotation = 180
-        self.camera.resolution = (2592, 1944)  # Max resolution requires 15 fps.
-        self.camera.framerate = 15
+        self.camera.resolution = (2592, 1952)  # Max resolution requires 15 fps.
+        self.camera.framerate = 30
         self.camera.start_preview()
         sleep(3)  # Sleep to allow camera to adjust to the light
 
     def __exit__(self):
         self.camera.stop_preview()
+
+    def take_photo(self):
+        self.camera.capture('')
 
     def stream_photo(self):
         """
