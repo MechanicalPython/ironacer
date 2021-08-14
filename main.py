@@ -19,7 +19,7 @@ import camera
 
 def main():
     camera = PiCamera()
-    camera.resolution = (sys.argv[1], sys.argv[2])
+    camera.resolution = (int(sys.argv[1]), int(sys.argv[2]))
     camera.framerate = 1
     rawCapture = PiRGBArray(camera, size=camera.resolution)
 
