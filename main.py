@@ -26,6 +26,8 @@ def main():
     cam.framerate = 1
 
     bot = telegram_bot.TelegramBot()
+    bot.main()
+    print('Bot up and running.')
     detector = find.Detector()
     claymore = strike.Claymore()
 
