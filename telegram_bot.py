@@ -1,4 +1,8 @@
 #! /usr/local/bin/python3.7
+"""
+Telegram bot either had to be run in a parallel thread to be used a a real time 2-way interaction, or it can be used
+to passively send information at pre-determined times.
+"""
 
 import html
 import json
@@ -7,8 +11,6 @@ import traceback
 
 from telegram import Update, ParseMode
 from telegram.ext import Updater, CommandHandler, CallbackContext
-
-import camera
 
 
 class TelegramBot:
@@ -36,13 +38,6 @@ class TelegramBot:
         update.message.reply_text('/photo to take a test photo. \n'
                                   '/ping to check connection.')
 
-    def photo(self, update, context):
-        update.message.reply_text('Taking test image...')
-        cam = camera.Camera()
-        last_photo_path = cam.stream_photo()
-        cam.__exit__()
-        self.bot.sendPhoto(self.chat_id, open(last_photo_path, 'rb'), timeout=300)
-
     def send_photo(self, photo_path):
         self.bot.sendPhoto(self.chat_id, open(photo_path, 'rb'), timeout=300)
 
@@ -67,7 +62,7 @@ class TelegramBot:
         self.dispatcher.add_handler(CommandHandler('start', self.start))
         self.dispatcher.add_handler(CommandHandler('help', self.help))
         self.dispatcher.add_handler(CommandHandler('ping', self.ping))
-        self.dispatcher.add_handler(CommandHandler('test_image', self.photo))
+        self.dispatcher.add_handler(CommandHandler('photo', self.photo))
 
         self.dispatcher.add_error_handler(self.error)
 

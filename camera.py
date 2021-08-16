@@ -27,8 +27,9 @@ class Camera:
     def __exit__(self):
         self.camera.stop_preview()
 
-    def take_photo(self):
-        self.camera.capture('')
+    def take_photo(self, path):
+        self.camera.capture(path)
+        return path
 
     def stream_photo(self):
         """

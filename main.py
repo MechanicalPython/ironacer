@@ -23,11 +23,11 @@ def main():
     else:
         cam.resolution = (int(sys.argv[1]), int(sys.argv[2]))
 
-    cam.framerate = 1
-
     bot = telegram_bot.TelegramBot()
-    bot.main()
-    print('Bot up and running.')
+    # take initial photo and send it to the telegram chat.
+    cam.take_photo('init.jpg')
+    bot.send_photo('init.jpg')
+
     detector = find.Detector()
     claymore = strike.Claymore()
 
