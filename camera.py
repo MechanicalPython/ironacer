@@ -35,6 +35,7 @@ class Camera:
         Takes single photo as image array to be passed to opencv.
         :return:
         """
-        self.camera.capture(self.raw_caputre, format='bgr')
-        image = self.raw_caputre.array
-        return image
+        rawCapture = PiRGBArray(self.camera, size=self.camera.resolution)
+        for frame in self.camera.capture_continuous(rawCapture, format='bgr', use_video_port=True):
+            yield frame.array
+            rawCapture.truncate(0)
