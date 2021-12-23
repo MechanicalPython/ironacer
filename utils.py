@@ -96,13 +96,14 @@ class FlickrDownload:
         print(f'Took {round(time.time() - start, 2)} seconds')
 
 
-def resize_images(dir, max_size=(1080, 1080)):
+def resize_images(dir, size=(640, 640)):
     """
     Used to resize a directory of images to a max dimentions
+    :param size: size of the output images.
     :param dir: Directory of photos.
-    :param max_size:
     :return:
     """
+    # todo - Resize the image and the bounding box that is given.
     if not dir.endswith('/'):
         dir = f'{dir}/'
     dir = os.path.expanduser(dir)
@@ -111,10 +112,17 @@ def resize_images(dir, max_size=(1080, 1080)):
         if any(image.endswith(end.lower()) for end in endings):
             print(f'{dir}{image}')
             im = Image.open(f'{dir}{image}')
-            im.thumbnail(max_size)
+            im = im.resize((640, 640))
             im.save(f'{dir}{image}')
+
+
+def convert_darknet_to_pytorch(darknet_weights):
+    pass
+    # todo
 
 
 if __name__ == '__main__':
     # FlickrDownload(['heron']).main()
-    resize_images('data/heron/')
+    resize_images('~/Downloads/Squirrels_data/test/images/')
+    resize_images('~/Downloads/Squirrels_data/train/images/')
+    resize_images('~/Downloads/Squirrels_data/valid/images/')

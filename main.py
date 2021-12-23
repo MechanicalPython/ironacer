@@ -33,10 +33,11 @@ def main():
 
     for image in cam.stream_photo():
         s = time.time()
-        squirrels = detector.darknet_detect(image)
+        squirrels = detector.detect(image)
         print(f'Time to detect: {time.time() - s}')
-        if squirrels is not False:
+        if len(squirrels) > 0:
             # Squirrel is present
+
             detector.save_image(squirrels, image, 'positive.jpg')
             bot.send_photo(photo_path='positive.jpg')
             claymore.detonate()
@@ -50,7 +51,7 @@ def test():
 
     while True:
         s = time.time()
-        squirrels = detector.darknet_detect(image)
+        squirrels = detector.detect(image)
         print(f'Time to detect: {time.time() - s}')
         if squirrels is not False:
             # Squirrel is present

@@ -7,3 +7,13 @@
 /yolo/custom_data/squirrel_photos/
 positive.jpg
 /data/
+/yolov5/
+best.pt
+data.yaml
+README.dataset.txt
+README.roboflow.txt
+test*.jpg
+/runs/
+/test/
+/train/
+/valid/

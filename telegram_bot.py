@@ -27,11 +27,7 @@ class TelegramBot:
 
     @staticmethod
     def start(update, context):
-        update.message.reply_text('start command received. /photo to take photos')
-
-    @staticmethod
-    def ping(update, context):
-        update.message.reply_text('Ping')
+        update.message.reply_text('start command received.')
 
     @staticmethod
     def help(update, context):
@@ -61,8 +57,6 @@ class TelegramBot:
     def main(self):
         self.dispatcher.add_handler(CommandHandler('start', self.start))
         self.dispatcher.add_handler(CommandHandler('help', self.help))
-        self.dispatcher.add_handler(CommandHandler('ping', self.ping))
-        self.dispatcher.add_handler(CommandHandler('photo', self.photo))
 
         self.dispatcher.add_error_handler(self.error)
 
