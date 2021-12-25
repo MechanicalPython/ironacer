@@ -5,6 +5,7 @@ FIND.py - find the exact location of the squirrel in the image in 3d space.
 """
 
 import torch
+import os
 
 
 class Detector:
@@ -16,15 +17,24 @@ class Detector:
     def __init__(self):
         self.model = torch.hub.load('yolov5', 'custom', path='best.pt', source='local')
         self.model.cpu()
-        self.model.conf = 0.5
+        self.model.conf = 0.1
+
+    @staticmethod
+    def get_latest_saved_image_path():
+        """Return path to the latest saved image in runs/detect/exp*/.jpg"""
+        root = 'runs/detect/'
+        exps = os.listdir(root)
+        exps.sort()
+        exp = f'{root}{(exps[len(exps)-1])}/'
+        images = os.listdir(exp)
+        return [f'{exp}{i}' for i in images if i.endswith('.jpg')]
 
     @staticmethod
     def results_to_centre_coord(results):
         """Convert results of the model to a list of x,y coordinates for each squirrel found"""
         # pandas().xyxy returns xmin, ymin, xmax, ymax, from top left of image.
-        results_df = results.pandas().xyxy[0]
-        results_df['confidence'].sort_values()
-        xyxy = results_df.to_dict('index')[0]
+        results['confidence'].sort_values()
+        xyxy = results.to_dict('index')[0]
         xmin = xyxy['xmin']
         ymin = xyxy['ymin']
         xmax = xyxy['xmax']
@@ -36,13 +46,22 @@ class Detector:
     def detect(self, img):
         """
         Finds the coordinates of the item most likely to be a squirrel (from top left = 0,0)
-
+        Return image of the box and corrdinates of the squirrel and true/false?
         :param: photo (either file path of rb in RAM)
         :return: df of results.
         """
-        results = self.model(img)
-
-        return results
+        self.model.
+        print(self.model(img))
+        # for i in self.model(img):
+        #     print(i)
+        # results = self.model(img)
+        # print('hello')
+        # df = results.pandas().xyxy[0]
+        # if len(df) > 0:
+        #     results.save()
+        #     picture = self.get_latest_saved_image_path()
+        #     return True, self.results_to_centre_coord(df), picture
+        # return False, 0, 0
 
 
 def angle_from_center(fov, total_width, object_loc):
@@ -60,9 +79,6 @@ def angle_from_center(fov, total_width, object_loc):
 
 
 if __name__ == '__main__':
-    d = Detector()
-    print(d.detect('test.jpg'))
-    print(d.detect('test2.jpg'))
-    print(d.detect('test3.jpg'))
-    print(d.detect('test4.jpg'))
+    pass
+    # Detector().detect('http://ironacer.local:8000/stream.mjpg')
 

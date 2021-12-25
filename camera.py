@@ -40,3 +40,22 @@ class Camera:
         for frame in self.camera.capture_continuous(rawCapture, format='bgr', use_video_port=True):
             yield frame.array
             rawCapture.truncate(0)
+
+
+class Stream:
+    def __init__(self):
+        self.address = 0
+
+
+
+
+
+
+
+
+
+
+
+
+
+

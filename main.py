@@ -2,6 +2,10 @@
 
 """
 Main.py controls all the sub methods and classes that do the heavy lifting.
+
+Workflow
+Camera image -> yolov5 -> if squirrel -> fire mechanism and send photo, else do nothing.
+
 """
 
 import time
@@ -24,47 +28,19 @@ def main():
         cam.resolution = (int(sys.argv[1]), int(sys.argv[2]))
 
     bot = telegram_bot.TelegramBot()
-    # take initial photo and send it to the telegram chat.
-    cam.take_photo('init.jpg')
-    bot.send_photo('init.jpg')
-
     detector = find.Detector()
     claymore = strike.Claymore()
 
     for image in cam.stream_photo():
         s = time.time()
-        squirrels = detector.detect(image)
+        squirrels, coords, picture = detector.detect(image)
         print(f'Time to detect: {time.time() - s}')
-        if len(squirrels) > 0:
-            # Squirrel is present
 
-            detector.save_image(squirrels, image, 'positive.jpg')
-            bot.send_photo(photo_path='positive.jpg')
+        if squirrels:  # Squirrel is present
+            bot.send_photo(photo_path=picture)
             claymore.detonate()
 
 
-def test():
-    image = 'test.jpg'
-    bot = telegram_bot.TelegramBot()
-    detector = find.Detector()
-    # claymore = strike.Claymore()
-
-    while True:
-        s = time.time()
-        squirrels = detector.detect(image)
-        print(f'Time to detect: {time.time() - s}')
-        if squirrels is not False:
-            # Squirrel is present
-            detector.save_image(squirrels, image, 'positive.jpg')
-            # bot.send_photo(photo_path='positive.jpg')
-            # claymore.detonate()
-        print(f'Time for loop: {time.time() - s}')
-        time.sleep(5)
-
-
 if __name__ == '__main__':
-    if sys.argv[1] == 'test':
-        test()
-    else:
-        main()
+    main()
 

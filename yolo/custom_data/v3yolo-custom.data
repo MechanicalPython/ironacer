@@ -1,5 +1,0 @@
-classes=1
-train=../custom_data/v3train.txt
-valid=../custom_data/v3test.txt
-names=../custom_data/custom.names
-backup=backup/
