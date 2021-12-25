@@ -11,7 +11,7 @@ import torch.backends.cudnn as cudnn
 
 from models.common import DetectMultiBackend
 from utils.datasets import LoadStreams
-from utils.general import (check_img_size, non_max_suppression, scale_coords)
+from utils.general import (check_img_size, non_max_suppression, scale_coords, increment_path)
 from utils.plots import Annotator, colors
 from utils.torch_utils import select_device
 
@@ -78,6 +78,7 @@ def detect_stream(weights='best.pt',  # model.pt path(s)
                   device='',  # cuda device, i.e. 0 or 0,1,2,3 or cpu
                   classes=None,  # filter by class: --class 0, or --class 0 2 3
                   agnostic_nms=False,  # class-agnostic NMS
+                  nosave=False,  # do not save images/videos
                   augment=False,  # augmented inference
                   visualize=False,  # visualize features
                   line_thickness=3,  # bounding box thickness (pixels)
@@ -87,12 +88,19 @@ def detect_stream(weights='best.pt',  # model.pt path(s)
                   dnn=False,  # use OpenCV DNN for ONNX inference
                   ):
     source = str(source)
-
+    save_img = not nosave and not source.endswith('.txt')  # save inference images
     # Load model
     device = select_device(device)
     model = DetectMultiBackend(weights, device=device, dnn=dnn)
     stride, names, pt, jit, onnx, engine = model.stride, model.names, model.pt, model.jit, model.onnx, model.engine
     imgsz = check_img_size(imgsz, s=stride)  # check image size
+
+    save_dir = 'results/'
+    vid_num = len([i for i in os.listdir(save_dir) if i.endswith(".mp4")]) + 1
+    save_path = str(f'{save_dir}result-{vid_num}.mp4')
+    vid_writer = None
+    # Tracking when to start a new video
+    number_of_frames_without_squirrel = 0
 
     # Half
     half &= (pt or jit or engine) and device.type != 'cpu'  # half precision only supported by PyTorch on CUDA
@@ -129,20 +137,46 @@ def detect_stream(weights='best.pt',  # model.pt path(s)
             s += '%gx%g ' % im.shape[2:]  # print string
             annotator = Annotator(im0, line_width=line_thickness, example=str(names))
             if len(det):  # If found a squirrel, this is triggered.
+                isSquirrel = True
+                number_of_frames_without_squirrel = 10  # How many frames in a row can be false before resetting the vid
                 # det = tensor list of xmin, ymin, xmax, ymax, confidence, class number
                 # Rescale boxes from img_size to im0 size, basically normalises it.
                 det[:, :4] = scale_coords(im.shape[2:], det[:, :4], im0.shape).round()
-                print(det[:, :4])
+                coordinates = det[:, :4]
+                confidence = det[:, 5]
                 # Write results
                 for *xyxy, conf, cls in reversed(det):
                     # Add box to image.
                     c = int(cls)  # integer class
                     label = None if hide_labels else (names[c] if hide_conf else f'{names[c]} {conf:.2f}')
                     annotator.box_label(xyxy, label, color=colors(c, True))
+            else:
+                if number_of_frames_without_squirrel > 0:
+                    number_of_frames_without_squirrel -= 1
+
+                isSquirrel = False
+                coordinates = False
+                confidence = False
+
+            vid_path = False
+            if save_img:
                 im0 = annotator.result()
-                cv2.imwrite(f'temp.jpg', im0)
-                yield True, 'temp.jpg'
-            yield False, None, None
+                if isSquirrel or number_of_frames_without_squirrel > 0:  # Record video
+                    if os.path.exists(save_path):  # Write to current file
+                        vid_writer.write(im0)  # Despite being inited above with None, this can't be reached unless
+                        # the else part has run, therefore don't worry about it.
+                    else:  # Start a new file
+                        if isinstance(vid_writer, cv2.VideoWriter):
+                            vid_writer.release()  # release previous video writer
+                        fps, w, h = 3, im0.shape[1], im0.shape[0]
+                        vid_writer = cv2.VideoWriter(save_path, cv2.VideoWriter_fourcc(*'mp4v'), fps, (w, h))
+                        vid_writer.write(im0)
+                else:
+                    vid_num = len([i for i in os.listdir(save_dir) if i.endswith(".mp4")]) + 1
+                    save_path = str(f'{save_dir}result-{vid_num}.mp4')
+                    vid_path = str(f'{save_dir}result-{vid_num - 1}.mp4')  # Now okay to send the just saved video out.
+
+            yield isSquirrel, coordinates, confidence, vid_path
 
 
 def angle_from_center(fov, total_width, object_loc):
@@ -160,5 +194,5 @@ def angle_from_center(fov, total_width, object_loc):
 
 
 if __name__ == '__main__':
-    for i in detect_stream(source='http://ironacer.local:8000/stream.mjpg'):
-        print(i)
+    for result, coord, conf in detect_stream(source='http://ironacer.local:8000/stream.mjpg'):
+        print(result)
