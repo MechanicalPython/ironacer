@@ -16,6 +16,7 @@ from utils.plots import Annotator, colors
 from utils.torch_utils import select_device
 
 
+# Deprecated - used for static images.
 class Detector:
     """
     darknet_detect() box gives left, top, width, height. left and top gives the top left coordinate
@@ -108,7 +109,6 @@ def detect_stream(weights='best.pt',  # model.pt path(s)
         model.model.half() if half else model.model.float()
 
     # Dataloader
-    # view_img = check_imshow()
     cudnn.benchmark = True  # set True to speed up constant image size inference
     dataset = LoadStreams(source, img_size=imgsz, stride=stride, auto=pt)
 

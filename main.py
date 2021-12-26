@@ -12,10 +12,13 @@ import find
 import strike
 import telegram_bot
 
+from tenacity import retry, wait_fixed, retry_if_exception_type
+
 # todo - False negative finder: when a squirrel is missed
 # todo - telegram to send photos to chat on request.
 
 
+@retry(wait=wait_fixed(60), retry=retry_if_exception_type(Exception))
 def main():
     print('Activating IRONACER')
     bot = telegram_bot.TelegramBot()
