@@ -11,7 +11,7 @@ import torch.backends.cudnn as cudnn
 
 from models.common import DetectMultiBackend
 from utils.datasets import LoadStreams
-from utils.general import (check_img_size, non_max_suppression, scale_coords, increment_path)
+from utils.general import (check_img_size, non_max_suppression, scale_coords)
 from utils.plots import Annotator, colors
 from utils.torch_utils import select_device
 
@@ -182,7 +182,7 @@ def detect_stream(weights='best.pt',  # model.pt path(s)
                     else:  # Start a new file
                         if isinstance(vid_writer, cv2.VideoWriter):
                             vid_writer.release()  # release previous video writer
-                        fps, w, h = 3, im0.shape[1], im0.shape[0]
+                        fps, w, h = 6, im0.shape[1], im0.shape[0]
                         vid_writer = cv2.VideoWriter(save_path, cv2.VideoWriter_fourcc(*'mp4v'), fps, (w, h))
                         vid_writer.write(im0)
                 else:
@@ -208,5 +208,6 @@ def angle_from_center(fov, total_width, object_loc):
 
 
 if __name__ == '__main__':
-    for result, coord, conf in detect_stream(source='http://ironacer.local:8000/stream.mjpg'):
-        print(result)
+    for i in detect_stream(source='http://ironacer.local:8000/stream.mjpg'):
+        isSquirrel, coords, confidence, vid_path = i
+        print(isSquirrel, coords, confidence, vid_path)

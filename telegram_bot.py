@@ -72,4 +72,4 @@ class TelegramBot:
 
 if __name__ == '__main__':
     bot = TelegramBot()
-    bot.send_video('./test.mp4')
+    bot.send_photo('./test.jpg')
