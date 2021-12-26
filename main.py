@@ -18,7 +18,7 @@ from tenacity import retry, wait_fixed, retry_if_exception_type
 # todo - telegram to send photos to chat on request.
 
 
-@retry(wait=wait_fixed(60), retry=retry_if_exception_type(Exception))
+@retry(wait=wait_fixed(60), retry=retry_if_exception_type(AssertionError))
 def main():
     print('Activating IRONACER')
     bot = telegram_bot.TelegramBot()

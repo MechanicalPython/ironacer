@@ -132,8 +132,9 @@ def detect_stream(weights='best.pt',  # model.pt path(s)
         for i, det in enumerate(pred):  # per image
             seen += 1
             p, im0, frame = path[i], im0s[i].copy(), dataset.count
-            s += f'{i}: '
-            s += '%gx%g ' % im.shape[2:]  # print string
+
+            print(len(dataset))
+
             annotator = Annotator(im0, line_width=line_thickness, example=str(names))
             if len(det):  # If found a squirrel, this is triggered.
                 isSquirrel = True
@@ -191,6 +192,9 @@ def detect_stream(weights='best.pt',  # model.pt path(s)
                     vid_path = str(f'{save_dir}result-{vid_num - 1}.mp4')  # Now okay to send the just saved video out.
 
             yield isSquirrel, coordinates, confidence, vid_path
+
+    # If you get to this point, the stream has been dropped.
+    raise AssertionError('Stream cannot be connected to')
 
 
 def angle_from_center(fov, total_width, object_loc):
