@@ -146,7 +146,7 @@ def detect_stream(weights='best.pt',  # model.pt path(s)
                 # Write image and box to training_wheels for future training data.
                 ext_num = len([i for i in os.listdir(save_dir) if i.endswith(".jpg")]) + 1
                 image_path = str(f'training_wheels/images/result-{ext_num}.jpg')
-                labels_path = str(f'training_wheels/labels/result-{ext_num}.jpg')
+                labels_path = str(f'training_wheels/labels/result-{ext_num}.txt')
                 cv2.imwrite(image_path, im0)
                 with open(labels_path, 'w') as f:  # class (0 for squirrel, x_center y_center width height
                     # from top right of image and normalised to be 0-1.
