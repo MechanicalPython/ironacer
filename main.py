@@ -17,6 +17,7 @@ import telegram_bot
 
 
 def main():
+    print('Activating IRONACER')
     bot = telegram_bot.TelegramBot()
     # claymore = strike.Claymore()
 
