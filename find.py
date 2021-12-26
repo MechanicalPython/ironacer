@@ -133,7 +133,6 @@ def detect_stream(weights='best.pt',  # model.pt path(s)
             seen += 1
             p, im0, frame = path[i], im0s[i].copy(), dataset.count
             s += f'{i}: '
-
             s += '%gx%g ' % im.shape[2:]  # print string
             annotator = Annotator(im0, line_width=line_thickness, example=str(names))
             if len(det):  # If found a squirrel, this is triggered.
@@ -144,6 +143,21 @@ def detect_stream(weights='best.pt',  # model.pt path(s)
                 det[:, :4] = scale_coords(im.shape[2:], det[:, :4], im0.shape).round()
                 coordinates = det[:, :4]
                 confidence = det[:, 5]
+                # Write image and box to training_wheels for future training data.
+                ext_num = len([i for i in os.listdir(save_dir) if i.endswith(".jpg")]) + 1
+                image_path = str(f'training_wheels/images/result-{ext_num}.jpg')
+                labels_path = str(f'training_wheels/labels/result-{ext_num}.jpg')
+                cv2.imwrite(image_path, im0)
+                with open(labels_path, 'w') as f:  # class (0 for squirrel, x_center y_center width height
+                    # from top right of image and normalised to be 0-1.
+                    xmin, ymin, xmax, ymax = coordinates
+                    im_width, im_height = im0.shape[1], im0.shape[0]
+                    x_center = (ymin + ((ymax - ymin) / 2)) / im_width
+                    y_center = (xmin + ((xmax - xmin) / 2)) / im_height
+                    width = (xmax - xmin) / im_width
+                    height = (ymax - ymin) / im_height
+                    f.write(f'0 {str(x_center)} {str(y_center)} {str(width)} {str(height)}')
+
                 # Write results
                 for *xyxy, conf, cls in reversed(det):
                     # Add box to image.
