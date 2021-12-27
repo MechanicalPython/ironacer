@@ -1,4 +1,3 @@
-#! /usr/local/bin/python3.7
 
 """
 FIND.py - find the exact location of the squirrel in the image in 3d space.
@@ -97,7 +96,7 @@ class StreamDetector:
             self.model.model.half() if self.half else self.model.model.float()
         cudnn.benchmark = True  # set True to speed up constant image size inference
         self.model.warmup(imgsz=(1, 3, *imgsz), half=self.half)  # warmup
-        self.number_of_frames_without_squirrel = 10  # How many frames in a row can be false before resetting the vid
+        self.number_of_frames_without_squirrel = 0  # How many frames in a row can be false before resetting the vid
         self.vid_writer = None
 
     def stream(self):
@@ -122,29 +121,29 @@ class StreamDetector:
         pred = self.model(im, augment=self.augment, visualize=self.visualize)
         # NMS
         pred = non_max_suppression(pred, self.conf_thres, self.iou_thres, self.classes, self.agnostic_nms, max_det=self.max_det)
-        batch = []
         # Process predictions
         im0 = im0s[0].copy()
         pred = pred[0]
+        isSquirrel = False
+        xyxy = False
+        confidence = False
+
         if len(pred):  # If found a squirrel, this is triggered.
             isSquirrel = True
             # det = tensor list of xmin, ymin, xmax, ymax, confidence, class number
             # Rescale boxes from img_size to im0 size, basically normalises it.
             pred[:, :4] = scale_coords(im.shape[2:], pred[:, :4], im0.shape).round()
-            coordinates = pred[:, :4]
-            confidence = pred[:, 5]
+            for *xyxy, conf, cls in reversed(pred):  # the *xyxy is to take the first 4 items as the coords.
+                confidence = conf.item()
+                xyxy = [i.item() for i in xyxy]  # Convert from [tensor(x), ..] to [x, ..]
+                self.save_train_data(im0, xyxy)
 
-            self.save_train_data(im0, coordinates)
-        else:
-            isSquirrel = False
-            coordinates = False
-            confidence = False
         vid_path = self.save_labeled(pred, im0)
 
-        yield isSquirrel, coordinates, confidence, vid_path
+        yield isSquirrel, xyxy, confidence, vid_path
 
     def save_labeled(self, det, im0):
-        """Should just need a frame and coordinates."""
+        """Should just need a frame and det."""
         save_dir = 'results/'
         vid_num = len([i for i in os.listdir(save_dir) if i.endswith(".mp4")]) + 1
         self.current_vid_path = str(f'{save_dir}result-{vid_num}.mp4')
@@ -160,13 +159,15 @@ class StreamDetector:
             if self.number_of_frames_without_squirrel > 0:
                 self.number_of_frames_without_squirrel -= 1
 
+        vid_done = False
         if not self.nosave:
             im0 = annotator.result()
-            self.current_vid_path = False
-            if len(det) and self.number_of_frames_without_squirrel > 0:  # record video
+            if len(det) or self.number_of_frames_without_squirrel > 0:  # record video
                 if isinstance(self.vid_writer, cv2.VideoWriter):  # Vid_writer has already been created.
                     self.vid_writer.write(im0)
                 else:  # Create a new vid_writer and write frame to it.
+                    vid_num = len([i for i in os.listdir(save_dir) if i.endswith(".mp4")]) + 1
+                    self.current_vid_path = str(f'{save_dir}result-{vid_num}.mp4')
                     fps, w, h = 6, im0.shape[1], im0.shape[0]
                     self.vid_writer = cv2.VideoWriter(self.current_vid_path, cv2.VideoWriter_fourcc(*'mp4v'), fps, (w, h))
                     self.vid_writer.write(im0)
@@ -174,10 +175,8 @@ class StreamDetector:
                 if isinstance(self.vid_writer, cv2.VideoWriter):  # If a video has been recorded
                     self.vid_writer.release()  # release previous video writer
                     self.vid_writer = None
-                    vid_num = len([i for i in os.listdir(save_dir) if i.endswith(".mp4")]) + 1
-                    self.current_vid_path = str(f'{save_dir}result-{vid_num}.mp4')
-
-        return self.current_vid_path
+                    vid_done = self.current_vid_path
+        return vid_done
 
     def save_train_data(self, im0, coordinates):
         """Takes the image and corrdinates of the box and save them to training_wheels for future training.
@@ -187,7 +186,7 @@ class StreamDetector:
         image_path = str(f'training_wheels/images/result-{ext_num}.jpg')
         labels_path = str(f'training_wheels/labels/result-{ext_num}.txt')
         cv2.imwrite(image_path, im0)  # Write image
-        with open(labels_path, 'w') as f: # Convert coordinates and save as txt file.
+        with open(labels_path, 'w') as f:  # Convert coordinates and save as txt file.
             # class (0 for squirrel, x_center y_center width height from top right of image and normalised to be 0-1.
             xmin, ymin, xmax, ymax = coordinates
             im_width, im_height = im0.shape[1], im0.shape[0]
@@ -258,7 +257,6 @@ def detect_stream(weights='best.pt',  # model.pt path(s)
         pred = non_max_suppression(pred, conf_thres, iou_thres, classes, agnostic_nms, max_det=max_det)
         # pred gives [tensor]
         # Process predictions
-        print(pred)
         for i, det in enumerate(pred):  # per image - i think, only useful if you pass it multiple images.
             # det gives tensor.
             # seen += 1
@@ -280,7 +278,7 @@ def detect_stream(weights='best.pt',  # model.pt path(s)
                 cv2.imwrite(image_path, im0)
                 with open(labels_path, 'w') as f:  # class (0 for squirrel, x_center y_center width height
                     # from top right of image and normalised to be 0-1.
-                    xmin, ymin, xmax, ymax = coordinates
+                    xmin, ymin, xmax, ymax = coordinates[0]
                     im_width, im_height = im0.shape[1], im0.shape[0]
                     x_center = (ymin + ((ymax - ymin) / 2)) / im_width
                     y_center = (xmin + ((xmax - xmin) / 2)) / im_height
@@ -346,7 +344,7 @@ if __name__ == '__main__':
         isSquirrel, coords, confidence, vid_path = i
         print(isSquirrel, coords, confidence, vid_path)
 
-    # For detect_stream
+    # # For detect_stream
     # for i in detect_stream(source='http://ironacer.local:8000/stream.mjpg'):
     #     isSquirrel, coords, confidence, vid_path = i
     #     print(isSquirrel, coords, confidence, vid_path)
