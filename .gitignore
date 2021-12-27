@@ -18,3 +18,4 @@ test*.jpg
 /train/
 /valid/
 /pytorch/
+/log.log

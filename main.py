@@ -45,6 +45,8 @@ def main():
             now = datetime.datetime.now()
             sunset = datetime.datetime(year=now.year, month=now.month, day=now.day, hour=16, minute=37)
             if now > sunset:
+                subprocess.Popen(["ssh", "pi@ironacer.local", "pkill -f stream.py"],
+                                 stdin=None, stdout=None, stderr=None, close_fds=True)
                 return None
     finally:
         subprocess.Popen(["ssh", "pi@ironacer.local", "pkill -f stream.py"],
