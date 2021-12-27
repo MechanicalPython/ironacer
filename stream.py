@@ -8,7 +8,7 @@ from http import server
 PAGE="""\
 <html>
 <head>
-<title>picamera MJPEG streaming demo</title>
+<title>Ironacer Live View</title>
 </head>
 <body>
 <h1>PiCamera MJPEG Streaming Demo</h1>
@@ -16,6 +16,8 @@ PAGE="""\
 </body>
 </html>
 """
+
+# todo - send info back to draw a bounding box to view it live?
 
 
 class StreamingOutput(object):
