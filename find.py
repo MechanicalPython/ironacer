@@ -420,6 +420,7 @@ def motion_detect_img_dir(path='motion_detected/'):
         key = cv2.waitKey(1)
         # if q entered whole process will stop
         if key == ord('q'):
+            print(f'Last image shown: {i}')
             break
 
     # Destroying all the windows

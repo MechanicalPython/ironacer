@@ -34,9 +34,12 @@ def main():
         print('Activating IRONACER')
         bot = telegram_bot.TelegramBot()
         # claymore = strike.Claymore()
+
         d = find.StreamDetector(weights='best.pt')
-        for i in d.stream():
-            isSquirrel, coords, confidence, vid_path = i
+        for path, im, im0s, vid_cap, s in d.stream():
+            d.motion_detector(im0s[0])  # Saves motion detected images.
+            isSquirrel, coords, confidence, vid_path = d.inference(path, im, im0s, vid_cap, s)  # Runs yolov5 inference.
+
             if isSquirrel:  # Squirrel is present
                 # claymore.detonate()
                 pass

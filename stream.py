@@ -17,8 +17,6 @@ PAGE="""\
 </html>
 """
 
-# todo - send info back to draw a bounding box to view it live?
-
 
 class StreamingOutput(object):
     def __init__(self):
