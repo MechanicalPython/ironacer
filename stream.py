@@ -11,8 +11,8 @@ PAGE="""\
 <title>Ironacer Live View</title>
 </head>
 <body>
-<h1>PiCamera MJPEG Streaming Demo</h1>
-<img src="stream.mjpg" width="640" height="480" />
+<h1>Ironacer Live View</h1>
+<img src="stream.mjpg" width="1280" height="1280" />
 </body>
 </html>
 """
@@ -82,8 +82,10 @@ class StreamingServer(socketserver.ThreadingMixIn, server.HTTPServer):
     allow_reuse_address = True
     daemon_threads = True
 
+# Pi camera resolution: 2592x1944 at 1-15fps is supported.
 
-with picamera.PiCamera(resolution='640x640', framerate=24) as camera:
+
+with picamera.PiCamera(resolution='1280x1280', framerate=10) as camera:
     output = StreamingOutput()
     camera.start_recording(output, format='mjpeg')
     try:
