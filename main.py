@@ -16,7 +16,6 @@ from tenacity import retry, wait_fixed, retry_if_exception_type
 
 import find
 import telegram_bot
-import sys
 
 # todo - False negative finder: when a squirrel is missed
 # todo - telegram to send photos to chat on request.
@@ -56,3 +55,6 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+# 53 - 56
+# 98 - 103

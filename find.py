@@ -1,4 +1,3 @@
-
 """
 FIND.py - find the exact location of the squirrel in the image in 3d space.
 """
@@ -9,11 +8,14 @@ import torch
 import torch.backends.cudnn as cudnn
 import time
 
-from models.common import DetectMultiBackend
-from utils.datasets import LoadStreams
-from utils.general import (check_img_size, non_max_suppression, scale_coords)
-from utils.plots import Annotator, colors
-from utils.torch_utils import select_device
+import sys
+sys.path.insert(0, 'yolov5/')
+
+from yolov5.models.common import DetectMultiBackend
+from yolov5.utils.datasets import LoadStreams
+from yolov5.utils.general import (check_img_size, non_max_suppression, scale_coords)
+from yolov5.utils.plots import Annotator, colors
+from yolov5.utils.torch_utils import select_device
 
 
 def angle_from_center(fov, total_width, object_loc):

@@ -1,18 +1,57 @@
 # Ironacer
-A project to deter squirrels from eating the garden acer by using darknet's yolo object detection and a water hose
 
-In the first version the anti-squirrel measure will be an area of effect hose that will be controlled by a solenoid 
-water valve connected to the main water supply. This will allow for the use of a single camera and no targeting system
+## Aim of the Ironacer
+The mission statement of the project is to leverage object recognition to fire water at squirrels that enter the 
+garden, in the service of non-lethally preventing them from eating the acer tree or digging up bulbs. 
 
-In version 2, there will be a stereoscopic camera for targeting a directed jet of water. 
+## The parts
+### Detection
+The detection of the squirrels is handled by the Yolov5 object recongition algorithm found at: 
+https://github.com/ultralytics/yolov5 and is powered by pytorch. 
 
-## General structure
-You will need to add:
-1. telegram_token - to use telegram. 
-2. flickr_key and flickr_secret to use the flickr scrapper utility. 
+The camera is run by a raspberry pi zero which provides a video stream. The inference of the images is then run on 
+a mac mini in a conda environment to allow pytorch to run natively on apple silicon. 
+
+### Deterrence
+Use of a raspberry pi controlled solenoid valve to control the flow of water. 
+
+### Information
+Use of telegram to publish images of detected squirrels. 
+
+## Project files
+This project is a weird mix of https://github.com/ultralytics/yolov5 and my own code. 
+camera.py - basically useless as it controlled the camera but that's done by stream.py
+stream.py - runs on the pi and serves the camera video for find.py
+find.py - class that reads the streaming video and runs motion detection on it of yolov5 inference. Saves images to 
+motion_detected, results, and training_wheels. 
+telegram_bot.py - runs the telegram bot to send images and videos of detected squirrels. 
+utils.py - holds random one-off functions. 
+
+## Installations
+### Conda env
+Mostly following: https://towardsdatascience.com/yes-you-can-run-pytorch-natively-on-m1-macbooks-and-heres-how-35d2eaa07a83
+```
+brew install miniforge
+conda init zsh
+conda create --name pytorch_env python=3.8
+conda activate pytorch_env
+conda install pytorch torchvision torchaudio -c pytorch
+```
+Then run python detect.py etc inside that pytorch_env. 
+I think that will work, this was written after I got it to all work and it wasn't straightforward. 
 
 
+## Training runs and weights
+All run and saved in yolov5/runs/train/exp{}/weights/{best.pt, last.pt}
+exp - exp2 are trained with 640 image size. 
+exp2 - exp5 are trained with 1280 image size. 
+
+yolov5 has runs in gitignore. 
 
 
 ### Angle
 pi camera: 62.2 degrees horizontal, 48.8 degrees vertical.
+
+
+If it all goes wrong
+removed models and utils from the root folder.
