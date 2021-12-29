@@ -213,7 +213,7 @@ class StreamDetector:
 
         vid_path = self.save_labeled(pred, im0)
 
-        yield isSquirrel, xyxy, confidence, vid_path
+        return isSquirrel, xyxy, confidence, vid_path
 
     def save_labeled(self, det, im0):
         """Should just need a frame and det."""
