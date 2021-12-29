@@ -19,3 +19,6 @@ test*.jpg
 /valid/
 /pytorch/
 /log.log
+/motion_detected/
+/results/
+/training_wheels/
