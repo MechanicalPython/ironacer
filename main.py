@@ -17,10 +17,9 @@ from tenacity import retry, wait_fixed, retry_if_exception_type
 import find
 import telegram_bot
 
-# todo - False negative finder: when a squirrel is missed
-# todo - telegram to send photos to chat on request.
-
-# todo - auto get sunrise and sunset.
+# todo - pi-running motion detector to gather images of squirrels.
+#  telegram to send photos to chat on request.
+#  auto get sunrise and sunset.
 
 
 @retry(wait=wait_fixed(60), retry=retry_if_exception_type(AssertionError))
@@ -55,6 +54,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-# 53 - 56
-# 98 - 103
