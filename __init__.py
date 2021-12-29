@@ -1,10 +1,9 @@
-from flickrapi import FlickrAPI
-import requests
-import os
-import time
-
-
 class FlickrDownload:
+    from flickrapi import FlickrAPI
+    import requests
+    import os
+    import time
+
     """
     A basic class to download images from a flickr search. Uses flickr api so requires public and private keys to
     be saved in the ironacer directory.
@@ -30,7 +29,7 @@ class FlickrDownload:
 
     def get_photos(self, image_tag):
         extras = ','.join(self.sizes)
-        flickr = FlickrAPI(self.KEY, self.SECRET)
+        flickr = self.FlickrAPI(self.KEY, self.SECRET)
         photos = flickr.walk(text=image_tag,
                              extras=extras,
                              privacy_filter=1,
@@ -59,32 +58,31 @@ class FlickrDownload:
                 break
         return urls
 
-    @staticmethod
-    def download_images(urls, path):
-        if not os.path.isdir(path):
-            os.makedirs(path)
+    def download_images(self, urls, path):
+        if not self.os.path.isdir(path):
+            self.os.makedirs(path)
 
         for url in urls:
             image_name = url.split("/")[-1]
-            image_path = os.path.join(path, image_name)
+            image_path = self.os.path.join(path, image_name)
 
-            if not os.path.isfile(image_path):  # ignore if already downloaded
-                response = requests.get(url, stream=True)
+            if not self.os.path.isfile(image_path):  # ignore if already downloaded
+                response = self.requests.get(url, stream=True)
                 try:
                     with open(image_path, 'wb') as outfile:
                         outfile.write(response.content)
-                except requests.exceptions.ChunkedEncodingError as e:
+                except self.requests.exceptions.ChunkedEncodingError as e:
                     print(f'{e} for {url}')
 
     def main(self):
-        start = time.time()
+        start = self.time.time()
         for tag in self.image_tags:
             print('Getting urls for ', tag)
             urls = self.get_urls(tag)
 
             print(f'Downloading {len(urls)} images for {tag}')
-            path = os.path.join('data', tag)
+            path = self.os.path.join('data', tag)
             self.download_images(urls, path)
 
-        print(f'Took {round(time.time() - start, 2)} seconds')
+        print(f'Took {round(self.time.time() - start, 2)} seconds')
 
