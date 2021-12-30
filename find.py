@@ -70,6 +70,7 @@ class StreamDetector:
         """Return raw image from the stream"""
         self.dataset = LoadStreams(self.source, img_size=self.imgsz, stride=self.stride, auto=self.pt)
         for path, im, im0s, vid_cap, s in self.dataset:
+            # Crop 2592x1944 image to 1280x1280.
             im = torch.from_numpy(im).to(self.device)
             im = im.half() if self.half else im.float()  # uint8 to fp16/32
             im /= 255  # 0 - 255 to 0.0 - 1.0

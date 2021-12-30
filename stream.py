@@ -83,8 +83,9 @@ class StreamingServer(socketserver.ThreadingMixIn, server.HTTPServer):
 # Pi camera resolution: 2592x1944 at 1-15fps is supported.
 
 
-with picamera.PiCamera(resolution='1280x1280', framerate=10) as camera:
+with picamera.PiCamera(resolution='2592x1944', framerate=10) as camera:
     output = StreamingOutput()
+    camera.zoom = (656, 332, 1280, 1280)  # x, y, w, h. Converts to 1280 1280 image from the middle of the frame.
     camera.start_recording(output, format='mjpeg')
     try:
         address = ('', 8000)

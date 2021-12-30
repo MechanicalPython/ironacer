@@ -352,6 +352,6 @@ def motion_detected_squirrel_organiser(conf_phot_num):
 
 
 if __name__ == '__main__':
-    motion_detect_img_dir()
-    # motion_detected_squirrel_organiser("10 - 11, 17 - 20, 25 - 30, 38 - 49, 53 - 60, 62 - 63, 66 - 67, 69 - 71, 108 - 109, 112 - 115, 123 - 124, 136 - 142, 148 - 167, 179 - 182, 189 - 189")
+    # motion_detect_img_dir()
+    motion_detected_squirrel_organiser("23 - 23, 78 - 79, 113 - 116")
     #
