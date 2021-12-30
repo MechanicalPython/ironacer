@@ -17,9 +17,11 @@ from tenacity import retry, wait_fixed, retry_if_exception_type
 import find
 import telegram_bot
 
-# todo - pi-running motion detector to gather images of squirrels.
+# todo - 1. pi-running motion detector to gather images of squirrels.
 #  telegram to send photos to chat on request.
 #  auto get sunrise and sunset.
+#  test speed of new weights.
+#  record the frame rate while running inference on it.
 
 
 @retry(wait=wait_fixed(60), retry=retry_if_exception_type(AssertionError))
