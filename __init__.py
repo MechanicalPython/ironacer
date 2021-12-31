@@ -1,6 +1,39 @@
 """
 Mostly to hold random methods and classes.
 """
+import os
+
+
+def next_free_path(path_pattern):
+    """
+    Method to save a file to a directory and increment the number on it.
+    eg. save result-x.jpg to a directory and automatically increment x.
+    From: https://stackoverflow.com/questions/17984809/how-do-i-create-an-incrementing-filename-in-python#17984925
+
+    Finds the next free path in a sequentially named list of files
+
+    e.g. path_pattern = 'file-%s.txt':
+    file-1.txt
+    file-2.txt
+    file-3.txt
+
+    Runs in log(n) time where n is the number of existing files in sequence
+     :return:
+    """
+    i = 1
+
+    # First do an exponential search
+    while os.path.exists(path_pattern % i):
+        i = i * 2
+
+    # Result lies somewhere in the interval (i/2..i]
+    # We call this interval (a..b] and narrow it down until a + 1 = b
+    a, b = (i // 2, i)
+    while a + 1 < b:
+        c = (a + b) // 2  # interval midpoint
+        a, b = (c, b) if os.path.exists(path_pattern % c) else (a, c)
+    return path_pattern % b
+
 
 class FlickrDownload:
     """
@@ -90,6 +123,7 @@ class FlickrDownload:
 
         print(f'Took {round(self.time.time() - start, 2)} seconds')
 
+
 class ImageDetector:
     """
     darknet_detect() box gives left, top, width, height. left and top gives the top left coordinate
@@ -141,6 +175,7 @@ class ImageDetector:
             picture = self.get_latest_saved_image_path()
             return True, self.results_to_centre_coord(df), picture
         return False, 0, 0
+
 
 # @torch.no_grad()
 def detect_stream(weights='best.pt',  # model.pt path(s)
@@ -352,6 +387,13 @@ def motion_detected_squirrel_organiser(conf_phot_num):
 
 
 if __name__ == '__main__':
-    # motion_detect_img_dir()
-    motion_detected_squirrel_organiser("23 - 23, 78 - 79, 113 - 116")
-    #
+    save_to_dir('training_wheels/images/result-%s.jpg')
+    # motion_detect_img_dir(start_number=4945)
+    # motion_detected_squirrel_organiser("1776 - 1779, 2516 - 2520, 4951 - 4959")
+
+
+    # # For detect_stream
+    # for i in detect_stream(source='http://ironacer.local:8000/stream.mjpg'):
+    #     isSquirrel, coords, confidence, vid_path = i
+    #     print(isSquirrel, coords, confidence, vid_path)
+

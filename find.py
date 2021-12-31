@@ -6,7 +6,7 @@ import os
 import cv2
 import torch
 import torch.backends.cudnn as cudnn
-
+from . import next_free_path
 import sys
 sys.path.insert(0, 'yolov5/')
 
@@ -127,10 +127,9 @@ class StreamDetector:
             bounding_boxes.append(f'{x} {y} {w} {h}')
 
         if motion == 1:  # Save the image.
-            ext_num = len([i for i in os.listdir('motion_detected/image/') if i.endswith(".jpg")]) + 1
-            image_path = str(f'motion_detected/image/result-{ext_num}.jpg')
+            image_path = next_free_path('motion_detected/image/result-%s.jpg')
             cv2.imwrite(image_path, og_frame)  # Write image
-            label_path = str(f'motion_detected/label/result-{ext_num}.txt')
+            label_path = next_free_path('motion_detected/label/result-%s.txt')
             with open(label_path, 'w') as f:
                 f.write('\n'.join(bounding_boxes))
 
@@ -201,12 +200,12 @@ class StreamDetector:
         return vid_done
 
     def save_train_data(self, im0, coordinates):
-        """Takes the image and corrdinates of the box and save them to training_wheels for future training.
-        :return nothing. """
+        """When a squirrel is detected, save the image and label for future training.
+        :return
+        """
         # Write image and box to training_wheels for future training data.
-        ext_num = len([i for i in os.listdir('training_wheels/images') if i.endswith(".jpg")]) + 1
-        image_path = str(f'training_wheels/images/result-{ext_num}.jpg')
-        labels_path = str(f'training_wheels/labels/result-{ext_num}.txt')
+        image_path = next_free_path('training_wheels/images/result-%s.jpg')
+        labels_path = image_path.replace('images', 'labels').replace('jpg', 'txt')  # To ensure label-image match.
         cv2.imwrite(image_path, im0)  # Write image
         with open(labels_path, 'w') as f:  # Convert coordinates and save as txt file.
             # class (0 for squirrel, x_center y_center width height from top right of image and normalised to be 0-1.
@@ -220,21 +219,9 @@ class StreamDetector:
 
 
 if __name__ == '__main__':
-    motion_detect_img_dir(start_number=1000)
-    # d = StreamDetector(motion_detection_only=True)
-    # vid = cv2.VideoCapture('results/result-114.mp4')
-    # while True:
-    #     i, frame = vid.read()
-    #     if frame is None:
-    #         break
-    #     print(d.motion_detector(frame, motion_thresh=1000))
+    d = StreamDetector(weights='best.pt')
+    for path, im, im0s, vid_cap, s in d.stream():
+        isSquirrel, coords, confidence, vid_path = d.inference(path, im, im0s, vid_cap, s)
+        print(isSquirrel, coords, confidence, vid_path)
 
-    # d = StreamDetector(weights='best.pt')
-    # for path, im, im0s, vid_cap, s in d.stream():
-    #     isSquirrel, coords, confidence, vid_path = d.inference(path, im, im0s, vid_cap, s)
-        # print(isSquirrel, coords, confidence, vid_path)
 
-    # # For detect_stream
-    # for i in detect_stream(source='http://ironacer.local:8000/stream.mjpg'):
-    #     isSquirrel, coords, confidence, vid_path = i
-    #     print(isSquirrel, coords, confidence, vid_path)

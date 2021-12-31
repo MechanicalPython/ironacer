@@ -24,6 +24,15 @@ import telegram_bot
 #  record the frame rate while running inference on it.
 
 
+def surveillance_mode():
+    # To be run on the pi to gather motion detected images that can be human reviewed.
+    subprocess.Popen(["python3 stream.py"],
+                     stdin=None, stdout=None, stderr=None, close_fds=True)
+    d = find.StreamDetector(motion_detection_only=True)
+    for path, im, im0s, vid_cap, s in d.stream():
+        d.motion_detector(im0s[0])  # Saves motion detected images.
+
+
 @retry(wait=wait_fixed(60), retry=retry_if_exception_type(AssertionError))
 def main():
     try:
