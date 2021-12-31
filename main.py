@@ -24,11 +24,11 @@ import telegram_bot
 #  record the frame rate while running inference on it.
 
 
-def surveillance_mode():
+def surveillance_mode(stream_address='http://ironacer.local:8000/stream.mjpg'):
     # To be run on the pi to gather motion detected images that can be human reviewed.
     subprocess.Popen(["python3 stream.py"],
                      stdin=None, stdout=None, stderr=None, close_fds=True)
-    d = find.StreamDetector(motion_detection_only=True)
+    d = find.StreamDetector(source=stream_address, motion_detection_only=True)
     for path, im, im0s, vid_cap, s in d.stream():
         d.motion_detector(im0s[0])  # Saves motion detected images.
 
