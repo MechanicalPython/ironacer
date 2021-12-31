@@ -11,11 +11,14 @@ Camera image -> yolov5 -> if squirrel -> fire mechanism and send photo, else do 
 import datetime
 import subprocess
 import time
+import argparse
+import sys
 
 from tenacity import retry, wait_fixed, retry_if_exception_type
 
 import find
 import telegram_bot
+import strike
 
 # todo - 1. pi-running motion detector to gather images of squirrels.
 #  telegram to send photos to chat on request.
@@ -24,46 +27,75 @@ import telegram_bot
 #  record the frame rate while running inference on it.
 
 
-def surveillance_mode(stream_address='http://ironacer.local:8000/stream.mjpg'):
-    # To be run on the pi to gather motion detected images that can be human reviewed.
-    subprocess.Popen(["python3 stream.py"],
-                     stdin=None, stdout=None, stderr=None, close_fds=True)
-    d = find.StreamDetector(source=stream_address, motion_detection_only=True)
-    for path, im, im0s, vid_cap, s in d.stream():
-        d.motion_detector(im0s[0])  # Saves motion detected images.
-
-
 @retry(wait=wait_fixed(60), retry=retry_if_exception_type(AssertionError))
-def main():
+def main(source='http://ironacer.local:8000/stream.mjpg',
+         weights='yolov5n6_best.pt',
+         imgsz=(1280, 1280),
+         telegram_bot_mode=True,
+         surveillance_mode=False,  # Don't run the strike functions.
+         motion_detection=True,
+         inference=True,
+         pi_mode=False
+         ):
     try:
-        print('Starting Stream')
-        subprocess.Popen(["ssh", "pi@ironacer.local", "python3 stream.py"],
-                         stdin=None, stdout=None, stderr=None, close_fds=True)
+        if not pi_mode:
+            subprocess.Popen(["ssh", "pi@ironacer.local", "python3 stream.py"],
+                             stdin=None, stdout=None, stderr=None, close_fds=True)
+        else:
+            subprocess.Popen(["python3 stream.py"],
+                             stdin=None, stdout=None, stderr=None, close_fds=True)
         time.sleep(5)
-        print('Activating IRONACER')
-        bot = telegram_bot.TelegramBot()
+
+        d = find.StreamDetector(source=source, weights=weights, motion_detection_only=motion_detection, imgsz=imgsz)
         # claymore = strike.Claymore()
+        bot = telegram_bot.TelegramBot()
 
-        d = find.StreamDetector(weights='yolov5n6_best.pt', imgsz=(1280, 1280))
         for path, im, im0s, vid_cap, s in d.stream():
-            d.motion_detector(im0s[0])  # Saves motion detected images.
-            isSquirrel, inference = d.inference(im, im0s)  # Runs yolov5 inference.
-            d.save_train_data(im0s[0], isSquirrel, inference)  # Saves training data (clean images and labels)
-            vid_path = d.save_labeled(im0s[0], isSquirrel, inference)  # Saves videos of detected squirrels.
+            if motion_detection:
+                d.motion_detector(im0s[0])  # Saves motion detected images.
 
-            if isSquirrel:  # Squirrel is present
-                # claymore.detonate()
-                pass
-            if vid_path is not False:
-                bot.send_video(vid_path=vid_path)
+            if inference:
+                isSquirrel, inference = d.inference(im, im0s)  # Runs yolov5 inference.
+
+                d.save_train_data(im0s[0], isSquirrel, inference)  # Saves training data (clean images and labels)
+                vid_path = d.save_labeled(im0s[0], isSquirrel, inference)  # Saves videos of detected squirrels.
+
+                if isSquirrel and not surveillance_mode:  # Squirrel is present
+                    # claymore.detonate()  # Currently just does nothing.
+                    pass
+                if vid_path is not False and telegram_bot_mode is True:
+                    bot.send_video(vid_path=vid_path)
             now = datetime.datetime.now()
             sunset = datetime.datetime(year=now.year, month=now.month, day=now.day, hour=16, minute=37)
             if now > sunset:
                 return None
     finally:
-        subprocess.Popen(["ssh", "pi@ironacer.local", "pkill -f stream.py"],
-                         stdin=None, stdout=None, stderr=None, close_fds=True)
+        if not pi_mode:
+            subprocess.Popen(["ssh", "pi@ironacer.local", "pkill -f stream.py"],
+                             stdin=None, stdout=None, stderr=None, close_fds=True)
+        else:
+            subprocess.Popen(["pkill -f stream.py"],
+                             stdin=None, stdout=None, stderr=None, close_fds=True)
+
+
+def arg_parse():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--source', type=str, default='http://ironacer.local:8000/stream.mjpg')
+    parser.add_argument('--surveillance_mode', type=bool, default=False, help='True = run pi surveillance to capture data. ')
+    parser.add_argument('--motion_detection', type=bool, default=True, help='Run motion detection')
+    parser.add_argument('--inference', type=bool, default=True, help='Run yolo inference or not.')
+    parser.add_argument('--pi_mode', type=bool, default=False, help='Running on pi or not?')
+    opt = parser.parse_args()
+    return opt
 
 
 if __name__ == '__main__':
-    main()
+    opt = arg_parse()
+    if len(sys.argv) == 1:  # Run this if from pycharm, otherwise it's command line.
+        opt.source = 'http://ironacer.local:8000/stream.mjpg'
+        opt.surveillance_mode = False
+        opt.motion_detection = True
+        opt.inference = True
+        opt.pi_mode = False
+    main(**vars(opt))
+

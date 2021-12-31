@@ -4,8 +4,9 @@
 Strike.py - employ the anti-squirrel measures.
 """
 
-# todo - convert camera distance and angle to target to gun distance and angle.
-# todo - locstat to trajectory required
+# todo - Needs to be written so it can run and execute from a mac.
+#  convert camera distance and angle to target to gun distance and angle.
+#  locstat to trajectory required
 
 try:
     import RPi.GPIO as GPIO
