@@ -145,16 +145,13 @@ class StreamDetector:
         return image_path
 
     @torch.no_grad()
-    def inference(self, path, im, im0s, vid_cap, s):
+    def inference(self, im, im0s):
         """
         Takes self.dataset = LoadStreams() outputs and runs inference on them.
         Also saves any images and videos.
-        :param path:
         :param im:
         :param im0s:
-        :param vid_cap:
-        :param s:
-        :return: isSquirrel, xyxy, confidence, vid_path
+        :return: isSquirrel: bool, results: [[xyxy, confidence, cls], ..] for each object found.
         """
         pred = self.model(im, augment=self.augment, visualize=self.visualize)
         # NMS
@@ -162,34 +159,35 @@ class StreamDetector:
         # Process predictions
         im0 = im0s[0].copy()
         pred = pred[0]
+
         isSquirrel = False
-        xyxy = False
-        confidence = False
+        results = []
 
         if len(pred):  # If found a squirrel, this is triggered.
             isSquirrel = True
             # det = tensor list of xmin, ymin, xmax, ymax, confidence, class number
+
             # Rescale boxes from img_size to im0 size, basically normalises it.
             pred[:, :4] = scale_coords(im.shape[2:], pred[:, :4], im0.shape).round()
+
             for *xyxy, conf, cls in reversed(pred):  # the *xyxy is to take the first 4 items as the coords.
                 confidence = conf.item()
                 xyxy = [i.item() for i in xyxy]  # Convert from [tensor(x), ..] to [x, ..]
-                self.save_train_data(im0, xyxy)
+                results.append([xyxy, confidence, cls])
+        return isSquirrel, results
 
-        vid_path = self.save_labeled(pred, im0)
-
-        return isSquirrel, xyxy, confidence, vid_path
-
-    def save_labeled(self, det, im0):
+    def save_labeled(self, frame, isSquirrel, inference):
         """Should just need a frame and det.
         return None when the video is not ready. Return video path when ready to send out.
+
+        Inputs: isSquirrel, xyxy, confidence, cls,
         """
         save_dir = 'results/'
 
-        annotator = Annotator(im0, line_width=self.line_thickness, example=str(self.names))
-        if len(det):  # There is a squirrel.
+        annotator = Annotator(frame, line_width=self.line_thickness, example=str(self.names))
+        if isSquirrel:
             self.number_of_frames_without_squirrel = 10
-            for *xyxy, conf, cls in reversed(det):
+            for xyxy, conf, cls in inference:
                 # Add box to image.
                 c = int(cls)  # integer class
                 label = (self.names[c] if self.hide_conf else f'{self.names[c]} {conf:.2f}')
@@ -201,7 +199,7 @@ class StreamDetector:
         vid_done = False
         if not self.nosave:
             im0 = annotator.result()
-            if len(det) or self.number_of_frames_without_squirrel > 0:  # record video
+            if isSquirrel or self.number_of_frames_without_squirrel > 0:  # record video
                 if isinstance(self.vid_writer, cv2.VideoWriter):  # Vid_writer has already been created.
                     self.vid_writer.write(im0)
                 else:  # Create a new vid_writer and write frame to it.
@@ -218,23 +216,24 @@ class StreamDetector:
                     vid_done = str(f'{save_dir}result-{prev_vid_num}.mp4')
         return vid_done
 
-    def save_train_data(self, im0, coordinates):
+    def save_train_data(self, im0, isSquirrel, inference):
         """When a squirrel is detected, save the image and label for future training.
         :return
         """
-        # Write image and box to training_wheels for future training data.
-        image_path = next_free_path('training_wheels/images/result-%s.jpg')
-        labels_path = image_path.replace('images', 'labels').replace('jpg', 'txt')  # To ensure label-image match.
-        cv2.imwrite(image_path, im0)  # Write image
-        with open(labels_path, 'w') as f:  # Convert coordinates and save as txt file.
-            # class (0 for squirrel, x_center y_center width height from top right of image and normalised to be 0-1.
-            xmin, ymin, xmax, ymax = coordinates
-            im_width, im_height = im0.shape[1], im0.shape[0]
-            x_center = (ymin + ((ymax - ymin) / 2)) / im_width
-            y_center = (xmin + ((xmax - xmin) / 2)) / im_height
-            width = (xmax - xmin) / im_width
-            height = (ymax - ymin) / im_height
-            f.write(f'0 {str(x_center)} {str(y_center)} {str(width)} {str(height)}')
+        if isSquirrel:
+            # Write image and box to training_wheels for future training data.
+            image_path = next_free_path('training_wheels/images/result-%s.jpg')
+            labels_path = image_path.replace('images', 'labels').replace('jpg', 'txt')  # To ensure label-image match.
+            cv2.imwrite(image_path, im0)  # Write image
+            with open(labels_path, 'w') as f:  # Convert coordinates and save as txt file.
+                # class (0 for squirrel, x_center y_center width height from top right of image and normalised to be 0-1.
+                xmin, ymin, xmax, ymax = inference[0]
+                im_width, im_height = im0.shape[1], im0.shape[0]
+                x_center = (ymin + ((ymax - ymin) / 2)) / im_width
+                y_center = (xmin + ((xmax - xmin) / 2)) / im_height
+                width = (xmax - xmin) / im_width
+                height = (ymax - ymin) / im_height
+                f.write(f'0 {str(x_center)} {str(y_center)} {str(width)} {str(height)}')
 
 
 if __name__ == '__main__':

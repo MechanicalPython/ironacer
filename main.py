@@ -47,7 +47,9 @@ def main():
         d = find.StreamDetector(weights='yolov5n6_best.pt', imgsz=(1280, 1280))
         for path, im, im0s, vid_cap, s in d.stream():
             d.motion_detector(im0s[0])  # Saves motion detected images.
-            isSquirrel, coords, confidence, vid_path = d.inference(path, im, im0s, vid_cap, s)  # Runs yolov5 inference.
+            isSquirrel, inference = d.inference(im, im0s)  # Runs yolov5 inference.
+            d.save_train_data(im0s[0], isSquirrel, inference)  # Saves training data (clean images and labels)
+            vid_path = d.save_labeled(im0s[0], isSquirrel, inference)  # Saves videos of detected squirrels.
 
             if isSquirrel:  # Squirrel is present
                 # claymore.detonate()
