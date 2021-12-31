@@ -35,12 +35,17 @@ class StreamDetector:
     """Class to detect and read a stream from a pi camera to then run yolo inference on each frame."""
     def __init__(self, weights='best.pt', source='http://ironacer.local:8000/stream.mjpg', imgsz=(1280, 1280), conf_thres=0.25, motion_detection_only=False):
         self.source = str(source)
+        self.weights = weights
         self.imgsz = imgsz  # inference size (height, width)
         self.device = ''  # cuda device, i.e. 0 or 0,1,2,3 or cpu
         self.device = select_device(self.device)
+        self.half = False  # use FP16 half-precision inference
+        self.dnn = False  # use OpenCV DNN for ONNX inference
+        self.model = DetectMultiBackend(self.weights, device=self.device, dnn=self.dnn)
+        self.stride, self.names, self.pt, jit, self.onnx, engine = self.model.stride, self.model.names, self.model.pt, self.model.jit, self.model.onnx, self.model.engine
+        self.half &= (self.pt or jit or engine) and self.device.type != 'cpu'  # half precision only supported by PyTorch on CUDA
 
         if motion_detection_only is False:
-            self.weights = weights
             self.conf_thres = conf_thres  # confidence threshold
             self.iou_thres = 0.45  # NMS IOU threshold
             self.max_det = 1000  # maximum detections per image
@@ -52,11 +57,6 @@ class StreamDetector:
             self.line_thickness = 3  # bounding box thickness (pixels)
             self.hide_labels = False  # hide labels
             self.hide_conf = False  # hide confidences
-            self.half = False  # use FP16 half-precision inference
-            self.dnn = False  # use OpenCV DNN for ONNX inference
-            self.model = DetectMultiBackend(self.weights, device=self.device, dnn=self.dnn)
-            self.stride, self.names, self.pt, jit, self.onnx, engine = self.model.stride, self.model.names, self.model.pt, self.model.jit, self.model.onnx, self.model.engine
-            self.half &= (self.pt or jit or engine) and self.device.type != 'cpu'  # half precision only supported by PyTorch on CUDA
             if self.pt or jit:
                 self.model.model.half() if self.half else self.model.model.float()
             cudnn.benchmark = True  # set True to speed up constant image size inference
@@ -245,9 +245,9 @@ class StreamDetector:
 
 
 if __name__ == '__main__':
-    d = StreamDetector(weights='yolov5n.pt')
+    d = StreamDetector(weights='yolov5n6.pt')
     for path, im, im0s, vid_cap, s in d.stream():
-        isSquirrel, coords, confidence, vid_path = d.inference(path, im, im0s, vid_cap, s)
-        print(isSquirrel, coords, confidence, vid_path)
+        isSquirrel, results = d.inference(path, im, im0s, vid_cap, s)
+        print(isSquirrel, results)
 
 
