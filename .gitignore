@@ -1,7 +1,7 @@
 /flickr_key
 /flickr_secret
 /telegram_token
-results/*.jpg
+results/*.mp4
 training_wheels/images/*.jpg
 training_wheels/labels/*.txt
 motion_detected/image/*.jpg
@@ -11,3 +11,4 @@ squirrels_dataset
 .idea
 *.jpg
 log.log
+/venv/
