@@ -1,11 +1,12 @@
 import io
-import picamera
 import logging
 import socketserver
-from threading import Condition
 from http import server
+from threading import Condition
 
-PAGE="""\
+import picamera
+
+PAGE = """\
 <html>
 <head>
 <title>Ironacer Live View</title>
@@ -80,12 +81,13 @@ class StreamingServer(socketserver.ThreadingMixIn, server.HTTPServer):
     allow_reuse_address = True
     daemon_threads = True
 
+
 # Pi camera resolution: 2592x1944 at 1-15fps is supported.
 
 
 with picamera.PiCamera(resolution='2592x1944', framerate=10) as camera:
     output = StreamingOutput()
-    camera.zoom = (656, 100, 1280, 1280)  # x, y, w, h. Converts to 1280 1280 image from the top middle of the frame.
+    camera.zoom = ((656 / 2592), (100 / 1944), (1280 / 2592), (1280 / 1944))  # x, y, w, h but as a fraction: 0-1.
     camera.start_recording(output, format='mjpeg')
     try:
         address = ('', 8000)
@@ -93,4 +95,3 @@ with picamera.PiCamera(resolution='2592x1944', framerate=10) as camera:
         server.serve_forever()
     finally:
         camera.stop_recording()
-
