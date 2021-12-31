@@ -38,13 +38,13 @@ def main(source='http://ironacer.local:8000/stream.mjpg',
          pi_mode=False
          ):
     try:
-        # if not pi_mode:
-        #     subprocess.Popen(["ssh", "pi@ironacer.local", "python3 stream.py"],
-        #                      stdin=None, stdout=None, stderr=None, close_fds=True)
-        # else:
-        #     subprocess.Popen(["python3 stream.py"],
-        #                      stdin=None, stdout=None, stderr=None, close_fds=True)
-        # time.sleep(5)
+        if not pi_mode:
+            subprocess.Popen(["ssh", "pi@ironacer.local", "python3 stream.py"],
+                             stdin=None, stdout=None, stderr=None, close_fds=True)
+        else:
+            subprocess.Popen(["python3 stream.py"],
+                             stdin=None, stdout=None, stderr=None, close_fds=True)
+        time.sleep(5)
 
         d = find.StreamDetector(source=source, weights=weights, motion_detection_only=motion_detection, imgsz=imgsz)
         # claymore = strike.Claymore()
@@ -71,12 +71,12 @@ def main(source='http://ironacer.local:8000/stream.mjpg',
                 return None
     finally:
         pass
-        # if not pi_mode:
-        #     subprocess.Popen(["ssh", "pi@ironacer.local", "pkill -f stream.py"],
-        #                      stdin=None, stdout=None, stderr=None, close_fds=True)
-        # else:
-        #     subprocess.Popen(["pkill -f stream.py"],
-        #                      stdin=None, stdout=None, stderr=None, close_fds=True)
+        if not pi_mode:
+            subprocess.Popen(["ssh", "pi@ironacer.local", "pkill -f stream.py"],
+                             stdin=None, stdout=None, stderr=None, close_fds=True)
+        else:
+            subprocess.Popen(["pkill -f stream.py"],
+                             stdin=None, stdout=None, stderr=None, close_fds=True)
 
 
 def arg_parse():
