@@ -87,7 +87,7 @@ class StreamingServer(socketserver.ThreadingMixIn, server.HTTPServer):
 
 with picamera.PiCamera(resolution='2592x1944', framerate=10) as camera:
     output = StreamingOutput()
-    camera.zoom = ((656 / 2592), (100 / 1944), (1280 / 2592), (1280 / 1944))  # x, y, w, h but as a fraction: 0-1.
+    camera.zoom = ((656 / 2592), (332 / 1944), (1280 / 2592), (1280 / 1944))  # x, y, w, h but as a fraction: 0-1.
     camera.start_recording(output, format='mjpeg')
     try:
         address = ('', 8000)
