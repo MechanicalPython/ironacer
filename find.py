@@ -36,14 +36,14 @@ class StreamDetector:
     def __init__(self, weights='best.pt', source='http://ironacer.local:8000/stream.mjpg', imgsz=(1280, 1280), conf_thres=0.25, motion_detection_only=False):
         self.source = str(source)
         self.imgsz = imgsz  # inference size (height, width)
+        self.device = ''  # cuda device, i.e. 0 or 0,1,2,3 or cpu
+        self.device = select_device(self.device)
 
         if motion_detection_only is False:
             self.weights = weights
             self.conf_thres = conf_thres  # confidence threshold
             self.iou_thres = 0.45  # NMS IOU threshold
             self.max_det = 1000  # maximum detections per image
-            self.device = ''  # cuda device, i.e. 0 or 0,1,2,3 or cpu
-            self.device = select_device(self.device)
             self.classes = None  # filter by class: --class 0, or --class 0 2 3
             self.agnostic_nms = False  # class-agnostic NMS
             self.nosave = False  # do not save images/videos

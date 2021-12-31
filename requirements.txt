@@ -1,0 +1,16 @@
+APScheduler==3.6.3
+backports.zoneinfo==0.2.1
+cachetools==4.2.2
+certifi==2021.10.8
+numpy==1.21.5
+opencv-python==4.5.5.62
+python-telegram-bot==13.9
+pytz==2021.3
+pytz-deprecation-shim==0.1.0.post0
+six==1.16.0
+tenacity==8.0.1
+torch==1.10.1
+tornado==6.1
+typing-extensions==4.0.1
+tzdata==2021.5
+tzlocal==4.1
