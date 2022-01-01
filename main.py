@@ -40,10 +40,11 @@ def main(source='http://ironacer.local:8000/stream.mjpg',
          ):
     try:
         if not pi_mode:
-            subprocess.Popen(["ssh", "pi@ironacer.local", "python3 ~/ironacer/stream.py"],
+            subprocess.Popen(["ssh", "pi@ironacer.local",
+                              "libcamera-vid -t 0 --inline --listen -o tcp://0.0.0.0:5000 --width 1280 --height 1280 --rawfull"],
                              stdin=None, stdout=None, stderr=None, close_fds=True)
         else:
-            subprocess.Popen(["python3 ~/ironacer/stream.py"],
+            subprocess.Popen(["libcamera-vid -t 0 --inline --listen -o tcp://0.0.0.0:5000 --width 1280 --height 1280 --rawfull"],
                              stdin=None, stdout=None, stderr=None, close_fds=True)
         time.sleep(5)
 
@@ -82,7 +83,7 @@ def main(source='http://ironacer.local:8000/stream.mjpg',
 
 def arg_parse():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--source', type=str, default='http://ironacer.local:8000/stream.mjpg')
+    parser.add_argument('--source', type=str, default='tcp://ironacer.local:5000')
     parser.add_argument('--surveillance_mode', type=bool, default=False, help='True = run pi surveillance to capture data. ')
     parser.add_argument('--motion_detection', type=bool, default=True, help='Run motion detection')
     parser.add_argument('--inference', type=bool, default=True, help='Run yolo inference or not.')
@@ -94,7 +95,7 @@ def arg_parse():
 if __name__ == '__main__':
     opt = arg_parse()
     if len(sys.argv) == 1:  # Run this if from pycharm, otherwise it's command line.
-        opt.source = 'http://ironacer.local:8000/stream.mjpg'
+        opt.source = 'tcp://ironacer.local:5000'
         opt.surveillance_mode = True
         opt.motion_detection = True
         opt.inference = False

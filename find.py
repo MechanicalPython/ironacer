@@ -6,6 +6,7 @@ import os
 import cv2
 import torch
 import torch.backends.cudnn as cudnn
+import datetime
 from __init__ import next_free_path
 import sys
 sys.path.insert(0, 'yolov5/')  # To allow importing from submodule yolov5.
@@ -248,7 +249,7 @@ class StreamDetector:
 
 
 if __name__ == '__main__':
-    d = StreamDetector(motion_detection_only=True)
+    d = StreamDetector(motion_detection_only=True, source='tcp://ironacer.local:5000')
     for path, im, im0s, vid_cap, s in d.stream():
         d.motion_detector(im0s[0])
 

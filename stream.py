@@ -3,7 +3,6 @@ import logging
 import socketserver
 from http import server
 from threading import Condition
-import argparse
 
 import picamera
 
