@@ -98,16 +98,17 @@ def arg_parse():
     parser = argparse.ArgumentParser()
     parser.add_argument('--resolution', type=str, default='2592x1944')
     parser.add_argument('--framerate', type=int, default=15)
+    parser.add_argument('--vidformat', type=str, default='mjpeg')
     opt = parser.parse_args()
     return opt
 
 
-def main(resolution, framerate):
+def main(resolution, framerate, vidformat):
     with picamera.PiCamera(resolution=resolution, framerate=framerate) as camera:
 
         output = StreamingOutput()
         # camera.zoom = ((656 / 2592), (332 / 1944), (1280 / 2592), (1280 / 1944))  # x, y, w, h but as a fraction: 0-1.
-        camera.start_recording(output, format='mjpeg', resize=(1280, 1280))
+        camera.start_recording(output, format=vidformat, resize=(1280, 1280))
         try:
             address = ('', 8000)
             server = StreamingServer(address, StreamingHandler)
