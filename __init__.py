@@ -336,12 +336,14 @@ def motion_detect_img_dir(path='motion_detected/', start_number=1):
         # cv2.imshow("Threshold Frame", thresh_frame)
 
         cv2.imshow("Motion Box", frame)
-        time.sleep(0.2)
+        time.sleep(0.1)
         key = cv2.waitKey(1)
         # if q entered whole process will stop
         if key == ord('q'):
             print(f'Last image shown: {i}')
             break
+        elif key == ord('t'):
+            print(f'Image: {i}')
 
     # Destroying all the windows
     cv2.destroyAllWindows()
@@ -387,9 +389,8 @@ def motion_detected_squirrel_organiser(conf_phot_num):
 
 
 if __name__ == '__main__':
-    save_to_dir('training_wheels/images/result-%s.jpg')
-    # motion_detect_img_dir(start_number=4945)
-    # motion_detected_squirrel_organiser("1776 - 1779, 2516 - 2520, 4951 - 4959")
+    # motion_detect_img_dir(start_number=1)
+    motion_detected_squirrel_organiser("164 - 171, 253 - 262, 397 - 415, 980 - 999, 1919 - 1929")
 
 
     # # For detect_stream

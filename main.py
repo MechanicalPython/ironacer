@@ -19,7 +19,8 @@ from tenacity import retry, wait_fixed, retry_if_exception_type
 import find
 import telegram_bot
 import strike
-
+# Running on a pi - can't import torch.
+#     Split off the motion detector into another file?
 # todo - 1. pi-running motion detector to gather images of squirrels.
 #  telegram to send photos to chat on request.
 #  auto get sunrise and sunset.
@@ -39,10 +40,10 @@ def main(source='http://ironacer.local:8000/stream.mjpg',
          ):
     try:
         if not pi_mode:
-            subprocess.Popen(["ssh", "pi@ironacer.local", "python3 stream.py"],
+            subprocess.Popen(["ssh", "pi@ironacer.local", "python3 ~/ironacer/stream.py"],
                              stdin=None, stdout=None, stderr=None, close_fds=True)
         else:
-            subprocess.Popen(["python3 stream.py"],
+            subprocess.Popen(["python3 ~/ironacer/stream.py"],
                              stdin=None, stdout=None, stderr=None, close_fds=True)
         time.sleep(5)
 
@@ -72,10 +73,10 @@ def main(source='http://ironacer.local:8000/stream.mjpg',
     finally:
         pass
         if not pi_mode:
-            subprocess.Popen(["ssh", "pi@ironacer.local", "pkill -f stream.py"],
+            subprocess.Popen(["ssh", "pi@ironacer.local", "pkill -f ~/ironacer/stream.py"],
                              stdin=None, stdout=None, stderr=None, close_fds=True)
         else:
-            subprocess.Popen(["pkill -f stream.py"],
+            subprocess.Popen(["pkill -f ~/ironacer/stream.py"],
                              stdin=None, stdout=None, stderr=None, close_fds=True)
 
 

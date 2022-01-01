@@ -81,7 +81,7 @@ class StreamDetector:
         """
         dataset = LoadStreams(self.source, img_size=self.imgsz)
         for path, im, im0s, vid_cap, s in dataset:
-
+            # todo - "Zoom" the image here.
             yield path, im, im0s, vid_cap, s
         # If you get to this point, the stream has been dropped.
         raise AssertionError('Stream cannot be connected to.')
