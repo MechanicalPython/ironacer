@@ -94,31 +94,17 @@ class StreamingServer(socketserver.ThreadingMixIn, server.HTTPServer):
 
 
 # Pi camera resolution: 2592x1944 at 1-15fps is supported.
-def arg_parse():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--resolution', type=str, default='2592x1944')
-    parser.add_argument('--framerate', type=int, default=15)
-    parser.add_argument('--vidformat', type=str, default='mjpeg')
-    opt = parser.parse_args()
-    return opt
+
+with picamera.PiCamera(resolution='2592x1944', framerate=15) as camera:
+
+    output = StreamingOutput()
+    # camera.zoom = ((656 / 2592), (332 / 1944), (1280 / 2592), (1280 / 1944))  # x, y, w, h but as a fraction: 0-1.
+    camera.start_recording(output, format='mjpeg', resize=(1280, 1280))
+    try:
+        address = ('', 8000)
+        server = StreamingServer(address, StreamingHandler)
+        server.serve_forever()
+    finally:
+        camera.stop_recording()
 
 
-def main(resolution, framerate, vidformat):
-    with picamera.PiCamera(resolution=resolution, framerate=framerate) as camera:
-
-        output = StreamingOutput()
-        # camera.zoom = ((656 / 2592), (332 / 1944), (1280 / 2592), (1280 / 1944))  # x, y, w, h but as a fraction: 0-1.
-        camera.start_recording(output, format=vidformat, resize=(1280, 1280))
-        try:
-            address = ('', 8000)
-            server = StreamingServer(address, StreamingHandler)
-            server.serve_forever()
-        finally:
-            camera.stop_recording()
-
-
-global output
-
-if __name__ == '__main__':
-    opt = arg_parse()
-    main(**vars(opt))
