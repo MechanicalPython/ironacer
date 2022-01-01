@@ -19,6 +19,7 @@ PAGE = """\
 </html>
 """
 
+
 # Video formats.
 # 'h264' - Write an H.264 video stream
 # 'mjpeg' - Write an M-JPEG video stream
@@ -103,6 +104,7 @@ def arg_parse():
 
 def main(resolution, framerate):
     with picamera.PiCamera(resolution=resolution, framerate=framerate) as camera:
+
         output = StreamingOutput()
         # camera.zoom = ((656 / 2592), (332 / 1944), (1280 / 2592), (1280 / 1944))  # x, y, w, h but as a fraction: 0-1.
         camera.start_recording(output, format='mjpeg', resize=(1280, 1280))
@@ -113,6 +115,8 @@ def main(resolution, framerate):
         finally:
             camera.stop_recording()
 
+
+global output
 
 if __name__ == '__main__':
     opt = arg_parse()
