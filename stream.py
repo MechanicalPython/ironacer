@@ -96,17 +96,16 @@ class StreamingServer(socketserver.ThreadingMixIn, server.HTTPServer):
 def arg_parse():
     parser = argparse.ArgumentParser()
     parser.add_argument('--resolution', type=str, default='2592x1944')
-    parser.add_argument('--framerate', type=str, default=15)
-    parser.add_argument('--vidformat', type=str, default='mjpeg', help='Run motion detection')
+    parser.add_argument('--framerate', type=int, default=15)
     opt = parser.parse_args()
     return opt
 
 
-def main(resolution, framerate, vidformat):
+def main(resolution, framerate):
     with picamera.PiCamera(resolution=resolution, framerate=framerate) as camera:
         output = StreamingOutput()
         # camera.zoom = ((656 / 2592), (332 / 1944), (1280 / 2592), (1280 / 1944))  # x, y, w, h but as a fraction: 0-1.
-        camera.start_recording(output, format=vidformat)
+        camera.start_recording(output, format='mjpeg', resize=(1280, 1280))
         try:
             address = ('', 8000)
             server = StreamingServer(address, StreamingHandler)

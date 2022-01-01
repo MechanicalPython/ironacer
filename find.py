@@ -248,9 +248,8 @@ class StreamDetector:
 
 
 if __name__ == '__main__':
-    d = StreamDetector(weights='yolov5n6.pt')
+    d = StreamDetector(motion_detection_only=True)
     for path, im, im0s, vid_cap, s in d.stream():
-        isSquirrel, results = d.inference(path, im, im0s, vid_cap, s)
-        print(isSquirrel, results)
+        d.motion_detector(im0s[0])
 
 
