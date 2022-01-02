@@ -42,7 +42,8 @@ def main(source='',
     try:
         if pi_mode:
             subprocess.Popen(
-                ["libcamera-vid -t 0 --inline --listen -o tcp://0.0.0.0:5000 --width 1280 --height 1280 --rawfull"],
+                ["libcamera-vid", "-t", "0", "--inline", "--listen", "-o", "tcp://0.0.0.0:5000",
+                 "--width", "1280", "--height", "1280", "--rawfull"],
                 stdin=None, stdout=None, stderr=None, close_fds=True)
             # If running on the pi, never has inference on as it can't install torch.
             motion_detection = True
@@ -77,12 +78,13 @@ def main(source='',
             if now > sunset:
                 return None
     finally:
-        if pi_mode:
-            subprocess.Popen(["pkill -f ~/ironacer/stream.py"],
-                             stdin=None, stdout=None, stderr=None, close_fds=True)
-        else:
-            subprocess.Popen(["ssh", "pi@ironacer.local", "pkill -f ~/ironacer/stream.py"],
-                             stdin=None, stdout=None, stderr=None, close_fds=True)
+        pass
+        # if pi_mode:
+        #     subprocess.Popen(["pkill -f ~/ironacer/stream.py"],
+        #                      stdin=None, stdout=None, stderr=None, close_fds=True)
+        # else:
+        #     subprocess.Popen(["ssh", "pi@ironacer.local", "pkill -f ~/ironacer/stream.py"],
+        #                      stdin=None, stdout=None, stderr=None, close_fds=True)
 
 
 def arg_parse():

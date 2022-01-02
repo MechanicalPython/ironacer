@@ -327,7 +327,8 @@ def motion_detect_img_dir(path='motion_detected/', start_number=1):
         frame = cv2.imread(f'{path}image/result-{i}.jpg')
         labels = open(f'{path}label/result-{i}.txt', 'r').read().split('\n')
         for label in labels:
-            x, y, w, h, amount_of_motion = [int(n) for n in label.split(' ')]
+            x, y, w, h, amount_of_motion = label.split(' ')
+            x, y, w, h, amount_of_motion = int(x), int(y), int(w), int(h), str(amount_of_motion)
             # making green rectangle around the moving object
             cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 3)
             cv2.putText(frame, amount_of_motion, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (36, 255, 12), 2)
@@ -390,8 +391,8 @@ def motion_detected_squirrel_organiser(conf_phot_num):
 
 
 if __name__ == '__main__':
-    # motion_detect_img_dir(start_number=1)
-    motion_detected_squirrel_organiser("164 - 171, 253 - 262, 397 - 415, 980 - 999, 1919 - 1929")
+    motion_detect_img_dir(start_number=1)
+    # motion_detected_squirrel_organiser("164 - 171, 253 - 262, 397 - 415, 980 - 999, 1919 - 1929")
 
 
     # # For detect_stream
