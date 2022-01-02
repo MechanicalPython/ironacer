@@ -145,7 +145,7 @@ class StreamDetector:
         self.prev_frame = frame
         return image_path
 
-    @torch.no_grad()
+    # @torch.no_grad()
     def inference(self, im, im0s):
         """
         Takes self.dataset = LoadStreams() outputs and runs inference on them.
