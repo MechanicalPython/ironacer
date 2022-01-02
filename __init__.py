@@ -327,9 +327,10 @@ def motion_detect_img_dir(path='motion_detected/', start_number=1):
         frame = cv2.imread(f'{path}image/result-{i}.jpg')
         labels = open(f'{path}label/result-{i}.txt', 'r').read().split('\n')
         for label in labels:
-            x, y, w, h = [int(n) for n in label.split(' ')]
+            x, y, w, h, amount_of_motion = [int(n) for n in label.split(' ')]
             # making green rectangle around the moving object
             cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 3)
+            cv2.putText(frame, amount_of_motion, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (36, 255, 12), 2)
 
         # cv2.imshow("Gray Frame", gray)
         # cv2.imshow("Difference Frame", diff_frame)

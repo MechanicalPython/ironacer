@@ -131,7 +131,7 @@ class StreamDetector:
 
             motion = 1
             (x, y, w, h) = cv2.boundingRect(contour)
-            bounding_boxes.append(f'{x} {y} {w} {h}')
+            bounding_boxes.append(f'{x} {y} {w} {h} {amount_of_motion}')
 
         if motion == 1:  # Save the image.
             image_path = next_free_path('motion_detected/image/result-%s.jpg')
