@@ -2,7 +2,7 @@
 Wholesale ripped all from yolov5 datasets and supporting docs to just make this work.
 
 """
-from __init__ import next_free_path
+
 import cv2
 import os
 import re
@@ -190,9 +190,10 @@ class PiMotion:
             bounding_boxes.append(f'{x} {y} {w} {h} {amount_of_motion}')
 
         if motion == 1:  # Save the image.
-            image_path = next_free_path('motion_detected/image/result-%s.jpg')
+            t = str(time.time())
+            image_path = f'motion_detected/image/result-{t}.jpg'
             cv2.imwrite(image_path, og_frame)  # Write image
-            label_path = next_free_path('motion_detected/label/result-%s.txt')
+            label_path = f'motion_detected/label/result-{t}.txt'
             with open(label_path, 'w') as f:
                 f.write('\n'.join(bounding_boxes))
 

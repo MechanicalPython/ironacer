@@ -8,6 +8,8 @@ from __init__ import next_free_path
 import torch
 import torch.backends.cudnn as cudnn
 import sys
+import time
+
 sys.path.insert(0, 'yolov5/')  # To allow importing from submodule yolov5.
 
 from yolov5.models.common import DetectMultiBackend
@@ -132,9 +134,10 @@ class StreamDetector:
             bounding_boxes.append(f'{x} {y} {w} {h} {amount_of_motion}')
 
         if motion == 1:  # Save the image.
-            image_path = next_free_path('motion_detected/image/result-%s.jpg')
+            t = str(time.time())
+            image_path = f'motion_detected/image/result-{t}.jpg'
             cv2.imwrite(image_path, og_frame)  # Write image
-            label_path = next_free_path('motion_detected/label/result-%s.txt')
+            label_path = f'motion_detected/label/result-{t}.txt'
             with open(label_path, 'w') as f:
                 f.write('\n'.join(bounding_boxes))
 
