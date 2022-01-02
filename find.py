@@ -5,19 +5,16 @@ FIND.py - find the exact location of the squirrel in the image in 3d space.
 import os
 import cv2
 from __init__ import next_free_path
-try:
-    import torch
-    import torch.backends.cudnn as cudnn
-    import sys
-    sys.path.insert(0, 'yolov5/')  # To allow importing from submodule yolov5.
+import torch
+import torch.backends.cudnn as cudnn
+import sys
+sys.path.insert(0, 'yolov5/')  # To allow importing from submodule yolov5.
 
-    from yolov5.models.common import DetectMultiBackend
-    from yolov5.utils.datasets import LoadStreams
-    from yolov5.utils.general import (non_max_suppression, scale_coords)
-    from yolov5.utils.plots import Annotator, colors
-    from yolov5.utils.torch_utils import select_device
-except ImportError:
-    print('Failed to import torch. Ignore if this on a raspberry pi, as that cannot install torch')
+from yolov5.models.common import DetectMultiBackend
+from yolov5.utils.datasets import LoadStreams
+from yolov5.utils.general import (non_max_suppression, scale_coords)
+from yolov5.utils.plots import Annotator, colors
+from yolov5.utils.torch_utils import select_device
 
 
 def angle_from_center(fov, total_width, object_loc):
@@ -145,7 +142,7 @@ class StreamDetector:
         self.prev_frame = frame
         return image_path
 
-    # @torch.no_grad()
+    @torch.no_grad()
     def inference(self, im, im0s):
         """
         Takes self.dataset = LoadStreams() outputs and runs inference on them.
