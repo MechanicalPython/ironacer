@@ -30,7 +30,7 @@ import strike
 
 
 @retry(wait=wait_fixed(60), retry=retry_if_exception_type(AssertionError))
-def main(source='http://ironacer.local:8000/stream.mjpg',
+def main(source='',
          weights='yolov5n6_best.pt',
          imgsz=(1280, 1280),
          telegram_bot_mode=True,
@@ -40,12 +40,16 @@ def main(source='http://ironacer.local:8000/stream.mjpg',
          pi_mode=False
          ):
     try:
-        if not pi_mode:
+        if pi_mode:
+            subprocess.Popen(
+                ["libcamera-vid -t 0 --inline --listen -o tcp://0.0.0.0:5000 --width 1280 --height 1280 --rawfull"],
+                stdin=None, stdout=None, stderr=None, close_fds=True)
+            # If running on the pi, never has inference on as it can't install torch.
+            motion_detection = True
+            inference = False
+        else:
             subprocess.Popen(["ssh", "pi@ironacer.local",
                               "libcamera-vid -t 0 --inline --listen -o tcp://0.0.0.0:5000 --width 1280 --height 1280 --rawfull"],
-                             stdin=None, stdout=None, stderr=None, close_fds=True)
-        else:
-            subprocess.Popen(["libcamera-vid -t 0 --inline --listen -o tcp://0.0.0.0:5000 --width 1280 --height 1280 --rawfull"],
                              stdin=None, stdout=None, stderr=None, close_fds=True)
         time.sleep(5)
 
@@ -73,12 +77,11 @@ def main(source='http://ironacer.local:8000/stream.mjpg',
             if now > sunset:
                 return None
     finally:
-        pass
-        if not pi_mode:
-            subprocess.Popen(["ssh", "pi@ironacer.local", "pkill -f ~/ironacer/stream.py"],
+        if pi_mode:
+            subprocess.Popen(["pkill -f ~/ironacer/stream.py"],
                              stdin=None, stdout=None, stderr=None, close_fds=True)
         else:
-            subprocess.Popen(["pkill -f ~/ironacer/stream.py"],
+            subprocess.Popen(["ssh", "pi@ironacer.local", "pkill -f ~/ironacer/stream.py"],
                              stdin=None, stdout=None, stderr=None, close_fds=True)
 
 
@@ -88,6 +91,9 @@ def arg_parse():
     parser.add_argument('--surveillance_mode', type=bool, default=False, help='True = run pi surveillance to capture data. ')
     parser.add_argument('--motion_detection', type=bool, default=True, help='Run motion detection')
     parser.add_argument('--inference', type=bool, default=True, help='Run yolo inference or not.')
+    parser.add_argument('--weights', type=bool, default='yolov5n6_best.pt', help='File path to yolo weights.pt')
+    parser.add_argument('--imgsz', type=bool, default=(1280, 1280), help='tuple of inference image size.')
+    parser.add_argument('--telegram_bot_mode', type=bool, default=True, help='Run telegram or not.')
     parser.add_argument('--pi_mode', type=bool, default=False, help='Running on pi or not?')
     opt = parser.parse_args()
     return opt
