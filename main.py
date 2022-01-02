@@ -16,10 +16,8 @@ import sys
 
 from tenacity import retry, wait_fixed, retry_if_exception_type
 
-import find
 import telegram_bot
 import strike
-import pi_motion_detection
 
 
 # Running on a pi - can't import torch.
@@ -43,6 +41,8 @@ def main(source='',
          ):
     try:
         if pi_mode:
+            import pi_motion_detection
+
             subprocess.Popen(
                 ["libcamera-vid", "-t", "0", "--inline", "--listen", "-o", "tcp://0.0.0.0:5000",
                  "--width", "1280", "--height", "1280", "--rawfull"],
@@ -50,6 +50,7 @@ def main(source='',
             # If running on the pi, never has inference on as it can't install torch.
             pi_motion_detection.main(source)
         else:
+            import find
             subprocess.Popen(["ssh", "pi@ironacer.local",
                               "libcamera-vid -t 0 --inline --listen -o tcp://0.0.0.0:5000 --width 1280 --height 1280 --rawfull"],
                              stdin=None, stdout=None, stderr=None, close_fds=True)
