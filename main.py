@@ -19,6 +19,8 @@ from tenacity import retry, wait_fixed, retry_if_exception_type
 import find
 import telegram_bot
 import strike
+import pi_motion_detection
+
 
 # Running on a pi - can't import torch.
 #     Split off the motion detector into another file?
@@ -46,37 +48,36 @@ def main(source='',
                  "--width", "1280", "--height", "1280", "--rawfull"],
                 stdin=None, stdout=None, stderr=None, close_fds=True)
             # If running on the pi, never has inference on as it can't install torch.
-            motion_detection = True
-            inference = False
+            pi_motion_detection.main(source)
         else:
             subprocess.Popen(["ssh", "pi@ironacer.local",
                               "libcamera-vid -t 0 --inline --listen -o tcp://0.0.0.0:5000 --width 1280 --height 1280 --rawfull"],
                              stdin=None, stdout=None, stderr=None, close_fds=True)
-        time.sleep(5)
+            time.sleep(5)
 
-        d = find.StreamDetector(source=source, weights=weights, motion_detection_only=motion_detection, imgsz=imgsz)
-        # claymore = strike.Claymore()
-        bot = telegram_bot.TelegramBot()
+            d = find.StreamDetector(source=source, weights=weights, motion_detection_only=motion_detection, imgsz=imgsz)
+            # claymore = strike.Claymore()
+            bot = telegram_bot.TelegramBot()
 
-        for path, im, im0s, vid_cap, s in d.stream():
-            if motion_detection:
-                d.motion_detector(im0s[0])  # Saves motion detected images.
+            for path, im, im0s, vid_cap, s in d.stream():
+                if motion_detection:
+                    d.motion_detector(im0s[0])  # Saves motion detected images.
 
-            if inference:
-                isSquirrel, inference = d.inference(im, im0s)  # Runs yolov5 inference.
+                if inference:
+                    isSquirrel, inference = d.inference(im, im0s)  # Runs yolov5 inference.
 
-                d.save_train_data(im0s[0], isSquirrel, inference)  # Saves training data (clean images and labels)
-                vid_path = d.save_labeled(im0s[0], isSquirrel, inference)  # Saves videos of detected squirrels.
+                    d.save_train_data(im0s[0], isSquirrel, inference)  # Saves training data (clean images and labels)
+                    vid_path = d.save_labeled(im0s[0], isSquirrel, inference)  # Saves videos of detected squirrels.
 
-                if isSquirrel and not surveillance_mode:  # Squirrel is present
-                    # claymore.detonate()  # Currently just does nothing.
-                    pass
-                if vid_path is not False and telegram_bot_mode is True:
-                    bot.send_video(vid_path=vid_path)
-            now = datetime.datetime.now()
-            sunset = datetime.datetime(year=now.year, month=now.month, day=now.day, hour=16, minute=37)
-            if now > sunset:
-                return None
+                    if isSquirrel and not surveillance_mode:  # Squirrel is present
+                        # claymore.detonate()  # Currently just does nothing.
+                        pass
+                    if vid_path is not False and telegram_bot_mode is True:
+                        bot.send_video(vid_path=vid_path)
+                now = datetime.datetime.now()
+                sunset = datetime.datetime(year=now.year, month=now.month, day=now.day, hour=16, minute=37)
+                if now > sunset:
+                    return None
     finally:
         pass
         # if pi_mode:
