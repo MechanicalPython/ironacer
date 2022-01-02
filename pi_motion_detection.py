@@ -9,7 +9,6 @@ import re
 import numpy as np
 from threading import Thread
 import time
-import logging
 
 
 def letterbox(im, new_shape=(640, 640), color=(114, 114, 114), auto=True, scaleFill=False, scaleup=True, stride=32):
@@ -205,5 +204,4 @@ def main(source):
     d = PiMotion(source=source)
     for path, im, im0s, vid_cap, s in d.load_stream():
         d.motion_detector(im0s[0])
-
 
