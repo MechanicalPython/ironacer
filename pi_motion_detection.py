@@ -201,8 +201,8 @@ class PiMotion:
         return image_path
 
 
-def main(source):
-    d = PiMotion(source=source)
+if __name__ == '__main__':
+    d = PiMotion(source='tcp://0.0.0.0:5000')
     for path, im, im0s, vid_cap, s in d.stream():
         d.motion_detector(im0s[0])
 

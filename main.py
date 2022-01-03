@@ -60,7 +60,7 @@ def main(source='',
             d = find.StreamDetector(source=source, weights=weights, motion_detection_only=motion_detection, imgsz=imgsz)
         # claymore = strike.Claymore()
         bot = telegram_bot.TelegramBot()
-
+        bot.send_message(f'Starting recoding. Pi_mode: {pi_mode}, Inference: {inference}')
         for path, im, im0s, vid_cap, s in d.stream():
             if motion_detection:
                 d.motion_detector(im0s[0])  # Saves motion detected images.

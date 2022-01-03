@@ -44,6 +44,9 @@ class TelegramBot:
         """
         update.message.reply_text('')
 
+    def send_message(self, text):
+        self.bot.send_message(self.chat_id, text)
+
     def send_photo(self, photo_path):
         self.bot.sendPhoto(self.chat_id, open(photo_path, 'rb'), timeout=300)
 
