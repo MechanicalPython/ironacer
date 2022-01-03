@@ -34,6 +34,16 @@ class TelegramBot:
         update.message.reply_text('/photo to take a test photo. \n'
                                   '/ping to check connection.')
 
+    def status(self, update, context):
+        """
+        Replies with current status of the camera:
+        - Number of images in motion_detected
+        - Time of last seen squirrel
+        - Photo of current view?
+        - Current mode that it's in? Pi_mode, inference, etc?
+        """
+        update.message.reply_text('')
+
     def send_photo(self, photo_path):
         self.bot.sendPhoto(self.chat_id, open(photo_path, 'rb'), timeout=300)
 
@@ -60,6 +70,7 @@ class TelegramBot:
     def main(self):
         self.dispatcher.add_handler(CommandHandler('start', self.start))
         self.dispatcher.add_handler(CommandHandler('help', self.help))
+        self.dispatcher.add_handler(CommandHandler('status', self.status))
 
         self.dispatcher.add_error_handler(self.error)
 

@@ -138,7 +138,7 @@ class PiMotion:
         self.source = source
         self.imgsz = 1280
 
-    def load_stream(self):
+    def stream(self):
         dataset = LoadStreams(self.source, img_size=self.imgsz)
         for path, im, im0s, vid_cap, s in dataset:
             yield path, im, im0s, vid_cap, s
@@ -203,6 +203,6 @@ class PiMotion:
 
 def main(source):
     d = PiMotion(source=source)
-    for path, im, im0s, vid_cap, s in d.load_stream():
+    for path, im, im0s, vid_cap, s in d.stream():
         d.motion_detector(im0s[0])
 
