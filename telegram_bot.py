@@ -8,6 +8,7 @@ import html
 import json
 import logging
 import traceback
+import os
 
 from telegram import Update, ParseMode
 from telegram.ext import Updater, CommandHandler, CallbackContext
@@ -15,7 +16,7 @@ from telegram.ext import Updater, CommandHandler, CallbackContext
 
 class TelegramBot:
     def __init__(self):
-        self.token = open('telegram_token', 'r').read()
+        self.token = open(f'{os.path.dirname(__file__)}/telegram_token', 'r').read()
         self.updater = Updater(self.token, use_context=True)
         self.dispatcher = self.updater.dispatcher
         self.bot = self.updater.bot
@@ -86,4 +87,4 @@ class TelegramBot:
 
 if __name__ == '__main__':
     bot = TelegramBot()
-    bot.send_photo('./test.jpg')
+    # bot.send_photo('./test.jpg')
