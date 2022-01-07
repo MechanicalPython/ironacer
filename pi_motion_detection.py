@@ -191,10 +191,10 @@ class PiMotion:
 
         if motion == 1:  # Save the image.
             t = str(time.time())
-            image_path = f'motion_detected/image/result-{t}.jpg'
+            image_path = f'{os.path.dirname(__file__)}/motion_detected/image/result-{t}.jpg'
             print(image_path)
             cv2.imwrite(image_path, og_frame)  # Write image
-            label_path = f'motion_detected/label/result-{t}.txt'
+            label_path = f'{os.path.dirname(__file__)}/motion_detected/label/result-{t}.txt'
             with open(label_path, 'w') as f:
                 f.write('\n'.join(bounding_boxes))
 
