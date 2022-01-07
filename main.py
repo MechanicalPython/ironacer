@@ -45,15 +45,16 @@ def main(source='',
             import pi_motion_detection
             inference = False
 
-            subprocess.call(
+            subprocess.Popen(
                 ["python3", f"{os.path.dirname(__file__)}/stream.py"],
                 stdin=None, stdout=None, stderr=None, close_fds=True)
             # If running on the pi, never has inference on as it can't install torch.
+            time.sleep(5)
             d = pi_motion_detection.PiMotion(source=source)
 
         else:
             import find
-            subprocess.call(["ssh", "pi@ironacer.local", "python3 ~/ironacer/stream.py"],
+            subprocess.Popen(["ssh", "pi@ironacer.local", "python3 ~/ironacer/stream.py"],
                              stdin=None, stdout=None, stderr=None, close_fds=True)
             time.sleep(5)
 
@@ -82,10 +83,10 @@ def main(source='',
                 return None
     finally:
         if pi_mode:
-            subprocess.call([f"pkill -f {os.path.dirname(__file__)}/stream.py"],
+            subprocess.Popen(["pkill", "-f", f"{os.path.dirname(__file__)}/stream.py"],
                              stdin=None, stdout=None, stderr=None, close_fds=True)
         else:
-            subprocess.call(["ssh", "pi@ironacer.local", "pkill -f ~/ironacer/stream.py"],
+            subprocess.Popen(["ssh", "pi@ironacer.local", "pkill -f ~/ironacer/stream.py"],
                              stdin=None, stdout=None, stderr=None, close_fds=True)
 
 
