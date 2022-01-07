@@ -58,7 +58,6 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
     def crop_video(cap, crop_xywh):
         if not cap.isOpened():
             raise Exception("Could not open video device")
-        # Set properties. Each returns === True on success (i.e. correct resolution)
         x, y, w, h = crop_xywh
         if cap.isOpened():
             ret, frame = cap.read()
@@ -74,7 +73,7 @@ class StreamingServer(socketserver.ThreadingMixIn, server.HTTPServer):
 
 
 if __name__ == '__main__':
-    cap = cv2.VideoCapture('/dev/video0', cv2.CAP_V4L2)
+    cap = cv2.VideoCapture(0, cv2.CAP_V4L2)
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1080)
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
     # crop_xywh = (1005, 592, 1280, 1280)
