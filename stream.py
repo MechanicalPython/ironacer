@@ -1,12 +1,8 @@
-import io
 import logging
 import socketserver
 from http import server
-from threading import Condition
-import cv2
-import sys
-import time
 
+import cv2
 
 PAGE = """\
 <html>
@@ -19,16 +15,6 @@ PAGE = """\
 </body>
 </html>
 """
-
-
-# Video formats.
-# 'h264' - Write an H.264 video stream
-# 'mjpeg' - Write an M-JPEG video stream
-# 'yuv' - Write the raw video data to a file in YUV420 format
-# 'rgb' - Write the raw video data to a file in 24-bit RGB format
-# 'rgba' - Write the raw video data to a file in 32-bit RGBA format
-# 'bgr' - Write the raw video data to a file in 24-bit BGR format
-# 'bgra' - Write the raw video data to a file in 32-bit BGRA format
 
 
 class StreamingHandler(server.BaseHTTPRequestHandler):
@@ -89,9 +75,9 @@ class StreamingServer(socketserver.ThreadingMixIn, server.HTTPServer):
 
 if __name__ == '__main__':
     cap = cv2.VideoCapture(0)
-    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1000)
-    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1000)
-    crop_xywh = (300, 300, 300, 300)
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 3280)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 2464)
+    crop_xywh = (1005, 592, 1280, 1280)
 
     address = ('', 8000)
     server = StreamingServer(address, StreamingHandler)
