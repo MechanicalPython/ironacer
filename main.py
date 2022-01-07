@@ -81,7 +81,7 @@ def main(source='',
     finally:
         pass
         if pi_mode:
-            subprocess.Popen(["pkill -f ~/ironacer/stream.py"],
+            subprocess.Popen(["pkill -f ironacer/stream.py"],
                              stdin=None, stdout=None, stderr=None, close_fds=True)
         else:
             subprocess.Popen(["ssh", "pi@ironacer.local", "pkill -f ~/ironacer/stream.py"],

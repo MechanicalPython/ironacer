@@ -75,9 +75,10 @@ class StreamingServer(socketserver.ThreadingMixIn, server.HTTPServer):
 
 if __name__ == '__main__':
     cap = cv2.VideoCapture('/dev/video0', cv2.CAP_V4L2)
-    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 3280)
-    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 2464)
-    crop_xywh = (1005, 592, 1280, 1280)
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1080)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
+    # crop_xywh = (1005, 592, 1280, 1280)
+    crop_xywh = (0, 0, 1080, 1080)
 
     address = ('', 8000)
     server = StreamingServer(address, StreamingHandler)
