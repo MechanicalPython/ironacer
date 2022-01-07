@@ -45,7 +45,7 @@ def main(source='',
             import pi_motion_detection
             inference = False
 
-            subprocess.Popen(
+            subprocess.call(
                 ["python3", f"{os.path.dirname(__file__)}/stream.py"],
                 stdin=None, stdout=None, stderr=None, close_fds=True)
             # If running on the pi, never has inference on as it can't install torch.
@@ -53,7 +53,7 @@ def main(source='',
 
         else:
             import find
-            subprocess.Popen(["ssh", "pi@ironacer.local", "python3 ~/ironacer/stream.py"],
+            subprocess.call(["ssh", "pi@ironacer.local", "python3 ~/ironacer/stream.py"],
                              stdin=None, stdout=None, stderr=None, close_fds=True)
             time.sleep(5)
 
@@ -82,16 +82,16 @@ def main(source='',
                 return None
     finally:
         if pi_mode:
-            subprocess.Popen([f"pkill -f {os.path.dirname(__file__)}/stream.py"],
+            subprocess.call([f"pkill -f {os.path.dirname(__file__)}/stream.py"],
                              stdin=None, stdout=None, stderr=None, close_fds=True)
         else:
-            subprocess.Popen(["ssh", "pi@ironacer.local", "pkill -f ~/ironacer/stream.py"],
+            subprocess.call(["ssh", "pi@ironacer.local", "pkill -f ~/ironacer/stream.py"],
                              stdin=None, stdout=None, stderr=None, close_fds=True)
 
 
 def arg_parse():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--source', type=str, default='tcp://ironacer.local:5000')
+    parser.add_argument('--source', type=str, default='http://localhost:8000/stream.mjpg')
     parser.add_argument('--surveillance_mode', type=bool, default=False, help='True = run pi surveillance to capture data. ')
     parser.add_argument('--motion_detection', type=bool, default=True, help='Run motion detection')
     parser.add_argument('--inference', type=bool, default=True, help='Run yolo inference or not.')
