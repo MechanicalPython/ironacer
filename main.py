@@ -49,7 +49,7 @@ def main(source='',
                 ["python3", f"/home/pi/ironacer/stream.py"],
                 stdin=None, stdout=None, stderr=None, close_fds=True)
             # If running on the pi, never has inference on as it can't install torch.
-            time.sleep(5)
+            time.sleep(30)
             d = pi_motion_detection.PiMotion(source=source)
 
         else:
