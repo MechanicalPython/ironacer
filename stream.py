@@ -1,8 +1,7 @@
 import logging
 import socketserver
-import sys
 from http import server
-
+import argparse
 import cv2
 
 PAGE = """\
@@ -73,21 +72,30 @@ class StreamingServer(socketserver.ThreadingMixIn, server.HTTPServer):
     daemon_threads = True
 
 
+def arg_parse():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--width', type=int, default=2592)
+    parser.add_argument('--height', type=int, default=1944)
+    parser.add_argument('--size', type=int, default=1280)
+    return parser.parse_args()
+
+
 # max - 3280 × 2464 pixels
 # 1-15 fps - 2592 x 1944
 
-if __name__ == '__main__':
-    _, width, height, size = sys.argv
-    width = int(width)
-    height = int(height)
-    size = int(size)
-    cap = cv2.VideoCapture(0, cv2.CAP_V4L2)
-    cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
-    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
-    x = (width - size) / 2
-    y = (height - size) / 2
-    crop_xywh = (int(x), int(y), int(size), int(size))
 
-    address = ('', 8000)
-    server = StreamingServer(address, StreamingHandler)
-    server.serve_forever()
+if __name__ == '__main__':
+    opt = arg_parse()
+    cap = cv2.VideoCapture(0, cv2.CAP_V4L2)
+    try:
+        cap.set(cv2.CAP_PROP_FRAME_WIDTH, opt.width)
+        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, opt.height)
+        x = (opt.width - opt.size) / 2
+        y = (opt.height - opt.size) / 2
+        crop_xywh = (int(x), int(y), opt.size, opt.size)
+
+        address = ('', 8000)
+        server = StreamingServer(address, StreamingHandler)
+        server.serve_forever()
+    finally:
+        cap.release()
