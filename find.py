@@ -252,6 +252,7 @@ class StreamDetector:
 if __name__ == '__main__':
     d = StreamDetector(motion_detection_only=True, source='http://ironacer.local:8000/stream.mjpg')
     for path, im, im0s, vid_cap, s in d.stream():
+        print(len(im0s[0]))
         d.motion_detector(im0s[0])
 
 

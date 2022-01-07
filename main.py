@@ -46,7 +46,7 @@ def main(source='',
             inference = False
 
             subprocess.Popen(
-                ["python3", f"{os.path.dirname(__file__)}/stream.py"],
+                ["python3", f"/home/pi/ironacer/stream.py"],
                 stdin=None, stdout=None, stderr=None, close_fds=True)
             # If running on the pi, never has inference on as it can't install torch.
             time.sleep(5)
@@ -83,10 +83,10 @@ def main(source='',
                 return None
     finally:
         if pi_mode:
-            subprocess.Popen(["pkill", "-f", f"{os.path.dirname(__file__)}/stream.py"],
+            subprocess.Popen(["pkill", "-f", f"/home/pi/ironacer/stream.py"],
                              stdin=None, stdout=None, stderr=None, close_fds=True)
         else:
-            subprocess.Popen(["ssh", "pi@ironacer.local", "pkill -f ~/ironacer/stream.py"],
+            subprocess.Popen(["ssh", "pi@ironacer.local", "pkill -f /home/pi/ironacer/stream.py"],
                              stdin=None, stdout=None, stderr=None, close_fds=True)
 
 
