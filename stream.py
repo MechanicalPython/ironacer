@@ -1,6 +1,7 @@
 import logging
 import socketserver
 from http import server
+import sys
 
 import cv2
 
@@ -76,10 +77,13 @@ class StreamingServer(socketserver.ThreadingMixIn, server.HTTPServer):
 # 1-15 fps - 2592 x 1944
 
 if __name__ == '__main__':
+    width, height, size = sys.argv
     cap = cv2.VideoCapture(0, cv2.CAP_V4L2)
-    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 2592)
-    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1944)
-    crop_xywh = (656, 332, 1280, 1280)
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
+    x = (width - size) / 2
+    y = (height - size) / 2
+    crop_xywh = (x, y, size, size)
 
     address = ('', 8000)
     server = StreamingServer(address, StreamingHandler)
