@@ -13,6 +13,7 @@ import subprocess
 import time
 import argparse
 import sys
+import os
 
 from tenacity import retry, wait_fixed, retry_if_exception_type
 
@@ -43,8 +44,9 @@ def main(source='',
         if pi_mode:
             import pi_motion_detection
             inference = False
+
             subprocess.Popen(
-                ["python3", "ironacer/stream.py"],
+                ["python3", f"{os.path.dirname(__file__)}/stream.py"],
                 stdin=None, stdout=None, stderr=None, close_fds=True)
             # If running on the pi, never has inference on as it can't install torch.
             d = pi_motion_detection.PiMotion(source=source)
@@ -79,9 +81,8 @@ def main(source='',
             if now > sunset:
                 return None
     finally:
-        pass
         if pi_mode:
-            subprocess.Popen(["pkill -f ironacer/stream.py"],
+            subprocess.Popen([f"pkill -f {os.path.dirname(__file__)}/stream.py"],
                              stdin=None, stdout=None, stderr=None, close_fds=True)
         else:
             subprocess.Popen(["ssh", "pi@ironacer.local", "pkill -f ~/ironacer/stream.py"],
