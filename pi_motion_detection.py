@@ -203,7 +203,7 @@ class PiMotion:
 
 
 if __name__ == '__main__':
-    d = PiMotion(source='http://localhost:8000/stream.mjpg')
+    d = PiMotion(source='http://ironacer.local:8000/stream.mjpg')
     for path, im, im0s, vid_cap, s in d.stream():
         d.motion_detector(im0s[0])
 

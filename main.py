@@ -56,8 +56,7 @@ def main(source='',
             import find
             subprocess.Popen(["ssh", "pi@ironacer.local", "python3 ~/ironacer/stream.py"],
                              stdin=None, stdout=None, stderr=None, close_fds=True)
-            time.sleep(5)
-
+            time.sleep(30)  # The pi needs a while to boot up the stream.
             d = find.StreamDetector(source=source, weights=weights, motion_detection_only=motion_detection, imgsz=imgsz)
         # claymore = strike.Claymore()
         bot = telegram_bot.TelegramBot()
@@ -92,7 +91,7 @@ def main(source='',
 
 def arg_parse():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--source', type=str, default='http://localhost:8000/stream.mjpg')
+    parser.add_argument('--source', type=str, default='http://ironacer.local:8000/stream.mjpg')
     parser.add_argument('--surveillance_mode', type=bool, default=False, help='True = run pi surveillance to capture data. ')
     parser.add_argument('--motion_detection', type=bool, default=True, help='Run motion detection')
     parser.add_argument('--inference', type=bool, default=True, help='Run yolo inference or not.')
