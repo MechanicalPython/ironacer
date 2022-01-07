@@ -35,7 +35,7 @@ def angle_from_center(fov, total_width, object_loc):
 
 class StreamDetector:
     """Class to detect and read a stream from a pi camera to then run yolo inference on each frame."""
-    def __init__(self, weights='best.pt', source='http://ironacer.local:8000/stream.mjpg', imgsz=(1280, 1280), conf_thres=0.25, motion_detection_only=False):
+    def __init__(self, weights='best.pt', source='', imgsz=(1280, 1280), conf_thres=0.25, motion_detection_only=False):
         self.source = str(source)
         self.weights = weights
         self.imgsz = imgsz  # inference size (height, width)
@@ -250,7 +250,7 @@ class StreamDetector:
 
 
 if __name__ == '__main__':
-    d = StreamDetector(motion_detection_only=True, source='tcp://ironacer.local:5000')
+    d = StreamDetector(motion_detection_only=True, source='http://localhost:8000/stream.mjpeg')
     for path, im, im0s, vid_cap, s in d.stream():
         d.motion_detector(im0s[0])
 
