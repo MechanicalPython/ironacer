@@ -105,7 +105,7 @@ def arg_parse():
 if __name__ == '__main__':
     opt = arg_parse()
     if len(sys.argv) == 1:  # Run this if from pycharm, otherwise it's command line.
-        opt.source = 'tcp://ironacer.local:5000'
+        opt.source = 'http://ironacer.local:8000/stream.mjpg'
         opt.surveillance_mode = True
         opt.motion_detection = True
         opt.inference = False
