@@ -73,13 +73,13 @@ class StreamingServer(socketserver.ThreadingMixIn, server.HTTPServer):
 
 
 # max - 3280 × 2464 pixels
+# 1-15 fps - 2592 x 1944
 
 if __name__ == '__main__':
     cap = cv2.VideoCapture(0, cv2.CAP_V4L2)
-    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 3280)
-    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 2464)
-    # crop_xywh = (1005, 592, 1280, 1280)
-    crop_xywh = (1005, 592, 1280, 1280)
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 2592)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1944)
+    crop_xywh = (656, 332, 1280, 1280)
 
     address = ('', 8000)
     server = StreamingServer(address, StreamingHandler)
