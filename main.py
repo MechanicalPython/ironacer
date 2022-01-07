@@ -44,7 +44,7 @@ def main(source='',
             import pi_motion_detection
             inference = False
             subprocess.Popen(
-                ["python3", "~/ironacer/stream.py"],
+                ["python3", "ironacer/stream.py"],
                 stdin=None, stdout=None, stderr=None, close_fds=True)
             # If running on the pi, never has inference on as it can't install torch.
             d = pi_motion_detection.PiMotion(source=source)
