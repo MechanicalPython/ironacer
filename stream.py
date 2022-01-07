@@ -3,8 +3,10 @@ import logging
 import socketserver
 from http import server
 from threading import Condition
+import cv2
+import sys
+import time
 
-import picamera
 
 PAGE = """\
 <html>
@@ -29,24 +31,6 @@ PAGE = """\
 # 'bgra' - Write the raw video data to a file in 32-bit BGRA format
 
 
-class StreamingOutput(object):
-    def __init__(self):
-        self.frame = None
-        self.buffer = io.BytesIO()
-        self.condition = Condition()
-
-    def write(self, buf):
-        if buf.startswith(b'\xff\xd8'):
-            # New frame, copy the existing buffer's content and notify all
-            # clients it's available
-            self.buffer.truncate()
-            with self.condition:
-                self.frame = self.buffer.getvalue()
-                self.condition.notify_all()
-            self.buffer.seek(0)
-        return self.buffer.write(buf)
-
-
 class StreamingHandler(server.BaseHTTPRequestHandler):
     def do_GET(self):
         if self.path == '/':
@@ -69,9 +53,7 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
             self.end_headers()
             try:
                 while True:
-                    with output.condition:
-                        output.condition.wait()
-                        frame = output.frame
+                    frame = next(self.crop_video(cap, crop_xywh))
                     self.wfile.write(b'--FRAME\r\n')
                     self.send_header('Content-Type', 'image/jpeg')
                     self.send_header('Content-Length', len(frame))
@@ -86,24 +68,31 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
             self.send_error(404)
             self.end_headers()
 
+    @staticmethod
+    def crop_video(cap, crop_xywh):
+        if not cap.isOpened():
+            raise Exception("Could not open video device")
+        # Set properties. Each returns === True on success (i.e. correct resolution)
+        x, y, w, h = crop_xywh
+        if cap.isOpened():
+            ret, frame = cap.read()
+            if ret:
+                frame = frame[y:y + h, x:x + w]
+                _, JPEG = cv2.imencode('.jpeg', frame, [cv2.IMWRITE_JPEG_QUALITY, 100])
+                yield JPEG.tobytes()
+
 
 class StreamingServer(socketserver.ThreadingMixIn, server.HTTPServer):
     allow_reuse_address = True
     daemon_threads = True
 
 
-# Pi camera resolution: 2592x1944 at 1-15fps is supported.
+if __name__ == '__main__':
+    cap = cv2.VideoCapture(0)
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1000)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1000)
+    crop_xywh = (300, 300, 300, 300)
 
-with picamera.PiCamera(resolution='2592x1944', framerate=15) as camera:
-
-    output = StreamingOutput()
-    # camera.zoom = ((656 / 2592), (332 / 1944), (1280 / 2592), (1280 / 1944))  # x, y, w, h but as a fraction: 0-1.
-    camera.start_recording(output, format='mjpeg', resize=(1280, 1280))
-    try:
-        address = ('', 8000)
-        server = StreamingServer(address, StreamingHandler)
-        server.serve_forever()
-    finally:
-        camera.stop_recording()
-
-
+    address = ('', 8000)
+    server = StreamingServer(address, StreamingHandler)
+    server.serve_forever()
