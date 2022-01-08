@@ -102,7 +102,7 @@ def arg_parse():
     parser = argparse.ArgumentParser()
     parser.add_argument('--width', type=int, default=2592)
     parser.add_argument('--height', type=int, default=1944)
-    parser.add_argument('--size', type=int, default=1280)
+    parser.add_argument('--imsiz', type=int, default=1280)
     return parser.parse_args()
 
 
