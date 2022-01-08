@@ -21,9 +21,7 @@ import telegram_bot
 import strike
 
 
-# Running on a pi - can't import torch.
-#     Split off the motion detector into another file?
-# todo - 1. pi-running motion detector to gather images of squirrels.
+# todo - 1. pi-running motion detector to gather images of squirrels - pi only, no video stream to reduce load.
 #  telegram to send photos to chat on request.
 #  auto get sunrise and sunset.
 #  test speed of new weights.
@@ -41,7 +39,7 @@ def main(source='',
          pi_mode=False
          ):
     try:
-        if pi_mode:
+        if pi_mode:  # Natively run on the pi, no streaming.
             import pi_motion_detection
             inference = False
 

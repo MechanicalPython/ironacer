@@ -108,6 +108,6 @@ def arg_parse():
 
 if __name__ == '__main__':
     opt = arg_parse()
-    d = PiMotion(opt.widht, opt.height, opt.imsiz)
+    d = PiMotion(opt.width, opt.height, opt.imsiz)
     for frame in d.stream():
         d.motion_detector(frame)
