@@ -3,145 +3,34 @@ Wholesale ripped all from yolov5 datasets and supporting docs to just make this 
 
 """
 
-import cv2
+import argparse
 import os
-import re
-import numpy as np
-from threading import Thread
 import time
 
-
-def letterbox(im, new_shape=(640, 640), color=(114, 114, 114), auto=True, scaleFill=False, scaleup=True, stride=32):
-    # Resize and pad image while meeting stride-multiple constraints
-    shape = im.shape[:2]  # current shape [height, width]
-    if isinstance(new_shape, int):
-        new_shape = (new_shape, new_shape)
-
-    # Scale ratio (new / old)
-    r = min(new_shape[0] / shape[0], new_shape[1] / shape[1])
-    if not scaleup:  # only scale down, do not scale up (for better val mAP)
-        r = min(r, 1.0)
-
-    # Compute padding
-    ratio = r, r  # width, height ratios
-    new_unpad = int(round(shape[1] * r)), int(round(shape[0] * r))
-    dw, dh = new_shape[1] - new_unpad[0], new_shape[0] - new_unpad[1]  # wh padding
-    if auto:  # minimum rectangle
-        dw, dh = np.mod(dw, stride), np.mod(dh, stride)  # wh padding
-    elif scaleFill:  # stretch
-        dw, dh = 0.0, 0.0
-        new_unpad = (new_shape[1], new_shape[0])
-        ratio = new_shape[1] / shape[1], new_shape[0] / shape[0]  # width, height ratios
-
-    dw /= 2  # divide padding into 2 sides
-    dh /= 2
-
-    if shape[::-1] != new_unpad:  # resize
-        im = cv2.resize(im, new_unpad, interpolation=cv2.INTER_LINEAR)
-    top, bottom = int(round(dh - 0.1)), int(round(dh + 0.1))
-    left, right = int(round(dw - 0.1)), int(round(dw + 0.1))
-    im = cv2.copyMakeBorder(im, top, bottom, left, right, cv2.BORDER_CONSTANT, value=color)  # add border
-    return im, ratio, (dw, dh)
-
-
-def clean_str(s):
-    # Cleans a string by replacing special characters with underscore _
-    return re.sub(pattern="[|@#!¡·$€%&()=?¿^*;:,¨´><+]", repl="_", string=s)
-
-
-class LoadStreams:
-    # Stolen from yolov5 - datasets.py
-    # YOLOv5 streamloader, i.e. `python detect.py --source 'rtsp://example.com/media.mp4'  # RTSP, RTMP, HTTP streams`
-    def __init__(self, sources='streams.txt', img_size=640, stride=32, auto=True):
-        self.mode = 'stream'
-        self.img_size = img_size
-        self.stride = stride
-
-        if os.path.isfile(sources):
-            with open(sources) as f:
-                sources = [x.strip() for x in f.read().strip().splitlines() if len(x.strip())]
-        else:
-            sources = [sources]
-
-        n = len(sources)
-        self.imgs, self.fps, self.frames, self.threads = [None] * n, [0] * n, [0] * n, [None] * n
-        self.sources = [clean_str(x) for x in sources]  # clean source names for later
-        self.auto = auto
-        for i, s in enumerate(sources):  # index, source
-            # Start thread to read frames from video stream
-            st = f'{i + 1}/{n}: {s}... '
-            s = eval(s) if s.isnumeric() else s  # i.e. s = '0' local webcam
-            cap = cv2.VideoCapture(s)
-            assert cap.isOpened(), f'{st}Failed to open {s}'
-            w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-            h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-            self.fps[i] = max(cap.get(cv2.CAP_PROP_FPS) % 100, 0) or 30.0  # 30 FPS fallback
-            self.frames[i] = max(int(cap.get(cv2.CAP_PROP_FRAME_COUNT)), 0) or float('inf')  # infinite stream fallback
-
-            _, self.imgs[i] = cap.read()  # guarantee first frame
-            self.threads[i] = Thread(target=self.update, args=([i, cap, s]), daemon=True)
-            self.threads[i].start()
-
-        # check for common shapes
-        s = np.stack([letterbox(x, self.img_size, stride=self.stride, auto=self.auto)[0].shape for x in self.imgs])
-        self.rect = np.unique(s, axis=0).shape[0] == 1  # rect inference if all shapes equal
-        if not self.rect:
-            print('WARNING: Stream shapes differ. For optimal performance supply similarly-shaped streams.')
-
-    def update(self, i, cap, stream):
-        # Read stream `i` frames in daemon thread
-        n, f, read = 0, self.frames[i], 1  # frame number, frame array, inference every 'read' frame
-        while cap.isOpened() and n < f:
-            n += 1
-            # _, self.imgs[index] = cap.read()
-            cap.grab()
-            if n % read == 0:
-                success, im = cap.retrieve()
-                if success:
-                    self.imgs[i] = im
-                else:
-                    print('WARNING: Video stream unresponsive, please check your IP camera connection.')
-                    self.imgs[i] = np.zeros_like(self.imgs[i])
-                    cap.open(stream)  # re-open stream if signal was lost
-            time.sleep(1 / self.fps[i])  # wait time
-
-    def __iter__(self):
-        self.count = -1
-        return self
-
-    def __next__(self):
-        self.count += 1
-        if not all(x.is_alive() for x in self.threads) or cv2.waitKey(1) == ord('q'):  # q to quit
-            cv2.destroyAllWindows()
-            raise StopIteration
-
-        # Letterbox
-        img0 = self.imgs.copy()
-        img = [letterbox(x, self.img_size, stride=self.stride, auto=self.rect and self.auto)[0] for x in img0]
-
-        # Stack
-        img = np.stack(img, 0)
-
-        # Convert
-        img = img[..., ::-1].transpose((0, 3, 1, 2))  # BGR to RGB, BHWC to BCHW
-        img = np.ascontiguousarray(img)
-
-        return self.sources, img, img0, None, ''
-
-    def __len__(self):
-        return len(self.sources)  # 1E12 frames = 32 streams at 30 FPS for 30 years
+import cv2
 
 
 class PiMotion:
-    def __init__(self, source):
+    def __init__(self, width, height, imsiz):
         self.prev_frame = None
-        self.source = source
-        self.imgsz = 1280
+        self.width = width
+        self.height = height
+        self.imsiz = imsiz
 
     def stream(self):
-        dataset = LoadStreams(self.source, img_size=self.imgsz)
-        for path, im, im0s, vid_cap, s in dataset:
-            yield path, im, im0s, vid_cap, s
+        cap = cv2.VideoCapture(0, cv2.CAP_V4L2)
+        cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.width)
+        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.height)
+        x = (self.width - self.imsiz) / 2
+        y = (self.height - self.imsiz) / 2
+        crop_xywh = (int(x), int(y), self.imsiz, self.imsiz)
+
+        if cap.isOpened():
+            ret, frame = cap.read()
+            if ret:
+                frame = self.crop_frame(frame, crop_xywh)
+                yield frame
+        yield None
 
     def motion_detector(self, frame, motion_thresh=500):
         """
@@ -201,9 +90,24 @@ class PiMotion:
         self.prev_frame = frame
         return image_path
 
+    @staticmethod
+    def crop_frame(frame, crop_xywh):
+        x, y, w, h = crop_xywh
+        frame = frame[y:y + h, x:x + w]
+        _, JPEG = cv2.imencode('.jpeg', frame, [cv2.IMWRITE_JPEG_QUALITY, 100])
+        return JPEG
+
+
+def arg_parse():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--width', type=int, default=2592)
+    parser.add_argument('--height', type=int, default=1944)
+    parser.add_argument('--size', type=int, default=1280)
+    return parser.parse_args()
+
 
 if __name__ == '__main__':
-    d = PiMotion(source='http://ironacer.local:8000/stream.mjpg')
-    for path, im, im0s, vid_cap, s in d.stream():
-        d.motion_detector(im0s[0])
-
+    opt = arg_parse()
+    d = PiMotion(opt.widht, opt.height, opt.imsiz)
+    for frame in d.stream():
+        d.motion_detector(frame)
