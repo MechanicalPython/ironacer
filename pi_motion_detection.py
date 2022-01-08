@@ -110,7 +110,8 @@ if __name__ == '__main__':
     opt = arg_parse()
     d = PiMotion(opt.width, opt.height, opt.imsiz)
     for frame in d.stream():
+        d.motion_detector(frame)
         now = datetime.datetime.now()
         sunset = datetime.datetime(year=now.year, month=now.month, day=now.day, hour=16, minute=37)
         if now > sunset:
-            continue
+            break
