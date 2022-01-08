@@ -112,8 +112,5 @@ if __name__ == '__main__':
     for frame in d.stream():
         now = datetime.datetime.now()
         sunset = datetime.datetime(year=now.year, month=now.month, day=now.day, hour=16, minute=37)
-        sunrise = datetime.datetime(year=now.year, month=now.month, day=now.day+1, hour=7, minute=30)
         if now > sunset:
-            time.sleep(60)
-        else:
-            d.motion_detector(frame)
+            continue
