@@ -6,7 +6,7 @@ Wholesale ripped all from yolov5 datasets and supporting docs to just make this 
 import argparse
 import os
 import time
-
+import datetime
 import cv2
 
 
@@ -95,7 +95,6 @@ class PiMotion:
     def crop_frame(frame, crop_xywh):
         x, y, w, h = crop_xywh
         frame = frame[y:y + h, x:x + w]
-        # _, JPEG = cv2.imencode('.jpeg', frame, [cv2.IMWRITE_JPEG_QUALITY, 100])
         return frame
 
 
@@ -111,4 +110,10 @@ if __name__ == '__main__':
     opt = arg_parse()
     d = PiMotion(opt.width, opt.height, opt.imsiz)
     for frame in d.stream():
-        d.motion_detector(frame)
+        now = datetime.datetime.now()
+        sunset = datetime.datetime(year=now.year, month=now.month, day=now.day, hour=16, minute=37)
+        sunrise = datetime.datetime(year=now.year, month=now.month, day=now.day+1, hour=7, minute=30)
+        if now > sunset:
+            time.sleep(60)
+        else:
+            d.motion_detector(frame)
