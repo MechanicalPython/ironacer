@@ -16,21 +16,23 @@ class PiMotion:
         self.width = width
         self.height = height
         self.imsiz = imsiz
-
-    def stream(self):
-        cap = cv2.VideoCapture(0, cv2.CAP_V4L2)
-        cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.width)
-        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.height)
+        self.cap = cv2.VideoCapture(0, cv2.CAP_V4L2)
+        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.width)
+        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.height)
         x = (self.width - self.imsiz) / 2
         y = (self.height - self.imsiz) / 2
-        crop_xywh = (int(x), int(y), self.imsiz, self.imsiz)
+        self.crop_xywh = (int(x), int(y), self.imsiz, self.imsiz)
 
-        if cap.isOpened():
-            ret, frame = cap.read()
-            if ret:
-                frame = self.crop_frame(frame, crop_xywh)
-                yield frame
-        yield None
+    def stream(self):
+        try:
+            while True:
+                if self.cap.isOpened():
+                    ret, frame = self.cap.read()
+                    if ret:
+                        # frame = self.crop_frame(frame, self.crop_xywh)
+                        yield frame
+        finally:
+            self.cap.release()
 
     def motion_detector(self, frame, motion_thresh=500):
         """
@@ -81,7 +83,6 @@ class PiMotion:
         if motion == 1:  # Save the image.
             t = str(time.time())
             image_path = f'{os.path.dirname(__file__)}/motion_detected/image/result-{t}.jpg'
-            print(image_path)
             cv2.imwrite(image_path, og_frame)  # Write image
             label_path = f'{os.path.dirname(__file__)}/motion_detected/label/result-{t}.txt'
             with open(label_path, 'w') as f:
@@ -94,8 +95,8 @@ class PiMotion:
     def crop_frame(frame, crop_xywh):
         x, y, w, h = crop_xywh
         frame = frame[y:y + h, x:x + w]
-        _, JPEG = cv2.imencode('.jpeg', frame, [cv2.IMWRITE_JPEG_QUALITY, 100])
-        return JPEG
+        # _, JPEG = cv2.imencode('.jpeg', frame, [cv2.IMWRITE_JPEG_QUALITY, 100])
+        return frame
 
 
 def arg_parse():
