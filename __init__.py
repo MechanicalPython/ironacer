@@ -125,14 +125,18 @@ class FlickrDownload:
 
 
 def motion_detect_img_dir(path='motion_detected/', start_number=1):
+    """Shows images and where the motion was detected."""
     import os
     import cv2
     import time
     # Loop to treat stack of image as video
-    for i in range(start_number, len([i for i in os.listdir(f'{path}image/') if i.endswith(".jpg")]) + 1):
+
+    images_dir = f'{path}image/'
+    for image in [f for f in os.listdir(images_dir) if f.endswith('.jpg')]:
+        serial_number = image.split('-')[1].replace('.jpg', '')
         # Reading frame(image) from video
-        frame = cv2.imread(f'{path}image/result-{i}.jpg')
-        labels = open(f'{path}label/result-{i}.txt', 'r').read().split('\n')
+        frame = cv2.imread(f'{path}image/result-{serial_number}.jpg')
+        labels = open(f'{path}label/result-{serial_number}.txt', 'r').read().split('\n')
         for label in labels:
             x, y, w, h, amount_of_motion = label.split(' ')
             x, y, w, h, amount_of_motion = int(x), int(y), int(w), int(h), str(amount_of_motion)
@@ -145,7 +149,7 @@ def motion_detect_img_dir(path='motion_detected/', start_number=1):
         # cv2.imshow("Threshold Frame", thresh_frame)
 
         cv2.imshow("Motion Box", frame)
-        time.sleep(0.1)
+        time.sleep(1)
         key = cv2.waitKey(1)
         # if q entered whole process will stop
         if key == ord('q'):
@@ -198,5 +202,5 @@ def motion_detected_squirrel_organiser(conf_phot_num):
 
 
 if __name__ == '__main__':
-    motion_detect_img_dir(start_number=1)
+    motion_detect_img_dir(path='/Users/matt/Downloads/motion_detected/', start_number=1)
     # motion_detected_squirrel_organiser("164 - 171, 253 - 262, 397 - 415, 980 - 999, 1919 - 1929")
