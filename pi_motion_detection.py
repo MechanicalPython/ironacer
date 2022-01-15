@@ -15,13 +15,12 @@ import cv2
 class PiMotion:
     def __init__(self, width, height, imsiz, on_mac=False, save_images=True):
         self.prev_frame = None
+        self.reset_freq = 5*60  # Frequency to reset the camera (in seconds).
         self.width = width
         self.height = height
         self.imsiz = imsiz
-        if on_mac:
-            self.cap = cv2.VideoCapture(0)
-        else:
-            self.cap = cv2.VideoCapture(0, cv2.CAP_V4L2)
+        self.on_mac = on_mac
+        self.set_video()
         self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.width)
         self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.height)
         x = (self.width - self.imsiz) / 2
@@ -29,9 +28,20 @@ class PiMotion:
         self.crop_xywh = (int(x), int(y), self.imsiz, self.imsiz)
         self.save_images = save_images
 
+    def set_video(self):
+        print('setting video.')
+        if self.on_mac:
+            self.cap = cv2.VideoCapture(0)
+        else:
+            self.cap = cv2.VideoCapture(0, cv2.CAP_V4L2)
+
     def stream(self):
+        t = time.time()
         try:
             while True:
+                if time.time() - t > self.reset_freq:
+                    self.set_video()
+                    t = time.time()
                 if self.cap.isOpened():
                     ret, frame = self.cap.read()
                     if ret:
@@ -145,6 +155,7 @@ def arg_parse():
 
 if __name__ == '__main__':
     opt = arg_parse()
+    opt.on_mac = True
     d = PiMotion(opt.width, opt.height, opt.imsiz, opt.on_mac)
     for frame in d.stream():
         d.motion_detector(frame)
