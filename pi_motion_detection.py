@@ -192,6 +192,6 @@ if __name__ == '__main__':
     opt.on_mac = True
     d = PiMotion(opt.width, opt.height, opt.imsiz, opt.on_mac)
     for frame in d.stream():
-        # d.motion_detector(frame)
-        d._show_motion_live()
+        d.motion_detector(frame)
+        # d._show_motion_live()
 
