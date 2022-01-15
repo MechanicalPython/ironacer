@@ -83,7 +83,6 @@ class PiMotion:
         parent_folder = os.path.dirname(__file__)
         if parent_folder == '':
             parent_folder = '.'
-        print(parent_folder)
         image_path = f'{parent_folder}/motion_detected/image/result-{t}.jpg'
         cv2.imwrite(image_path, frame)  # Write image
         label_path = f'{parent_folder}/motion_detected/label/result-{t}.txt'
@@ -190,7 +189,7 @@ def arg_parse():
 if __name__ == '__main__':
     opt = arg_parse()
     opt.on_mac = True
-    d = PiMotion(opt.width, opt.height, opt.imsiz, opt.on_mac)
+    d = PiMotion(opt.width, opt.height, opt.imsiz, opt.detection_region, on_mac=True)
     for frame in d.stream():
         d.motion_detector(frame)
         # d._show_motion_live()
