@@ -75,7 +75,7 @@ class PiMotion:
             key = cv2.waitKey(1)
             # if q entered whole process will stop
             if key == ord('q'):
-                quit()
+                break
 
     def save_motion_image(self, frame, bounding_boxes):
         """Save the motion detected image. """
