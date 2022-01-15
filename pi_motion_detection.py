@@ -9,12 +9,11 @@ import time
 
 import cv2
 
-# todo - capture motion only in certain areas of the image.
-
 
 class PiMotion:
-    def __init__(self, width, height, imsiz, on_mac=False, save_images=True):
+    def __init__(self, width, height, imsiz, detection_region, on_mac=False, save_images=True):
         self.prev_frame = None
+        self.detection_region = detection_region
         self.reset_freq = 5*60  # Frequency to reset the camera (in seconds).
         self.width = width
         self.height = height
@@ -56,11 +55,16 @@ class PiMotion:
             frame, bounding_box = self.motion_detector(frame)
             if frame is None:
                 continue
+            cv2.rectangle(frame,
+                          (self.detection_region[0], self.detection_region[1]),
+                          (self.detection_region[2], self.detection_region[3]),
+                          (255, 0, 0), 3)
             for label in bounding_box:
                 x, y, w, h, amount_of_motion = label.split(' ')
                 x, y, w, h, amount_of_motion = int(x), int(y), int(w), int(h), str(amount_of_motion)
                 # making green rectangle around the moving object
                 cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 3)
+
                 cv2.putText(frame, amount_of_motion, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (36, 255, 12), 2)
 
             # cv2.imshow("Gray Frame", gray)
@@ -71,7 +75,7 @@ class PiMotion:
             key = cv2.waitKey(1)
             # if q entered whole process will stop
             if key == ord('q'):
-                break
+                quit()
 
     def save_motion_image(self, frame, bounding_boxes):
         """Save the motion detected image. """
@@ -93,14 +97,13 @@ class PiMotion:
 
         Based on Webcam Motion Detector from https://www.geeksforgeeks.org/webcam-motion-detector-python/
 
+        Bounding boxes are x, y, width, height. Origin is top left of the image.
         :param motion_thresh: 500 is low to capture everything, but gets a lot of leaf movement.
         :param frame:
         :return:
         """
         if frame is None:
             return None, None
-
-        motion = 0  # 0 = no motion, 1 = yes motion.
 
         og_frame = frame
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)  # Converting color image to gray_scale image
@@ -127,15 +130,44 @@ class PiMotion:
             if amount_of_motion < motion_thresh:  # this is the threshold for motion.
                 continue  # go to next contour.
 
-            motion = 1
             (x, y, w, h) = cv2.boundingRect(contour)
             bounding_boxes.append(f'{x} {y} {w} {h} {amount_of_motion}')
 
-        if motion == 1 and self.save_images:  # Save the image.
+        motion, bounding_boxes = self.motion_region(bounding_boxes)
+
+        if motion and self.save_images:  # Save the image.
             self.save_motion_image(og_frame, bounding_boxes)
 
         self.prev_frame = frame
         return og_frame, bounding_boxes
+
+    def motion_region(self, bounding_boxes):
+        """Set a rectangle where motion can be detected"""
+        positive_boxes = []
+        for box in bounding_boxes:
+            x, y, w, h, _ = [float(i) for i in box.split(' ')]
+            corners = (x, y), (x+w, y), (x, y+h), (x+w, y+h)
+            for corner in corners:
+                cx, cy = corner
+                if self.coord_in_rect(cx, cy):
+                    positive_boxes.append(box)
+        if len(positive_boxes) == 0:
+            return False, positive_boxes
+        else:
+            return True, positive_boxes
+
+    def coord_in_rect(self, x, y):
+        """
+        x, y is coordinage from origin of top left of image. Returns bool.
+        allowed_rectangle = x, y, w, h
+        """
+        if self.detection_region[0] <= x <= (self.detection_region[0] + self.detection_region[2]) and \
+                self.detection_region[1] <= y <= (self.detection_region[1] + self.detection_region[3]):
+            return True
+        else:
+            return False
+
+
 
     @staticmethod
     def crop_frame(frame, crop_xywh):
@@ -150,6 +182,7 @@ def arg_parse():
     parser.add_argument('--width', type=int, default=2592)
     parser.add_argument('--height', type=int, default=1944)
     parser.add_argument('--imsiz', type=int, default=1280)
+    parser.add_argument('--detection_region', type=list, default=[0, 250, 500, 1280])
     parser.add_argument('--on_mac', type=bool, default=False)
     return parser.parse_args()
 
@@ -159,4 +192,6 @@ if __name__ == '__main__':
     opt.on_mac = True
     d = PiMotion(opt.width, opt.height, opt.imsiz, opt.on_mac)
     for frame in d.stream():
-        d.motion_detector(frame)
+        # d.motion_detector(frame)
+        d._show_motion_live()
+
