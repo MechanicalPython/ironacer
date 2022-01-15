@@ -9,7 +9,7 @@ import time
 
 import cv2
 
-# todo - needs to reset the brightness every now and then.
+# todo - capture motion only in certain areas of the image.
 
 
 class PiMotion:
@@ -20,20 +20,21 @@ class PiMotion:
         self.height = height
         self.imsiz = imsiz
         self.on_mac = on_mac
-        self.set_video()
-        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.width)
-        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.height)
+
+        self.set_video()  # All parameters for the video are to go in this.
+
         x = (self.width - self.imsiz) / 2
         y = (self.height - self.imsiz) / 2
         self.crop_xywh = (int(x), int(y), self.imsiz, self.imsiz)
         self.save_images = save_images
 
     def set_video(self):
-        print('setting video.')
         if self.on_mac:
             self.cap = cv2.VideoCapture(0)
         else:
             self.cap = cv2.VideoCapture(0, cv2.CAP_V4L2)
+        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.width)
+        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.height)
 
     def stream(self):
         t = time.time()
