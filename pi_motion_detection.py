@@ -12,6 +12,10 @@ import cv2
 
 class PiMotion:
     def __init__(self, width, height, imsiz, detection_region, on_mac=False, save_images=True):
+        self.parent_folder = os.path.dirname(__file__)
+        if self.parent_folder == '':
+            self.parent_folder = '.'
+
         self.prev_frame = None
         self.detection_region = detection_region
         self.reset_freq = 5*60  # Frequency to reset the camera (in seconds).
@@ -80,12 +84,9 @@ class PiMotion:
     def save_motion_image(self, frame, bounding_boxes):
         """Save the motion detected image. """
         t = str(time.time())
-        parent_folder = os.path.dirname(__file__)
-        if parent_folder == '':
-            parent_folder = '.'
-        image_path = f'{parent_folder}/motion_detected/image/result-{t}.jpg'
+        image_path = f'{self.parent_folder}/motion_detected/image/result-{t}.jpg'
         cv2.imwrite(image_path, frame)  # Write image
-        label_path = f'{parent_folder}/motion_detected/label/result-{t}.txt'
+        label_path = f'{self.parent_folder}/motion_detected/label/result-{t}.txt'
         with open(label_path, 'w') as f:
             f.write('\n'.join(bounding_boxes))
 
@@ -166,8 +167,6 @@ class PiMotion:
         else:
             return False
 
-
-
     @staticmethod
     def crop_frame(frame, crop_xywh):
         x, y, w, h = crop_xywh
@@ -188,8 +187,7 @@ def arg_parse():
 
 if __name__ == '__main__':
     opt = arg_parse()
-    opt.on_mac = True
-    d = PiMotion(opt.width, opt.height, opt.imsiz, opt.detection_region, on_mac=True)
+    d = PiMotion(opt.width, opt.height, opt.imsiz, opt.detection_region, opt.on_mac)
     for frame in d.stream():
         d.motion_detector(frame)
         # d._show_motion_live()
