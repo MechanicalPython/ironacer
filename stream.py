@@ -1,83 +1,67 @@
-import logging
-import socketserver
-from http import server
-import argparse
-import cv2
+"""
+Stream raw cv2 video, as an array, that other aspects of the program can plug into.
 
-PAGE = """\
-<html>
-<head>
-<title>Ironacer Live View</title>
-</head>
-<body>
-<h1>Ironacer Live View</h1>
-<img src="stream.mjpg" width="1280" height="1280" />
-</body>
-</html>
 """
 
+import cv2
+import argparse
+import time
 
-class StreamingHandler(server.BaseHTTPRequestHandler):
-    def do_GET(self):
-        if self.path == '/':
-            self.send_response(301)
-            self.send_header('Location', '/index.html')
-            self.end_headers()
-        elif self.path == '/index.html':
-            content = PAGE.encode('utf-8')
-            self.send_response(200)
-            self.send_header('Content-Type', 'text/html')
-            self.send_header('Content-Length', len(content))
-            self.end_headers()
-            self.wfile.write(content)
-        elif self.path == '/stream.mjpg':
-            self.send_response(200)
-            self.send_header('Age', 0)
-            self.send_header('Cache-Control', 'no-cache, private')
-            self.send_header('Pragma', 'no-cache')
-            self.send_header('Content-Type', 'multipart/x-mixed-replace; boundary=FRAME')
-            self.end_headers()
-            try:
-                while True:
-                    frame = next(self.crop_video(cap, crop_xywh))
-                    self.wfile.write(b'--FRAME\r\n')
-                    self.send_header('Content-Type', 'image/jpeg')
-                    self.send_header('Content-Length', len(frame))
-                    self.end_headers()
-                    self.wfile.write(frame)
-                    self.wfile.write(b'\r\n')
-            except Exception as e:
-                logging.warning(
-                    'Removed streaming client %s: %s',
-                    self.client_address, str(e))
+
+class Streamer:
+    def __init__(self, width, height, imsiz, on_mac=False):
+        self.reset_freq = 5*60  # Frequency to reset the camera (in seconds).
+        self.width = width
+        self.height = height
+        self.imsiz = imsiz
+        self.on_mac = on_mac
+
+        self.set_video()  # All parameters for the video are to go in this.
+
+    def set_video(self):
+        if self.on_mac:
+            self.cap = cv2.VideoCapture(0)
         else:
-            self.send_error(404)
-            self.end_headers()
+            self.cap = cv2.VideoCapture(0, cv2.CAP_V4L2)
+        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.width)
+        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.height)
 
-    @staticmethod
-    def crop_video(cap, crop_xywh):
-        if not cap.isOpened():
-            raise Exception("Could not open video device")
-        x, y, w, h = crop_xywh
-        if cap.isOpened():
-            ret, frame = cap.read()
-            if ret:
-                frame = frame[y:y + h, x:x + w]
-                _, JPEG = cv2.imencode('.jpeg', frame, [cv2.IMWRITE_JPEG_QUALITY, 100])
-                yield JPEG.tobytes()
+    def get_frame(self):
+        t = time.time()
+        try:
+            while True:
+                if time.time() - t > self.reset_freq:
+                    self.set_video()
+                    t = time.time()
+                if self.cap.isOpened():
+                    ret, frame = self.cap.read()
+                    if ret:
+                        frame = cv2.resize(frame, (self.width, self.height))
+                        yield frame
+        finally:
+            self.cap.release()
 
 
-class StreamingServer(socketserver.ThreadingMixIn, server.HTTPServer):
-    allow_reuse_address = True
-    daemon_threads = True
+def show_frame(frame, rects=None):
+    """
 
+    :param frame:
+    :param rect: list of [x, y, w, h, label] to put up labels.
+    :return:
+    """
+    if rects is not None:
+        for rect in rects:
+            x, y, w, h, label = rect
+            x, y, w, h, label = int(x), int(y), int(w), int(h), str(label)
+            # making green rectangle around the moving object
+            cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 3)
+            cv2.putText(frame, label, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (36, 255, 12), 2)
 
-def arg_parse():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--width', type=int, default=2592)
-    parser.add_argument('--height', type=int, default=1944)
-    parser.add_argument('--size', type=int, default=1280)
-    return parser.parse_args()
+    cv2.imshow("Motion Box", frame)
+    key = cv2.waitKey(1)
+    # if q entered whole process will stop
+    if key == ord('q'):
+        return False
 
 
 # max - 3280 × 2464 pixels
@@ -85,17 +69,11 @@ def arg_parse():
 
 
 if __name__ == '__main__':
-    opt = arg_parse()
-    cap = cv2.VideoCapture(0, cv2.CAP_V4L2)
-    try:
-        cap.set(cv2.CAP_PROP_FRAME_WIDTH, opt.width)
-        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, opt.height)
-        x = (opt.width - opt.size) / 2
-        y = (opt.height - opt.size) / 2
-        crop_xywh = (int(x), int(y), opt.size, opt.size)
+    stream = Streamer(width=2592, height=1944, imsiz=1280)
+    while True:
+        frame = stream.stream()
+        show_frame(frame)
 
-        address = ('', 8000)
-        server = StreamingServer(address, StreamingHandler)
-        server.serve_forever()
-    finally:
-        cap.release()
+
+
+

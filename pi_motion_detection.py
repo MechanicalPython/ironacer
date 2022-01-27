@@ -2,16 +2,16 @@
 Script that can be run on the pi to detect motion for capturing data for yolo training.
 
 """
-
-import argparse
 import os
-import time
-
 import cv2
 
 
-class PiMotion:
+class MotionDetection:
     def __init__(self, width, height, imsiz, detection_region, on_mac=False, save_images=True):
+        """
+
+        :rtype: object
+        """
         self.parent_folder = os.path.dirname(__file__)
         if self.parent_folder == '':
             self.parent_folder = '.'
@@ -24,73 +24,12 @@ class PiMotion:
         self.imsiz = imsiz
         self.on_mac = on_mac
 
-        self.set_video()  # All parameters for the video are to go in this.
-
         x = (self.width - self.imsiz) / 2
         y = (self.height - self.imsiz) / 2
         self.crop_xywh = (int(x), int(y), self.imsiz, self.imsiz)
         self.save_images = save_images
 
-    def set_video(self):
-        if self.on_mac:
-            self.cap = cv2.VideoCapture(0)
-        else:
-            self.cap = cv2.VideoCapture(0, cv2.CAP_V4L2)
-        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.width)
-        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.height)
-
-    def stream(self):
-        t = time.time()
-        try:
-            while True:
-                if time.time() - t > self.reset_freq:
-                    self.set_video()
-                    t = time.time()
-                if self.cap.isOpened():
-                    ret, frame = self.cap.read()
-                    if ret:
-                        # frame = self.crop_frame(frame, self.crop_xywh)
-                        yield frame
-        finally:
-            self.cap.release()
-
-    def _show_motion_live(self):
-        for frame in d.stream():
-            frame, bounding_box = self.motion_detector(frame)
-            if frame is None:
-                continue
-            cv2.rectangle(frame,
-                          (self.detection_region[0], self.detection_region[1]),
-                          (self.detection_region[2], self.detection_region[3]),
-                          (255, 0, 0), 3)
-            for label in bounding_box:
-                x, y, w, h, amount_of_motion = label.split(' ')
-                x, y, w, h, amount_of_motion = int(x), int(y), int(w), int(h), str(amount_of_motion)
-                # making green rectangle around the moving object
-                cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 3)
-
-                cv2.putText(frame, amount_of_motion, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (36, 255, 12), 2)
-
-            # cv2.imshow("Gray Frame", gray)
-            # cv2.imshow("Difference Frame", diff_frame)
-            # cv2.imshow("Threshold Frame", thresh_frame)
-
-            cv2.imshow("Motion Box", frame)
-            key = cv2.waitKey(1)
-            # if q entered whole process will stop
-            if key == ord('q'):
-                break
-
-    def save_motion_image(self, frame, bounding_boxes):
-        """Save the motion detected image. """
-        t = str(time.time())
-        image_path = f'{self.parent_folder}/motion_detected/image/result-{t}.jpg'
-        cv2.imwrite(image_path, frame)  # Write image
-        label_path = f'{self.parent_folder}/motion_detected/label/result-{t}.txt'
-        with open(label_path, 'w') as f:
-            f.write('\n'.join(bounding_boxes))
-
-    def motion_detector(self, frame, motion_thresh=500):
+    def detect(self, frame, motion_thresh=500):
         """
         If there is motion between frame A and frame B, this saves frame B and the bounding boxes for that motion
         in a labels file.
@@ -100,12 +39,11 @@ class PiMotion:
         Bounding boxes are x, y, width, height. Origin is top left of the image.
         :param motion_thresh: 500 is low to capture everything, but gets a lot of leaf movement.
         :param frame:
-        :return:
+        :return: is_motion, list of [xyxy, amount_of_motion].  xyxy is list of 4 items.
         """
         if frame is None:
             return None, None
 
-        og_frame = frame
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)  # Converting color image to gray_scale image
         frame = cv2.GaussianBlur(frame, (21, 21), 0)
 
@@ -131,21 +69,19 @@ class PiMotion:
                 continue  # go to next contour.
 
             (x, y, w, h) = cv2.boundingRect(contour)
-            bounding_boxes.append(f'{x} {y} {w} {h} {amount_of_motion}')
+            xyxy = [x, y, x+w, y+h]  # Convert to top left and top right coords for compatibility with yolo convention.
+            bounding_boxes.append([xyxy, amount_of_motion])
 
-        motion, bounding_boxes = self.motion_region(bounding_boxes)
-
-        if motion and self.save_images:  # Save the image.
-            self.save_motion_image(og_frame, bounding_boxes)
+        is_motion, bounding_boxes = self.motion_region(bounding_boxes)
 
         self.prev_frame = frame
-        return og_frame, bounding_boxes
+        return is_motion, bounding_boxes
 
     def motion_region(self, bounding_boxes):
         """Set a rectangle where motion can be detected"""
         positive_boxes = []
         for box in bounding_boxes:
-            x, y, w, h, _ = [float(i) for i in box.split(' ')]
+            x, y, w, h, _ = box
             corners = (x, y), (x+w, y), (x, y+h), (x+w, y+h)
             for corner in corners:
                 cx, cy = corner
@@ -167,28 +103,12 @@ class PiMotion:
         else:
             return False
 
-    @staticmethod
-    def crop_frame(frame, crop_xywh):
-        x, y, w, h = crop_xywh
-        frame = frame[y:y + h, x:x + w]
-        # _, JPEG = cv2.imencode('.jpeg', frame, [cv2.IMWRITE_JPEG_QUALITY, 100])
-        return frame
-
-
-def arg_parse():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--width', type=int, default=2592)
-    parser.add_argument('--height', type=int, default=1944)
-    parser.add_argument('--imsiz', type=int, default=1280)
-    parser.add_argument('--detection_region', type=list, default=[0, 250, 500, 1280])
-    parser.add_argument('--on_mac', type=bool, default=False)
-    return parser.parse_args()
-
 
 if __name__ == '__main__':
-    opt = arg_parse()
-    d = PiMotion(opt.width, opt.height, opt.imsiz, opt.detection_region, opt.on_mac)
-    for frame in d.stream():
-        d.motion_detector(frame)
-        # d._show_motion_live()
+    import stream
+    streamer = stream.Streamer(width=2592, height=1944, imsiz=1280)
+    motion_detector = MotionDetection(width=2592, height=1944, imsiz=1280, detection_region=[0, 250, 500, 1280])
+    while True:
+        frame = streamer.get_frame()
+        results = motion_detector.detect(frame)
 

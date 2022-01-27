@@ -1,6 +1,6 @@
 #! /usr/local/bin/python3.7
 """
-Telegram bot either had to be run in a parallel thread to be used a a real time 2-way interaction, or it can be used
+Telegram bot either had to be run in a parallel thread to be used a real time 2-way interaction, or it can be used
 to passively send information at pre-determined times.
 """
 
