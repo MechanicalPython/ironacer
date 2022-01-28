@@ -7,7 +7,7 @@ import cv2
 
 
 class MotionDetection:
-    def __init__(self, width, height, imsiz, detection_region, on_mac=False, save_images=True):
+    def __init__(self, detection_region):
         """
 
         :rtype: object
@@ -19,15 +19,6 @@ class MotionDetection:
         self.prev_frame = None
         self.detection_region = detection_region
         self.reset_freq = 5*60  # Frequency to reset the camera (in seconds).
-        self.width = width
-        self.height = height
-        self.imsiz = imsiz
-        self.on_mac = on_mac
-
-        x = (self.width - self.imsiz) / 2
-        y = (self.height - self.imsiz) / 2
-        self.crop_xywh = (int(x), int(y), self.imsiz, self.imsiz)
-        self.save_images = save_images
 
     def detect(self, frame, motion_thresh=500):
         """
@@ -42,7 +33,7 @@ class MotionDetection:
         :return: is_motion, list of [xyxy, amount_of_motion].  xyxy is list of 4 items.
         """
         if frame is None:
-            return None, None
+            return False, None
 
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)  # Converting color image to gray_scale image
         frame = cv2.GaussianBlur(frame, (21, 21), 0)
@@ -67,26 +58,26 @@ class MotionDetection:
             amount_of_motion = cv2.contourArea(contour)
             if amount_of_motion < motion_thresh:  # this is the threshold for motion.
                 continue  # go to next contour.
-
             (x, y, w, h) = cv2.boundingRect(contour)
             xyxy = [x, y, x+w, y+h]  # Convert to top left and top right coords for compatibility with yolo convention.
             bounding_boxes.append([xyxy, amount_of_motion])
-
         is_motion, bounding_boxes = self.motion_region(bounding_boxes)
-
         self.prev_frame = frame
         return is_motion, bounding_boxes
 
     def motion_region(self, bounding_boxes):
-        """Set a rectangle where motion can be detected"""
+        """Set a rectangle where motion can be detected.
+        If any part of the motion box is in the detection region it'll be counted. """
         positive_boxes = []
         for box in bounding_boxes:
-            x, y, w, h, _ = box
-            corners = (x, y), (x+w, y), (x, y+h), (x+w, y+h)
+            xyxy, _ = box
+            x, y, a, b = xyxy  # x, y, a, b = top left, top right
+            corners = (x, y), (a, y), (x, b), (a, b)
             for corner in corners:
                 cx, cy = corner
                 if self.coord_in_rect(cx, cy):
                     positive_boxes.append(box)
+                    break  # To stop duplicates if 2 corners are in the detection region.
         if len(positive_boxes) == 0:
             return False, positive_boxes
         else:
@@ -105,10 +96,17 @@ class MotionDetection:
 
 
 if __name__ == '__main__':
-    import stream
-    streamer = stream.Streamer(width=2592, height=1944, imsiz=1280)
-    motion_detector = MotionDetection(width=2592, height=1944, imsiz=1280, detection_region=[0, 250, 500, 1280])
-    while True:
-        frame = streamer.get_frame()
-        results = motion_detector.detect(frame)
+    from stream import LoadWebcam, show_frame
+    motion_detector = MotionDetection(detection_region=[0, 250, 500, 1280])
+
+    with LoadWebcam() as stream:
+        for frame in stream:
+            is_motion, results = motion_detector.detect(frame)  # results = [[[x, y, x, y], motion],.. ]
+            rectangles = [[0, 250, 500, 1280, 'DETECT']]
+            if results is None:
+                continue
+            for xyxy, motion in results:
+                xyxy.append(motion)
+                rectangles.append(xyxy)
+            show_frame(frame, rects=rectangles)
 
