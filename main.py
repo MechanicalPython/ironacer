@@ -8,22 +8,17 @@ Camera image -> yolov5 -> if squirrel -> fire mechanism and send photo, else do 
 
 """
 
-import datetime
-import subprocess
 import time
 import argparse
 import sys
-import os
 import cv2
 
 
-from tenacity import retry, wait_fixed, retry_if_exception_type
-
 import telegram_bot
 import strike
-import stream
-import find
-import pi_motion_detection
+from stream import LoadWebcam
+from find import Detector
+from pi_motion_detection import MotionDetection
 
 # todo
 #  telegram to send photos to chat on request.
@@ -45,7 +40,7 @@ def save_results(frame, xyxy, label, type):
         f.write(f'{" ".join(xyxy)} {label}')
 
 
-def main(source='',
+def main(source=0,
          weights='yolov5n6_best.pt',
          imgsz=(1280, 1280),
          telegram_bot_mode=True,
@@ -54,62 +49,58 @@ def main(source='',
          inference=True,
          ):
 
-    # Set up the stream and the inference or motion detection classes as needed.
-    streamer = stream.Streamer(width=2592, height=1944, imsiz=1280)
     if inference:
-        yolo = find.Detector(weights, imgsz)
+        yolo = Detector(weights, imgsz)
 
     if motion_detection:
-        motion_detector = pi_motion_detection.MotionDetection(
-            width=2592, height=1944, imsiz=1280, detection_region=[0, 250, 500, 1280])
+        motion_detector = MotionDetection(detection_region=[0, 250, 500, 1280])
 
-    while True:
-        is_squirrel = False
-        is_motion = False
+    # Set up the stream and the inference or motion detection classes as needed.
+    with LoadWebcam() as stream:
+        for frame in stream:
 
-        frame = streamer.get_frame()
-        if inference:
-            is_squirrel, inference_result = yolo.inference(frame)
-            xyxy, conf, cls = inference_result   # xyxy is list of 4 items.
+            is_squirrel = False
+            is_motion = False
 
-            if is_squirrel:# Save image
-                save_results(frame, xyxy, f'{conf}%_Squirrel', 'Yolo')
+            if inference:
+                is_squirrel, inference_result = yolo.inference(frame)
+                xyxy, conf, cls = inference_result   # xyxy is list of 4 items.
 
-        if motion_detection:
-            is_motion, motion_detection_result = motion_detector.detect(frame)  # list of [xyxy, amount_of_motion]
-            xyxy, amount_of_motion = motion_detection_result
-            if is_motion:# Save image
-                save_results(frame, xyxy, amount_of_motion, 'Motion')
+                if is_squirrel:  # Save image
+                    save_results(frame, xyxy, f'{conf}%_Squirrel', 'Yolo')
 
+            if motion_detection:
+                is_motion, motion_detection_result = motion_detector.detect(frame)  # list of [xyxy, amount_of_motion]
+                xyxy, amount_of_motion = motion_detection_result
 
-        if not surveillance_mode:
-            strike.claymore()
-            # One day, strike.javelin(result)
+                if is_motion:  # Save image
+                    save_results(frame, xyxy, amount_of_motion, 'Motion')
 
-        if telegram_bot_mode:
-            if is_squirrel:
-                # Send video
-                pass
-            if is_motion:
-                # Send video
-                pass
+            if not surveillance_mode:
+                strike.claymore()
+                # One day, strike.javelin(result)
 
-            if telegram.new_message == 'send_photo':
-                send_photo(frame)
-
-
+            # if telegram_bot_mode:
+            #     if is_squirrel:
+            #         # Send video
+            #         pass
+            #     if is_motion:
+            #         # Send video
+            #         pass
+            #
+            #     if telegram.new_message == 'send_photo':
+            #         send_photo(frame)
 
 
 def arg_parse():
     parser = argparse.ArgumentParser()
     parser.add_argument('--source', type=str, default='http://ironacer.local:8000/stream.mjpg')
-    parser.add_argument('--surveillance_mode', type=bool, default=False, help='True = run pi surveillance to capture data. ')
-    parser.add_argument('--motion_detection', type=bool, default=True, help='Run motion detection')
-    parser.add_argument('--inference', type=bool, default=True, help='Run yolo inference or not.')
     parser.add_argument('--weights', type=bool, default='yolov5n6_best.pt', help='File path to yolo weights.pt')
     parser.add_argument('--imgsz', type=bool, default=(1280, 1280), help='tuple of inference image size.')
     parser.add_argument('--telegram_bot_mode', type=bool, default=True, help='Run telegram or not.')
-    parser.add_argument('--pi_mode', type=bool, default=False, help='Running on pi or not?')
+    parser.add_argument('--surveillance_mode', type=bool, default=False, help='True = run pi surveillance to capture data. ')
+    parser.add_argument('--motion_detection', type=bool, default=True, help='Run motion detection')
+    parser.add_argument('--inference', type=bool, default=True, help='Run yolo inference or not.')
     opt = parser.parse_args()
     return opt
 
@@ -117,10 +108,9 @@ def arg_parse():
 if __name__ == '__main__':
     opt = arg_parse()
     if len(sys.argv) == 1:  # Run this if from pycharm, otherwise it's command line.
-        opt.source = 'http://ironacer.local:8000/stream.mjpg'
+        opt.source = 0
         opt.surveillance_mode = True
         opt.motion_detection = True
         opt.inference = False
-        opt.pi_mode = False
     main(**vars(opt))
 
