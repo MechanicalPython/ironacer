@@ -60,7 +60,6 @@ class LoadWebcam:
         return self
 
     def __exit__(self, exc_type, exc_value, tb):
-        print('release')
         self.cap.release()
 
     def __iter__(self):
