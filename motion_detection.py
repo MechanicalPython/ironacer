@@ -94,7 +94,7 @@ class MotionDetection:
 
 
 if __name__ == '__main__':
-    from stream import LoadWebcam, show_frame
+    from stream import LoadWebcam
     motion_detector = MotionDetection(detection_region=[0, 250, 500, 1280])
 
     with LoadWebcam() as stream:
@@ -106,5 +106,4 @@ if __name__ == '__main__':
             for xyxy, motion in results:
                 xyxy.append(motion)
                 rectangles.append(xyxy)
-            show_frame(frame, rects=rectangles)
 

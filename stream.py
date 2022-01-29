@@ -108,11 +108,11 @@ if __name__ == '__main__':
     with LoadWebcam() as stream:
         for img in stream:
             show_frame(img)
-            # img = cv2.imencode('.jpg', img)[1].tobytes()  # cv2.imencode gives True, array, dtype
+            img = cv2.imencode('.jpg', img)[1].tobytes()  # cv2.imencode gives True, array, dtype
             # print(type(img))
-            # bot.send_photo(img)
+            bot.send_photo(img)
             # quit()
-
+            cv2.enco
 
 
 
