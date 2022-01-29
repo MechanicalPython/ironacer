@@ -64,6 +64,9 @@ def main(source=0,
         from motion_detection import MotionDetection
         motion_detector = MotionDetection(detection_region=[0, 250, 500, 1280])
 
+    if not surveillance_mode:
+        claymore = strike.Claymore()
+
     # Set up the stream and the inference or motion detection classes as needed.
     with LoadWebcam() as stream:
         for frame in stream:
@@ -85,7 +88,7 @@ def main(source=0,
                     save_results(frame, motion_detection_result, 'Motion')
 
             if not surveillance_mode:
-                strike.claymore()
+                claymore.detonate()
                 # One day, strike.javelin(result)
 
             # if telegram_bot_mode:
