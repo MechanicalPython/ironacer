@@ -47,7 +47,7 @@ def save_results(frame, xyxyl, type):
         f.write(label)
 
 
-def main(source=0,
+def main(source="0",
          weights='yolov5n6_best.pt',
          imgsz=(1280, 1280),
          telegram_bot_mode=True,
@@ -110,7 +110,7 @@ def boolean_string(s):
 
 def arg_parse():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--source', type=str, default=0)
+    parser.add_argument('--source', type=str, default="0")
     parser.add_argument('--weights', type=str, default='yolov5n6_best.pt', help='File path to yolo weights.pt')
     parser.add_argument('--imgsz', type=tuple, default=(1280, 1280), help='tuple of inference image size.')
     parser.add_argument('--telegram_bot_mode', type=boolean_string, default=True, help='Run telegram or not.')
