@@ -100,15 +100,21 @@ def main(source=0,
             #         send_photo(frame)
 
 
+def boolean_string(s):
+    if s not in {'False', 'True'}:
+        raise ValueError('Not a valid boolean string')
+    return s == 'True'
+
+
 def arg_parse():
     parser = argparse.ArgumentParser()
     parser.add_argument('--source', type=str, default=0)
-    parser.add_argument('--weights', type=bool, default='yolov5n6_best.pt', help='File path to yolo weights.pt')
-    parser.add_argument('--imgsz', type=bool, default=(1280, 1280), help='tuple of inference image size.')
-    parser.add_argument('--telegram_bot_mode', type=bool, default=True, help='Run telegram or not.')
-    parser.add_argument('--surveillance_mode', type=bool, default=False, help='True = run pi surveillance to capture data. ')
-    parser.add_argument('--motion_detection', type=bool, default=True, help='Run motion detection')
-    parser.add_argument('--inference', type=bool, default=True, help='Run yolo inference or not.')
+    parser.add_argument('--weights', type=str, default='yolov5n6_best.pt', help='File path to yolo weights.pt')
+    parser.add_argument('--imgsz', type=tuple, default=(1280, 1280), help='tuple of inference image size.')
+    parser.add_argument('--telegram_bot_mode', type=boolean_string, default=True, help='Run telegram or not.')
+    parser.add_argument('--surveillance_mode', type=boolean_string, default=False, help='True = do strike')
+    parser.add_argument('--motion_detection', type=boolean_string, default=True, help='Run motion detection')
+    parser.add_argument('--inference', type=boolean_string, default=True, help='Run yolo inference or not.')
     opt = parser.parse_args()
     return opt
 
