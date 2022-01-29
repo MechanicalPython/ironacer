@@ -54,6 +54,7 @@ def main(source=0,
          surveillance_mode=False,  # Don't run the strike functions.
          motion_detection=True,
          inference=True,
+         on_mac=False
          ):
 
     if inference:
@@ -68,11 +69,8 @@ def main(source=0,
         claymore = strike.Claymore()
 
     # Set up the stream and the inference or motion detection classes as needed.
-    with LoadWebcam() as stream:
+    with LoadWebcam(on_mac=on_mac) as stream:
         for frame in stream:
-
-            is_squirrel = False
-            is_motion = False
 
             if inference:
                 is_squirrel, inference_result = yolo.inference(frame)
@@ -119,6 +117,8 @@ def arg_parse():
     parser.add_argument('--surveillance_mode', type=boolean_string, default=False, help='True = do strike')
     parser.add_argument('--motion_detection', type=boolean_string, default=True, help='Run motion detection')
     parser.add_argument('--inference', type=boolean_string, default=True, help='Run yolo inference or not.')
+    parser.add_argument('--on_mac', type=boolean_string, default=False, help='True if running on mac.')
+
     opt = parser.parse_args()
     return opt
 
@@ -130,5 +130,6 @@ if __name__ == '__main__':
         opt.surveillance_mode = True
         opt.motion_detection = True
         opt.inference = False
+        opt.on_mac = True
     main(**vars(opt))
 
