@@ -69,7 +69,7 @@ def main(source=0,
         claymore = strike.Claymore()
 
     # Set up the stream and the inference or motion detection classes as needed.
-    with LoadWebcam(on_mac=on_mac) as stream:
+    with LoadWebcam(pipe=source, img_size=imgsz, on_mac=on_mac) as stream:
         for frame in stream:
 
             if inference:
@@ -126,7 +126,6 @@ def arg_parse():
 if __name__ == '__main__':
     opt = arg_parse()
     if len(sys.argv) == 1:  # Run this if from pycharm, otherwise it's command line.
-        opt.source = 0
         opt.surveillance_mode = True
         opt.motion_detection = True
         opt.inference = False
