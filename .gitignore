@@ -1,13 +1,9 @@
 /flickr_key
 /flickr_secret
 /telegram_token
-results/*.mp4
-training_wheels/images/*.jpg
-training_wheels/labels/*.txt
-motion_detected/image/*.jpg
-motion_detected/label/*.txt
+detected/image/*.jpg
+detected/label/*.txt
 data.yaml
-squirrels_dataset
 .idea
 *.jpg
 log.log

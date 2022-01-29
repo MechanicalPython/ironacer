@@ -19,7 +19,7 @@ import telegram_bot
 import strike
 from stream import LoadWebcam
 from find import Detector
-from pi_motion_detection import MotionDetection
+from motion_detection import MotionDetection
 
 # todo
 #  telegram to send photos to chat on request.
@@ -39,7 +39,6 @@ def save_results(frame, xyxyl, type):
     cv2.imwrite(image_path, frame)  # Write image
     label_path = f'{parent_folder}/detected/label/{type}_result-{t}.txt'
 
-    # todo - convert [[x, y, x, y, label], ] to string.
     label = ''
     for box in xyxyl:
         box = [str(i) for i in box]
