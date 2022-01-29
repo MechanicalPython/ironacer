@@ -200,5 +200,5 @@ def motion_detected_squirrel_organiser(conf_phot_num):
 
 
 if __name__ == '__main__':
-    motion_detect_img_dir(path='/Users/matt/Downloads/motion_detected/', start_number=1)
+    motion_detect_img_dir(path='/Users/matt/Downloads/detected/', start_number=1)
     # motion_detected_squirrel_organiser("164 - 171, 253 - 262, 397 - 415, 980 - 999, 1919 - 1929")

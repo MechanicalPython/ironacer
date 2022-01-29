@@ -88,7 +88,8 @@ def main(source=0,
                     save_results(frame, motion_detection_result, 'Motion')
 
             if not surveillance_mode:
-                claymore.detonate()
+                pass
+                # claymore.detonate()
                 # One day, strike.javelin(result)
 
             # if telegram_bot_mode:
