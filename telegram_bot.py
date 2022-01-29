@@ -35,24 +35,17 @@ class TelegramBot:
         update.message.reply_text('/photo to take a test photo. \n'
                                   '/ping to check connection.')
 
-    def status(self, update, context):
-        """
-        Replies with current status of the camera:
-        - Number of images in motion_detected
-        - Time of last seen squirrel
-        - Photo of current view?
-        - Current mode that it's in? Pi_mode, inference, etc?
-        """
-        update.message.reply_text('')
-
     def send_message(self, text):
         self.bot.send_message(self.chat_id, text)
 
     def send_photo(self, photo_bytes):
         self.bot.sendPhoto(self.chat_id, photo_bytes, timeout=300)
 
-    def send_video(self, vid_path):
-        self.bot.sendVideo(self.chat_id, open(vid_path, 'rb'), timeout=300)
+    def send_video(self, vid_bytes):
+        self.bot.sendVideo(self.chat_id, vid_bytes, timeout=300)
+
+    def get_last_msg(self):
+        print(self.bot.Message())
 
     def error(self, update: object, context: CallbackContext):
         self.logger.error(msg="Exception while handling an update:", exc_info=context.error)
@@ -74,7 +67,6 @@ class TelegramBot:
     def main(self):
         self.dispatcher.add_handler(CommandHandler('start', self.start))
         self.dispatcher.add_handler(CommandHandler('help', self.help))
-        self.dispatcher.add_handler(CommandHandler('status', self.status))
 
         self.dispatcher.add_error_handler(self.error)
 
@@ -87,4 +79,5 @@ class TelegramBot:
 
 if __name__ == '__main__':
     bot = TelegramBot()
-    bot.send_photo('./test.jpg')
+    bot.get_last_msg()
+
