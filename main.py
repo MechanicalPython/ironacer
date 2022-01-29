@@ -21,7 +21,7 @@ import telegram_bot
 import strike
 from stream import LoadWebcam
 
-
+# Have it as a class so that it can store the last 20 seconds of footage
 # todo
 #  Send photos on request,
 #  run telegram, inference, and motion detection on seperate threads to speed it up.
@@ -33,22 +33,117 @@ if parent_folder == '':
     parent_folder = '.'
 
 
-def save_results(frame, xyxyl, type):
-    """Saves a clean image and the label for that image.
-    label = x, y, x, y, label.
-    """
-    t = str(time.time())
-    image_path = f'{parent_folder}/detected/image/{type}_result-{t}.jpg'
-    cv2.imwrite(image_path, frame)  # Write image
-    label_path = f'{parent_folder}/detected/label/{type}_result-{t}.txt'
+class IronAcer:
+    def __init__(self,
+                 source="0",
+                 weights='yolov5n6_best.pt',
+                 imgsz=1280,  # Only every going to be square as yolo needs square inputs.
+                 telegram_bot_mode=True,
+                 surveillance_mode=False,  # Don't run the strike functions.
+                 motion_detection=True,
+                 inference=True,
+                 on_mac=False):
+        self.source = source
+        self.weights = weights
+        self.imgsz = imgsz
+        self.telegram_bot_mode = telegram_bot_mode
+        self.surveillance_mode = surveillance_mode
+        self.motion_detection = motion_detection
+        self.inference = inference
+        self.on_mac = on_mac
 
-    label = ''
-    for box in xyxyl:
-        box = [str(i) for i in box]
-        label = f'{label}{" ".join(box)}\n'
+        if self.inference:
+            from find import Detector
+            self.yolo = Detector(weights, imgsz)
 
-    with open(label_path, 'w') as f:
-        f.write(label)
+        if self.motion_detection:
+            from motion_detection import MotionDetection
+            self.motion_detector = MotionDetection(detection_region=[0, 250, 500, 1280])
+
+        if not surveillance_mode:
+            self.claymore = strike.Claymore()
+
+        self.bot = telegram_bot.TelegramBot()
+        self.sun = suntime.Sun(51.5, -0.1)  # London lat long.
+        self.sunrise = self.sun.get_sunrise_time().replace(tzinfo=None)
+        self.sunset = self.sun.get_local_sunset_time().replace(tzinfo=None)
+
+        self.vid_writer =
+
+
+    def main(self):
+        with LoadWebcam(pipe=self.source, img_size=self.imgsz, on_mac=self.on_mac) as stream:
+            for frame in stream:
+                now = datetime.datetime.now()
+
+                if not self.sunrise < now < self.sunset:  # Outside of daylight, so skip it.
+                    motion = [i for i in os.listdir(f'{parent_folder}/detected/image/') if 'Motion' in i]
+                    msg = f"{len(motion)} motion detected photos currently saved"
+                    self.bot.send_message(msg)
+
+                    time.sleep((self.sunrise - now).seconds)  # Wait until sunrise.
+                    self.sunrise = self.sun.get_sunrise_time().replace(tzinfo=None)
+                    self.sunset = self.sun.get_local_sunset_time().replace(tzinfo=None)
+                    continue
+
+                is_squirrel = False
+
+                if self.inference:
+                    is_squirrel, inference_result = self.yolo.inference(frame)
+                    xyxy, conf, cls = inference_result  # xyxy is list of 4 items.
+
+                    if is_squirrel:  # Save image
+                        xyxy.append(conf)  # add conf to xyxy to save it.
+                        self.save_results(frame, xyxy, 'Yolo')
+
+                if self.motion_detection:
+                    is_motion, motion_detection_result = self.motion_detector.detect(frame)  # list of [xyxy, amount_of_motion]
+                    if is_motion:  # Save image
+                        self.save_results(frame, motion_detection_result, 'Motion')
+
+                if not self.surveillance_mode:
+                    pass
+                    # claymore.detonate()
+                    # One day, strike.javelin(result)
+
+                if self.telegram_bot_mode:
+                    self.bot.get
+                    if is_squirrel:
+                        # todo - this
+                        self.bot.send_video()
+
+
+    @staticmethod
+    def save_results(frame, xyxyl, type):
+        """Saves a clean image and the label for that image.
+        label = x, y, x, y, label.
+        """
+        t = str(time.time())
+        image_path = f'{parent_folder}/detected/image/{type}_result-{t}.jpg'
+        cv2.imwrite(image_path, frame)  # Write image
+        label_path = f'{parent_folder}/detected/label/{type}_result-{t}.txt'
+
+        label = ''
+        for box in xyxyl:
+            box = [str(i) for i in box]
+            label = f'{label}{" ".join(box)}\n'
+
+        with open(label_path, 'w') as f:
+            f.write(label)
+
+    @staticmethod
+    def add_label_to_frame(frame, xyxyl):
+        """
+        xyxyl = [[x, y, x, y, label], ] top left, bottom right.
+        """
+        for label in xyxyl:
+            x, y, x2, y2, amount_of_motion = label
+            x, y, x2, y2, amount_of_motion = int(x), int(y), int(x2), int(y2), str(amount_of_motion)
+            # making green rectangle around the moving object
+            cv2.rectangle(frame, (x, y), (x2, y2), (0, 255, 0), 3)
+            cv2.putText(frame, amount_of_motion, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (36, 255, 12), 2)
+        return frame
+
 
 
 def main(source="0",
@@ -113,9 +208,11 @@ def main(source="0",
                 # claymore.detonate()
                 # One day, strike.javelin(result)
 
-            if telegram_bot_mode and is_squirrel:
-                # todo - this
-                bot.send_video()
+            if telegram_bot_mode:
+                bot.get
+                if is_squirrel:
+                    # todo - this
+                    bot.send_video()
 
 
 def boolean_string(s):
@@ -146,5 +243,6 @@ if __name__ == '__main__':
         opt.motion_detection = True
         opt.inference = False
         opt.on_mac = True
-    main(**vars(opt))
+    IronAcer(**vars(opt)).main()
+    # main(**vars(opt))
 
