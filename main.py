@@ -18,8 +18,7 @@ import cv2
 import telegram_bot
 import strike
 from stream import LoadWebcam
-from find import Detector
-from motion_detection import MotionDetection
+
 
 # todo
 #  telegram to send photos to chat on request.
@@ -58,9 +57,11 @@ def main(source=0,
          ):
 
     if inference:
+        from find import Detector
         yolo = Detector(weights, imgsz)
 
     if motion_detection:
+        from motion_detection import MotionDetection
         motion_detector = MotionDetection(detection_region=[0, 250, 500, 1280])
 
     # Set up the stream and the inference or motion detection classes as needed.
