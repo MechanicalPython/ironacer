@@ -124,7 +124,7 @@ class FlickrDownload:
         print(f'Took {round(self.time.time() - start, 2)} seconds')
 
 
-def motion_detect_img_dir(path='motion_detected/', start_number=1):
+def motion_detect_img_dir(path='detected/', start_number=1):
     """Shows images and where the motion was detected."""
     import os
     import cv2
@@ -133,10 +133,12 @@ def motion_detect_img_dir(path='motion_detected/', start_number=1):
 
     images_dir = f'{path}image/'
     for image in [f for f in os.listdir(images_dir) if f.endswith('.jpg')]:
+        if 'Motion' not in image:
+            continue
         serial_number = image.split('-')[1].replace('.jpg', '')
         # Reading frame(image) from video
-        frame = cv2.imread(f'{path}image/result-{serial_number}.jpg')
-        labels = open(f'{path}label/result-{serial_number}.txt', 'r').read().split('\n')
+        frame = cv2.imread(f'{path}image/Motion_result-{serial_number}.jpg')
+        labels = open(f'{path}label/Motion_result-{serial_number}.txt', 'r').read().split('\n')
         for label in labels:
             x, y, w, h, amount_of_motion = label.split(' ')
             x, y, w, h, amount_of_motion = int(x), int(y), int(w), int(h), str(amount_of_motion)
@@ -144,19 +146,15 @@ def motion_detect_img_dir(path='motion_detected/', start_number=1):
             cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 3)
             cv2.putText(frame, amount_of_motion, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (36, 255, 12), 2)
 
-        # cv2.imshow("Gray Frame", gray)
-        # cv2.imshow("Difference Frame", diff_frame)
-        # cv2.imshow("Threshold Frame", thresh_frame)
-
         cv2.imshow("Motion Box", frame)
         time.sleep(1)
         key = cv2.waitKey(1)
         # if q entered whole process will stop
         if key == ord('q'):
-            print(f'Last image shown: {i}')
+            print(f'Last image shown: {image}')
             break
         elif key == ord('t'):
-            print(f'Image: {i}')
+            print(f'Image: {image}')
 
     # Destroying all the windows
     cv2.destroyAllWindows()
