@@ -35,8 +35,13 @@ class LoadWebcam:
     Returns just the image, the augmentation needed for inference is done by find.py.
     """
 
-    def __init__(self, pipe='0', img_size=1280, stride=32, on_mac=True):
-        self.img_size = img_size
+    def __init__(self, pipe='0', capture_size=(3280, 2464), output_img_size=1280, stride=32, on_mac=True):
+        self.capture_size = capture_size
+
+        x = (capture_size[0] - output_img_size) / 2
+        y = (capture_size[1] - output_img_size) / 2
+        self.crop_xywh = (int(x), int(y), output_img_size, output_img_size)
+
         self.stride = stride
         self.pipe = eval(pipe) if pipe.isnumeric() else pipe
         self.on_mac = on_mac
@@ -49,10 +54,13 @@ class LoadWebcam:
             self.cap = cv2.VideoCapture(0)
         else:
             self.cap = cv2.VideoCapture(0, cv2.CAP_V4L2)
-
-        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.img_size)
-        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.img_size)
+        time.sleep(0.5)
+        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.capture_size[0])
+        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.capture_size[1])
         self.cap.set(cv2.CAP_PROP_BUFFERSIZE, 3)  # set buffer size
+        self.cap.set(cv2.CAP_PROP_FPS, 15)
+        # self.cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 0.75)
+        self.cap.set(cv2.CAP_PROP_EXPOSURE, 10)
 
     def __enter__(self):
         print('start camera')
@@ -70,14 +78,18 @@ class LoadWebcam:
         self.count += 1
         # Read frame
         ret_val, img = self.cap.read()
+
+        # Crop image to correct size.
+        x, y, w, h = self.crop_xywh
+        img = img[y:y + h, x:x + w]
+
         if time.time() - self.t > self.reset_freq:
             self.reset_camera()
             self.t = time.time()
         return img
 
     def reset_camera(self):
-        self.cap.release()
-        self.set_camera()
+        self.cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 0.75)
 
 
 # max - 3280 × 2464 pixels
@@ -89,8 +101,9 @@ if __name__ == '__main__':
     bot = telegram_bot.TelegramBot()
     with LoadWebcam() as stream:
         for img in stream:
+            # show_frame(img)
             img = cv2.imencode('.jpg', img)[1].tobytes()  # cv2.imencode gives True, array, dtype
-            print(type(img))
+            # print(type(img))
             bot.send_photo(img)
             quit()
 
