@@ -11,6 +11,7 @@ Camera image -> yolov5 -> if squirrel -> fire mechanism and send photo, else do 
 import time
 import argparse
 import sys
+import os
 import cv2
 
 
@@ -25,9 +26,11 @@ from pi_motion_detection import MotionDetection
 #  auto get sunrise and sunset.
 
 
-def save_results(frame, xyxy, label, type):
-    """Saves a clean image and the label for that image"""
-    parent_folder = __file__
+def save_results(frame, xyxyl, type):
+    """Saves a clean image and the label for that image.
+    label = x, y, x, y, label.
+    """
+    parent_folder = os.path.dirname(__file__)
     if parent_folder == '':
         parent_folder = '.'
 
@@ -36,8 +39,14 @@ def save_results(frame, xyxy, label, type):
     cv2.imwrite(image_path, frame)  # Write image
     label_path = f'{parent_folder}/detected/label/{type}_result-{t}.txt'
 
+    # todo - convert [[x, y, x, y, label], ] to string.
+    label = ''
+    for box in xyxyl:
+        box = [str(i) for i in box]
+        label = f'{label}{" ".join(box)}\n'
+
     with open(label_path, 'w') as f:
-        f.write(f'{" ".join(xyxy)} {label}')
+        f.write(label)
 
 
 def main(source=0,
@@ -67,14 +76,13 @@ def main(source=0,
                 xyxy, conf, cls = inference_result   # xyxy is list of 4 items.
 
                 if is_squirrel:  # Save image
-                    save_results(frame, xyxy, f'{conf}%_Squirrel', 'Yolo')
+                    xyxy.append(conf)  # add conf to xyxy to save it.
+                    save_results(frame, xyxy, 'Yolo')
 
             if motion_detection:
                 is_motion, motion_detection_result = motion_detector.detect(frame)  # list of [xyxy, amount_of_motion]
-                xyxy, amount_of_motion = motion_detection_result
-
                 if is_motion:  # Save image
-                    save_results(frame, xyxy, amount_of_motion, 'Motion')
+                    save_results(frame, motion_detection_result, 'Motion')
 
             if not surveillance_mode:
                 strike.claymore()
@@ -94,7 +102,7 @@ def main(source=0,
 
 def arg_parse():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--source', type=str, default='http://ironacer.local:8000/stream.mjpg')
+    parser.add_argument('--source', type=str, default=0)
     parser.add_argument('--weights', type=bool, default='yolov5n6_best.pt', help='File path to yolo weights.pt')
     parser.add_argument('--imgsz', type=bool, default=(1280, 1280), help='tuple of inference image size.')
     parser.add_argument('--telegram_bot_mode', type=bool, default=True, help='Run telegram or not.')

@@ -30,17 +30,17 @@ class MotionDetection:
         Bounding boxes are x, y, width, height. Origin is top left of the image.
         :param motion_thresh: 500 is low to capture everything, but gets a lot of leaf movement.
         :param frame:
-        :return: is_motion, list of [xyxy, amount_of_motion].  xyxy is list of 4 items.
+        :return: is_motion, list of [x, y, x, y, amount of motion]
         """
         if frame is None:
-            return False, None
+            return False, [None, None, None, None, None]
 
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)  # Converting color image to gray_scale image
         frame = cv2.GaussianBlur(frame, (21, 21), 0)
 
         if self.prev_frame is None:  # Init first frame to gray background.
             self.prev_frame = frame
-            return None, None
+            return None, [None, None, None, None, None]
 
         # Difference between previous frame and current frame(which is GaussianBlur)
         diff_frame = cv2.absdiff(self.prev_frame, frame)
@@ -59,8 +59,7 @@ class MotionDetection:
             if amount_of_motion < motion_thresh:  # this is the threshold for motion.
                 continue  # go to next contour.
             (x, y, w, h) = cv2.boundingRect(contour)
-            xyxy = [x, y, x+w, y+h]  # Convert to top left and top right coords for compatibility with yolo convention.
-            bounding_boxes.append([xyxy, amount_of_motion])
+            bounding_boxes.append([x, y, x+w, y+h, amount_of_motion])  # Convert to top left and top right coords for compatibility with yolo convention.
         is_motion, bounding_boxes = self.motion_region(bounding_boxes)
         self.prev_frame = frame
         return is_motion, bounding_boxes
@@ -70,8 +69,7 @@ class MotionDetection:
         If any part of the motion box is in the detection region it'll be counted. """
         positive_boxes = []
         for box in bounding_boxes:
-            xyxy, _ = box
-            x, y, a, b = xyxy  # x, y, a, b = top left, top right
+            x, y, a, b, _ = box  # x, y, a, b = top left, top right
             corners = (x, y), (a, y), (x, b), (a, b)
             for corner in corners:
                 cx, cy = corner
@@ -79,7 +77,7 @@ class MotionDetection:
                     positive_boxes.append(box)
                     break  # To stop duplicates if 2 corners are in the detection region.
         if len(positive_boxes) == 0:
-            return False, positive_boxes
+            return False, [None, None, None, None, None]
         else:
             return True, positive_boxes
 

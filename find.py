@@ -4,18 +4,14 @@ FIND.py - find the exact location of the squirrel in the image in 3d space.
 
 import os
 import cv2
-from __init__ import next_free_path
 import torch
 import torch.backends.cudnn as cudnn
 import sys
 import numpy as np
 
-import time
-
 sys.path.insert(0, 'yolov5/')  # To allow importing from submodule yolov5.
 from yolov5.utils.augmentations import letterbox
 from yolov5.models.common import DetectMultiBackend
-from yolov5.utils.datasets import LoadStreams
 from yolov5.utils.general import (non_max_suppression, scale_coords)
 from yolov5.utils.plots import Annotator, colors
 from yolov5.utils.torch_utils import select_device
@@ -112,7 +108,7 @@ class Detector:
                 results.append([xyxy, confidence, cls])
         return isSquirrel, results
 
-    def save_labeled(self, frame, isSquirrel, inference):  # Save the video.
+    def save_labeled_video(self, frame, isSquirrel, inference):  # Save the video.
         """Should just need a frame and det.
         return None when the video is not ready. Return video path when ready to send out.
 
@@ -154,34 +150,29 @@ class Detector:
                     vid_done = str(f'{save_dir}result-{prev_vid_num}.mp4')
         return vid_done
 
-    def save_train_data(self, im0, isSquirrel, inference):
-        """When a squirrel is detected, save the image and label for future training.
-        :return
-        """
-        if isSquirrel:
-            if not os.path.exists('training_wheels/images/'):
-                os.mkdir('training_wheels/images/')
-            if not os.path.exists('training_wheels/labels/'):
-                os.mkdir('training_wheels/labels/')
 
-            # Write image and box to training_wheels for future training data.
-            image_path = next_free_path('training_wheels/images/result-%s.jpg')
-            labels_path = image_path.replace('images', 'labels').replace('jpg', 'txt')  # To ensure label-image match.
-            cv2.imwrite(image_path, im0)  # Write image
-            with open(labels_path, 'w') as f:  # Convert coordinates and save as txt file.
-                # class (0 for squirrel, x_center y_center width height from top right of image and normalised to be 0-1.
-                xmin, ymin, xmax, ymax = inference[0]
-                im_width, im_height = im0.shape[1], im0.shape[0]
-                x_center = (ymin + ((ymax - ymin) / 2)) / im_width
-                y_center = (xmin + ((xmax - xmin) / 2)) / im_height
-                width = (xmax - xmin) / im_width
-                height = (ymax - ymin) / im_height
-                f.write(f'0 {str(x_center)} {str(y_center)} {str(width)} {str(height)}')
+def convert_xyxy_to_yolo_label(frame, xyxy):
+    """
+    class (0 for squirrel, x_center y_center width height from top right of image and normalised to be 0-1.
+    return:
+    """
+
+    xmin, ymin, xmax, ymax = xyxy[0]
+    im_width, im_height = frame.shape[1], frame.shape[0]
+    x_center = (ymin + ((ymax - ymin) / 2)) / im_width
+    y_center = (xmin + ((xmax - xmin) / 2)) / im_height
+    width = (xmax - xmin) / im_width
+    height = (ymax - ymin) / im_height
+    return [0, x_center, y_center, width, height]
 
 
 if __name__ == '__main__':
-    import stream
-    streamer = stream.Streamer(width=2592, height=1944, imsiz=1280)
+    from stream import LoadWebcam
 
+    detect = Detector()
 
+    with LoadWebcam() as stream:
+        for frame in stream:
+            inf = detect.inference(frame)
+            print(inf)
 
