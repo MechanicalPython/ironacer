@@ -48,8 +48,8 @@ class TelegramBot:
     def send_message(self, text):
         self.bot.send_message(self.chat_id, text)
 
-    def send_photo(self, photo_path):
-        self.bot.sendPhoto(self.chat_id, open(photo_path, 'rb'), timeout=300)
+    def send_photo(self, photo_bytes):
+        self.bot.sendPhoto(self.chat_id, photo_bytes, timeout=300)
 
     def send_video(self, vid_path):
         self.bot.sendVideo(self.chat_id, open(vid_path, 'rb'), timeout=300)
@@ -87,4 +87,4 @@ class TelegramBot:
 
 if __name__ == '__main__':
     bot = TelegramBot()
-    # bot.send_photo('./test.jpg')
+    bot.send_photo('./test.jpg')

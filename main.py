@@ -8,11 +8,13 @@ Camera image -> yolov5 -> if squirrel -> fire mechanism and send photo, else do 
 
 """
 
+import datetime
 import time
 import argparse
 import sys
 import os
 import cv2
+import suntime
 
 
 import telegram_bot
@@ -21,18 +23,20 @@ from stream import LoadWebcam
 
 
 # todo
-#  telegram to send photos to chat on request.
-#  auto get sunrise and sunset.
+#  Send photos on request,
+#  run telegram, inference, and motion detection on seperate threads to speed it up.
+
+
+# Set as global variable.
+parent_folder = os.path.dirname(__file__)
+if parent_folder == '':
+    parent_folder = '.'
 
 
 def save_results(frame, xyxyl, type):
     """Saves a clean image and the label for that image.
     label = x, y, x, y, label.
     """
-    parent_folder = os.path.dirname(__file__)
-    if parent_folder == '':
-        parent_folder = '.'
-
     t = str(time.time())
     image_path = f'{parent_folder}/detected/image/{type}_result-{t}.jpg'
     cv2.imwrite(image_path, frame)  # Write image
@@ -68,9 +72,28 @@ def main(source="0",
     if not surveillance_mode:
         claymore = strike.Claymore()
 
+    bot = telegram_bot.TelegramBot()
+
+    sun = suntime.Sun(51.5, -0.1)  # London lat long.
+    sunrise = sun.get_sunrise_time().replace(tzinfo=None)
+    sunset = sun.get_local_sunset_time().replace(tzinfo=None)
+
     # Set up the stream and the inference or motion detection classes as needed.
     with LoadWebcam(pipe=source, img_size=imgsz, on_mac=on_mac) as stream:
         for frame in stream:
+            now = datetime.datetime.now()
+
+            if not sunrise < now < sunset:  # Outside of daylight, so skip it.
+                motion = [i for i in os.listdir(f'{parent_folder}/detected/image/') if 'Motion' in i]
+                msg = f"{len(motion)} motion detected photos currently saved"
+                bot.send_message(msg)
+
+                time.sleep((sunrise - now).seconds)  # Wait until sunrise.
+                sunrise = sun.get_sunrise_time().replace(tzinfo=None)
+                sunset = sun.get_local_sunset_time().replace(tzinfo=None)
+                continue
+
+            is_squirrel = False
 
             if inference:
                 is_squirrel, inference_result = yolo.inference(frame)
@@ -90,16 +113,9 @@ def main(source="0",
                 # claymore.detonate()
                 # One day, strike.javelin(result)
 
-            # if telegram_bot_mode:
-            #     if is_squirrel:
-            #         # Send video
-            #         pass
-            #     if is_motion:
-            #         # Send video
-            #         pass
-            #
-            #     if telegram.new_message == 'send_photo':
-            #         send_photo(frame)
+            if telegram_bot_mode and is_squirrel:
+                # todo - this
+                bot.send_video()
 
 
 def boolean_string(s):
