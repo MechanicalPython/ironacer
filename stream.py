@@ -37,10 +37,7 @@ class LoadWebcam:
 
     def __init__(self, pipe='0', capture_size=(3280, 2464), output_img_size=1280, stride=32, on_mac=True):
         self.capture_size = capture_size
-
-        x = (capture_size[0] - output_img_size) / 2
-        y = (capture_size[1] - output_img_size) / 2
-        self.crop_xywh = (int(x), int(y), output_img_size, output_img_size)
+        self.output_img_size = output_img_size
 
         self.stride = stride
         self.pipe = eval(pipe) if pipe.isnumeric() else pipe
@@ -59,8 +56,17 @@ class LoadWebcam:
         self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.capture_size[1])
         self.cap.set(cv2.CAP_PROP_BUFFERSIZE, 3)  # set buffer size
         self.cap.set(cv2.CAP_PROP_FPS, 15)
-        # self.cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 0.75)
-        self.cap.set(cv2.CAP_PROP_EXPOSURE, 10)
+        self.cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 0.75)
+
+        width, height = self.cap.get(cv2.CAP_PROP_FRAME_WIDTH), self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
+
+        x1 = int((width / 2) - (self.output_img_size / 2))
+        y1 = int((height / 2) - (self.output_img_size / 2))
+
+        x2 = int((width / 2) + (self.output_img_size / 2))
+        y2 = int((height / 2) + (self.output_img_size / 2))
+
+        self.crop_xyxy = [x1, y1, x2, y2]
 
     def __enter__(self):
         print('start camera')
@@ -80,8 +86,8 @@ class LoadWebcam:
         ret_val, img = self.cap.read()
 
         # Crop image to correct size.
-        x, y, w, h = self.crop_xywh
-        img = img[y:y + h, x:x + w]
+        x1, y1, x2, y2 = self.crop_xyxy
+        img = img[y1:y2, x1:x2]  # y1:y2, x1:x2 where x1y1 it top left and x2y2 is bottom right.
 
         if time.time() - self.t > self.reset_freq:
             self.reset_camera()
@@ -101,11 +107,11 @@ if __name__ == '__main__':
     bot = telegram_bot.TelegramBot()
     with LoadWebcam() as stream:
         for img in stream:
-            # show_frame(img)
-            img = cv2.imencode('.jpg', img)[1].tobytes()  # cv2.imencode gives True, array, dtype
+            show_frame(img)
+            # img = cv2.imencode('.jpg', img)[1].tobytes()  # cv2.imencode gives True, array, dtype
             # print(type(img))
-            bot.send_photo(img)
-            quit()
+            # bot.send_photo(img)
+            # quit()
 
 
 
