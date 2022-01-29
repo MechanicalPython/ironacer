@@ -68,11 +68,8 @@ class IronAcer:
         self.sunrise = self.sun.get_sunrise_time().replace(tzinfo=None)
         self.sunset = self.sun.get_local_sunset_time().replace(tzinfo=None)
 
-        self.vid_writer =
-
-
     def main(self):
-        with LoadWebcam(pipe=self.source, img_size=self.imgsz, on_mac=self.on_mac) as stream:
+        with LoadWebcam(pipe=self.source, output_img_size=self.imgsz, on_mac=self.on_mac) as stream:
             for frame in stream:
                 now = datetime.datetime.now()
 
@@ -84,6 +81,9 @@ class IronAcer:
                     time.sleep((self.sunrise - now).seconds)  # Wait until sunrise.
                     self.sunrise = self.sun.get_sunrise_time().replace(tzinfo=None)
                     self.sunset = self.sun.get_local_sunset_time().replace(tzinfo=None)
+                    frame = self.add_label_to_frame(stream.__next__(),
+                                                    self.motion_detector.detection_region.append('Dectection Area'))
+                    self.bot.photo = cv2.imencode('.jpg', frame)[1].tobytes()
                     continue
 
                 is_squirrel = False
@@ -107,9 +107,10 @@ class IronAcer:
                     # One day, strike.javelin(result)
 
                 if self.telegram_bot_mode:
-                    self.bot.get
+
                     if is_squirrel:
                         # todo - this
+                        pass
                         self.bot.send_video()
 
 
@@ -145,76 +146,6 @@ class IronAcer:
         return frame
 
 
-
-def main(source="0",
-         weights='yolov5n6_best.pt',
-         imgsz=(1280, 1280),
-         telegram_bot_mode=True,
-         surveillance_mode=False,  # Don't run the strike functions.
-         motion_detection=True,
-         inference=True,
-         on_mac=False
-         ):
-
-    if inference:
-        from find import Detector
-        yolo = Detector(weights, imgsz)
-
-    if motion_detection:
-        from motion_detection import MotionDetection
-        motion_detector = MotionDetection(detection_region=[0, 250, 500, 1280])
-
-    if not surveillance_mode:
-        claymore = strike.Claymore()
-
-    bot = telegram_bot.TelegramBot()
-
-    sun = suntime.Sun(51.5, -0.1)  # London lat long.
-    sunrise = sun.get_sunrise_time().replace(tzinfo=None)
-    sunset = sun.get_local_sunset_time().replace(tzinfo=None)
-
-    # Set up the stream and the inference or motion detection classes as needed.
-    with LoadWebcam(pipe=source, img_size=imgsz, on_mac=on_mac) as stream:
-        for frame in stream:
-            now = datetime.datetime.now()
-
-            if not sunrise < now < sunset:  # Outside of daylight, so skip it.
-                motion = [i for i in os.listdir(f'{parent_folder}/detected/image/') if 'Motion' in i]
-                msg = f"{len(motion)} motion detected photos currently saved"
-                bot.send_message(msg)
-
-                time.sleep((sunrise - now).seconds)  # Wait until sunrise.
-                sunrise = sun.get_sunrise_time().replace(tzinfo=None)
-                sunset = sun.get_local_sunset_time().replace(tzinfo=None)
-                continue
-
-            is_squirrel = False
-
-            if inference:
-                is_squirrel, inference_result = yolo.inference(frame)
-                xyxy, conf, cls = inference_result   # xyxy is list of 4 items.
-
-                if is_squirrel:  # Save image
-                    xyxy.append(conf)  # add conf to xyxy to save it.
-                    save_results(frame, xyxy, 'Yolo')
-
-            if motion_detection:
-                is_motion, motion_detection_result = motion_detector.detect(frame)  # list of [xyxy, amount_of_motion]
-                if is_motion:  # Save image
-                    save_results(frame, motion_detection_result, 'Motion')
-
-            if not surveillance_mode:
-                pass
-                # claymore.detonate()
-                # One day, strike.javelin(result)
-
-            if telegram_bot_mode:
-                bot.get
-                if is_squirrel:
-                    # todo - this
-                    bot.send_video()
-
-
 def boolean_string(s):
     if s not in {'False', 'True'}:
         raise ValueError('Not a valid boolean string')
@@ -243,6 +174,7 @@ if __name__ == '__main__':
         opt.motion_detection = True
         opt.inference = False
         opt.on_mac = True
+
     IronAcer(**vars(opt)).main()
     # main(**vars(opt))
 
