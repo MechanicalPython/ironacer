@@ -111,7 +111,7 @@ class IronAcer:
                     if is_squirrel:
                         # todo - this
                         pass
-                        self.bot.send_video()
+                        # self.bot.send_video()
 
 
     @staticmethod

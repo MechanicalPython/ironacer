@@ -44,9 +44,6 @@ class TelegramBot:
     def send_video(self, vid_bytes):
         self.bot.sendVideo(self.chat_id, vid_bytes, timeout=300)
 
-    def get_last_msg(self):
-        print(self.bot.Message())
-
     def error(self, update: object, context: CallbackContext):
         self.logger.error(msg="Exception while handling an update:", exc_info=context.error)
         tb_list = traceback.format_exception(None, context.error, context.error.__traceback__)
@@ -79,5 +76,5 @@ class TelegramBot:
 
 if __name__ == '__main__':
     bot = TelegramBot()
-    bot.get_last_msg()
+    bot.main()
 
