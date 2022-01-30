@@ -115,11 +115,11 @@ class IronAcer:
                         pass
                         # self.bot.send_video()
 
-                if True:
-                    motion_detection_result.append(self.detection_region)
-                    # print(motion_detection_result)
-                    frame = self.add_label_to_frame(frame, motion_detection_result)
-                    show_frame(frame)
+                # if True:
+                #     motion_detection_result.append(self.detection_region)
+                #     # print(motion_detection_result)
+                #     frame = self.add_label_to_frame(frame, motion_detection_result)
+                #     show_frame(frame)
 
     @staticmethod
     def save_results(frame, xyxyl, type):
