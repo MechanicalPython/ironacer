@@ -37,7 +37,7 @@ class IronAcer:
                  source="0",
                  weights='yolov5n6_best.pt',
                  imgsz=1280,  # Only every going to be square as yolo needs square inputs.
-                 detection_region='0,350,1280,400',
+                 detection_region='0,350,1280,600',
                  telegram_bot_mode=True,
                  surveillance_mode=False,  # Don't run the strike functions.
                  motion_detection=True,

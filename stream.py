@@ -50,7 +50,7 @@ class LoadWebcam:
             self.cap = cv2.VideoCapture(0)
         else:
             self.cap = cv2.VideoCapture(0, cv2.CAP_V4L2)
-        time.sleep(0.5)
+        time.sleep(1)
         self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.capture_size[0])
         self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.capture_size[1])
         self.cap.set(cv2.CAP_PROP_BUFFERSIZE, 3)  # set buffer size
