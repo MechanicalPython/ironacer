@@ -70,12 +70,20 @@ class IronAcer:
         self.sunrise = self.sun.get_sunrise_time().replace(tzinfo=None)
         self.sunset = self.sun.get_local_sunset_time().replace(tzinfo=None)
 
+        self.has_sent_start_photo = False
+
     def main(self):
         with LoadWebcam(pipe=self.source, output_img_size=self.imgsz, on_mac=self.on_mac) as stream:
             for frame in stream:
                 now = datetime.datetime.now()
 
+                if self.has_sent_start_photo is False:
+                    frame = self.add_label_to_frame(frame, self.motion_detector.detection_region.append('Dectection Area'))
+                    self.bot.photo = cv2.imencode('.jpg', frame)[1].tobytes()
+                    self.has_sent_start_photo = True
+
                 if not self.sunrise < now < self.sunset:  # Outside of daylight, so skip it.
+                    self.has_sent_start_photo = False
                     motion = [i for i in os.listdir(f'{parent_folder}/detected/image/') if 'Motion' in i]
                     msg = f"{len(motion)} motion detected photos currently saved"
                     self.bot.send_message(msg)
@@ -83,9 +91,7 @@ class IronAcer:
                     time.sleep((self.sunrise - now).seconds)  # Wait until sunrise.
                     self.sunrise = self.sun.get_sunrise_time().replace(tzinfo=None)
                     self.sunset = self.sun.get_local_sunset_time().replace(tzinfo=None)
-                    frame = self.add_label_to_frame(stream.__next__(),
-                                                    self.motion_detector.detection_region.append('Dectection Area'))
-                    self.bot.photo = cv2.imencode('.jpg', frame)[1].tobytes()
+
                     continue
 
                 is_squirrel = False
