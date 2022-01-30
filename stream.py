@@ -107,7 +107,7 @@ class LoadWebcam:
 if __name__ == '__main__':
     import telegram_bot
     bot = telegram_bot.TelegramBot()
-    with LoadWebcam() as stream:
+    with LoadWebcam(on_mac=False) as stream:
         for img in stream:
             if stream is None:
                 print('None')
