@@ -84,6 +84,8 @@ class LoadWebcam:
         self.count += 1
         # Read frame
         ret_val, img = self.cap.read()
+        if img is None:
+            return None
 
         # Crop image to correct size.
         x1, y1, x2, y2 = self.crop_xyxy

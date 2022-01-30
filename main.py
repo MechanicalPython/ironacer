@@ -75,6 +75,9 @@ class IronAcer:
     def main(self):
         with LoadWebcam(pipe=self.source, output_img_size=self.imgsz, on_mac=self.on_mac) as stream:
             for frame in stream:
+                if frame is None:
+                    time.sleep(1)
+                    continue
                 now = datetime.datetime.now()
                 if self.has_sent_start_photo is False and frame is not None:
                     frame = self.add_label_to_frame(frame, [self.detection_region])
