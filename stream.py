@@ -53,8 +53,9 @@ class LoadWebcam:
 
         self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.capture_size[0])
         self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.capture_size[1])
-        self.cap.set(cv2.CAP_PROP_BUFFERSIZE, 3)  # set buffer size
+        self.cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)  # set buffer size
         self.cap.set(cv2.CAP_PROP_FPS, 15)
+        self.cap.read()
         self.cap.read()
         self.cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 0.75)
         time.sleep(1)
