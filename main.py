@@ -76,10 +76,9 @@ class IronAcer:
         with LoadWebcam(pipe=self.source, output_img_size=self.imgsz, on_mac=self.on_mac) as stream:
             for frame in stream:
                 now = datetime.datetime.now()
-
-                if self.has_sent_start_photo is False:
-                    frame = self.add_label_to_frame(frame, self.motion_detector.detection_region.append('Dectection Area'))
-                    self.bot.photo = cv2.imencode('.jpg', frame)[1].tobytes()
+                if self.has_sent_start_photo is False and frame is not None:
+                    frame = self.add_label_to_frame(frame, [self.detection_region])
+                    self.bot.send_photo(cv2.imencode('.jpg', frame)[1].tobytes())
                     self.has_sent_start_photo = True
 
                 if not self.sunrise < now < self.sunset:  # Outside of daylight, so skip it.
