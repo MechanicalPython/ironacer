@@ -98,6 +98,7 @@ class LoadWebcam:
         return img
 
     def reset_camera(self):
+        self.cap.read()
         self.cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 0.75)
 
 
