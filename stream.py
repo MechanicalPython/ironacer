@@ -46,6 +46,10 @@ class LoadWebcam:
         self.t = time.time()
 
     def set_camera(self):
+        # https://github.com/yuripourre/v4l2-ctl-opencv/issues/6
+
+        # 0.75 is manual control.
+        #
         if self.on_mac:
             self.cap = cv2.VideoCapture(0)
         else:
@@ -53,11 +57,10 @@ class LoadWebcam:
 
         self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.capture_size[0])
         self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.capture_size[1])
-        self.cap.set(cv2.CAP_PROP_BUFFERSIZE, 3)  # set buffer size
+        self.cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)  # set buffer size
         self.cap.set(cv2.CAP_PROP_FPS, 15)
-        self.cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 0.75)
-        for i in range(0, 5):
-            self.cap.read()
+        # self.cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, self.cap.get(cv2.CAP_PROP_AUTO_EXPOSURE))
+        self.cap.read()  # Clear buffer
         time.sleep(1)
 
         width, height = self.cap.get(cv2.CAP_PROP_FRAME_WIDTH), self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
