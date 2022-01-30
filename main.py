@@ -23,7 +23,6 @@ from stream import LoadWebcam
 
 # Have it as a class so that it can store the last 20 seconds of footage
 # todo
-#  Send photos on request,
 #  run telegram, inference, and motion detection on seperate threads to speed it up.
 
 
@@ -38,11 +37,13 @@ class IronAcer:
                  source="0",
                  weights='yolov5n6_best.pt',
                  imgsz=1280,  # Only every going to be square as yolo needs square inputs.
+                 detection_region='0,350,1280,400',
                  telegram_bot_mode=True,
                  surveillance_mode=False,  # Don't run the strike functions.
                  motion_detection=True,
                  inference=True,
                  on_mac=False):
+        self.detection_region = [int(i) for i in detection_region.split(',')]
         self.source = source
         self.weights = weights
         self.imgsz = imgsz
@@ -58,7 +59,7 @@ class IronAcer:
 
         if self.motion_detection:
             from motion_detection import MotionDetection
-            self.motion_detector = MotionDetection(detection_region=[0, 250, 500, 1280])
+            self.motion_detector = MotionDetection(detection_region=self.detection_region)
 
         if not surveillance_mode:
             self.claymore = strike.Claymore()
@@ -113,7 +114,6 @@ class IronAcer:
                         pass
                         # self.bot.send_video()
 
-
     @staticmethod
     def save_results(frame, xyxyl, type):
         """Saves a clean image and the label for that image.
@@ -157,14 +157,13 @@ def arg_parse():
     parser.add_argument('--source', type=str, default="0")
     parser.add_argument('--weights', type=str, default='yolov5n6_best.pt', help='File path to yolo weights.pt')
     parser.add_argument('--imgsz', type=int, default=1280, help='Square image size.')
+    parser.add_argument('--detection_region', type=str, default='0,350,1280,400', help='Set detection region:x,y,x,y')
     parser.add_argument('--telegram_bot_mode', type=boolean_string, default=True, help='Run telegram or not.')
     parser.add_argument('--surveillance_mode', type=boolean_string, default=False, help='True = do strike')
     parser.add_argument('--motion_detection', type=boolean_string, default=True, help='Run motion detection')
     parser.add_argument('--inference', type=boolean_string, default=True, help='Run yolo inference or not.')
     parser.add_argument('--on_mac', type=boolean_string, default=False, help='True if running on mac.')
-
-    opt = parser.parse_args()
-    return opt
+    return parser.parse_args()
 
 
 if __name__ == '__main__':

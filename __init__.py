@@ -35,96 +35,7 @@ def next_free_path(path_pattern):
     return path_pattern % b
 
 
-class FlickrDownload:
-    """
-    A basic class to download images from a flickr search. Uses flickr api so requires public and private keys to
-    be saved in the ironacer directory.
-
-    Use: FlickrDownload([image tag to be searches], max_downloads=2000).main()
-    Files saved to working directory as
-        data/tag1/tag_1.jpg
-                 /tag_2.jpg
-            /tag2/...
-
-    NB: Must be run with python 3.7 for deprecation reasons.
-
-    """
-    # from flickrapi import FlickrAPI
-    import requests
-    import os
-    import time
-
-    def __init__(self, image_tags, max_downloads=2000):
-        try:
-            self.KEY = open("flickr_key", 'r').read()
-            self.SECRET = open("flickr_secret", 'r').read()
-        except FileNotFoundError as e:
-            raise(e, 'Public or private flickr api key not found as: flickr_key and flickr_secret')
-        self.sizes = ["url_o", "url_k", "url_h", "url_l", "url_c"]
-        self.image_tags = image_tags
-        self.max = max_downloads
-
-    def get_photos(self, image_tag):
-        extras = ','.join(self.sizes)
-        flickr = self.FlickrAPI(self.KEY, self.SECRET)
-        photos = flickr.walk(text=image_tag,
-                             extras=extras,
-                             privacy_filter=1,
-                             per_page=50,
-                             sort='relevance')
-        return photos
-
-    def get_url(self, photo):
-        for i in range(len(self.sizes)):
-            url = photo.get(self.sizes[i])
-            if url:
-                return url
-
-    def get_urls(self, image_tag):
-        photos = self.get_photos(image_tag)
-        counter = 0
-        urls = []
-
-        for photo in photos:
-            if counter < self.max:
-                url = self.get_url(photo)
-                if url:
-                    urls.append(url)
-                    counter += 1
-            else:
-                break
-        return urls
-
-    def download_images(self, urls, path):
-        if not self.os.path.isdir(path):
-            self.os.makedirs(path)
-
-        for url in urls:
-            image_name = url.split("/")[-1]
-            image_path = self.os.path.join(path, image_name)
-
-            if not self.os.path.isfile(image_path):  # ignore if already downloaded
-                response = self.requests.get(url, stream=True)
-                try:
-                    with open(image_path, 'wb') as outfile:
-                        outfile.write(response.content)
-                except self.requests.exceptions.ChunkedEncodingError as e:
-                    print(f'{e} for {url}')
-
-    def main(self):
-        start = self.time.time()
-        for tag in self.image_tags:
-            print('Getting urls for ', tag)
-            urls = self.get_urls(tag)
-
-            print(f'Downloading {len(urls)} images for {tag}')
-            path = self.os.path.join('data', tag)
-            self.download_images(urls, path)
-
-        print(f'Took {round(self.time.time() - start, 2)} seconds')
-
-
-def motion_detect_img_dir(path='detected/', start_number=1):
+def motion_detect_img_dir(path='detected/', start_number=1, detect_region=['0', '350', '1280', '400', 'Detect']):
     """Shows images and where the motion was detected."""
     import os
     import cv2
@@ -132,14 +43,18 @@ def motion_detect_img_dir(path='detected/', start_number=1):
     # Loop to treat stack of image as video
 
     images_dir = f'{path}image/'
+    os.listdir(images_dir)
     for image in [f for f in os.listdir(images_dir) if f.endswith('.jpg')]:
         if 'Motion' not in image:
             continue
         serial_number = image.split('-')[1].replace('.jpg', '')
         # Reading frame(image) from video
         frame = cv2.imread(f'{path}image/Motion_result-{serial_number}.jpg')
-        labels = open(f'{path}label/Motion_result-{serial_number}.txt', 'r').read().split('\n')
+        labels = open(f'{path}label/Motion_result-{serial_number}.txt', 'r').read().strip().split('\n')
+
+        labels.append(' '.join(detect_region))
         for label in labels:
+            print(len(label))
             x, y, w, h, amount_of_motion = label.split(' ')
             x, y, w, h, amount_of_motion = int(x), int(y), int(w), int(h), str(amount_of_motion)
             # making green rectangle around the moving object
@@ -200,5 +115,5 @@ def motion_detected_squirrel_organiser(conf_phot_num):
 
 
 if __name__ == '__main__':
-    motion_detect_img_dir(path='/Users/matt/Downloads/detected/', start_number=1)
+    motion_detect_img_dir(path='/Users/matt/detected/', start_number=1)
     # motion_detected_squirrel_organiser("164 - 171, 253 - 262, 397 - 415, 980 - 999, 1919 - 1929")
