@@ -109,8 +109,7 @@ if __name__ == '__main__':
     bot = telegram_bot.TelegramBot()
     with LoadWebcam(on_mac=False) as stream:
         for img in stream:
-            print(len(img))
-            if stream is None:
+            if img is None:
                 print('None')
                 time.sleep(1)
                 continue
