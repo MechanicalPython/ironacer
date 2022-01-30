@@ -33,14 +33,14 @@ class MotionDetection:
         :return: is_motion, list of [x, y, x, y, amount of motion]
         """
         if frame is None:
-            return False, [None, None, None, None, None]
+            return False, [[None, None, None, None, None]]
 
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)  # Converting color image to gray_scale image
         frame = cv2.GaussianBlur(frame, (21, 21), 0)
 
         if self.prev_frame is None:  # Init first frame to gray background.
             self.prev_frame = frame
-            return None, [None, None, None, None, None]
+            return None, [[None, None, None, None, None]]
 
         # Difference between previous frame and current frame(which is GaussianBlur)
         diff_frame = cv2.absdiff(self.prev_frame, frame)
@@ -77,17 +77,17 @@ class MotionDetection:
                     positive_boxes.append(box)
                     break  # To stop duplicates if 2 corners are in the detection region.
         if len(positive_boxes) == 0:
-            return False, [None, None, None, None, None]
+            return False, [[None, None, None, None, None]]
         else:
             return True, positive_boxes
 
     def coord_in_rect(self, x, y):
         """
         x, y is coordinage from origin of top left of image. Returns bool.
-        allowed_rectangle = x, y, w, h
+        detection region is in top left bottom right xyxy coords.
         """
-        if self.detection_region[0] <= x <= (self.detection_region[0] + self.detection_region[2]) and \
-                self.detection_region[1] <= y <= (self.detection_region[1] + self.detection_region[3]):
+        if self.detection_region[0] <= x <= (self.detection_region[2]) and \
+                self.detection_region[1] <= y <= (self.detection_region[3]):
             return True
         else:
             return False

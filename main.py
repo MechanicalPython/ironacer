@@ -19,7 +19,7 @@ import suntime
 
 import telegram_bot
 import strike
-from stream import LoadWebcam
+from stream import LoadWebcam, show_frame
 
 # Have it as a class so that it can store the last 20 seconds of footage
 # todo
@@ -59,6 +59,7 @@ class IronAcer:
 
         if self.motion_detection:
             from motion_detection import MotionDetection
+            print(self.detection_region)
             self.motion_detector = MotionDetection(detection_region=self.detection_region)
 
         if not surveillance_mode:
@@ -114,6 +115,12 @@ class IronAcer:
                         pass
                         # self.bot.send_video()
 
+                if True:
+                    motion_detection_result.append(self.detection_region)
+                    # print(motion_detection_result)
+                    frame = self.add_label_to_frame(frame, motion_detection_result)
+                    show_frame(frame)
+
     @staticmethod
     def save_results(frame, xyxyl, type):
         """Saves a clean image and the label for that image.
@@ -138,6 +145,10 @@ class IronAcer:
         xyxyl = [[x, y, x, y, label], ] top left, bottom right.
         """
         for label in xyxyl:
+            if None in label:
+                continue
+            if len(label) == 4:
+                label.append(' ')
             x, y, x2, y2, amount_of_motion = label
             x, y, x2, y2, amount_of_motion = int(x), int(y), int(x2), int(y2), str(amount_of_motion)
             # making green rectangle around the moving object
@@ -169,6 +180,8 @@ def arg_parse():
 if __name__ == '__main__':
     opt = arg_parse()
     if len(sys.argv) == 1:  # Run this if from pycharm, otherwise it's command line.
+        opt.imgsz = 720
+        opt.detection_region = '400,400,500,500'
         opt.surveillance_mode = True
         opt.motion_detection = True
         opt.inference = False
