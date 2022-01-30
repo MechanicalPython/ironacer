@@ -109,13 +109,14 @@ if __name__ == '__main__':
     bot = telegram_bot.TelegramBot()
     with LoadWebcam() as stream:
         for img in stream:
-            show_frame(img)
+            if stream is None:
+                print('None')
+                time.sleep(1)
+                continue
             img = cv2.imencode('.jpg', img)[1].tobytes()  # cv2.imencode gives True, array, dtype
             # print(type(img))
             bot.send_photo(img)
-            # quit()
-            cv2.enco
-
+            quit()
 
 
 
