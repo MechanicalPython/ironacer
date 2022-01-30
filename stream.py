@@ -34,8 +34,7 @@ class LoadWebcam:
     Taken and modified from yolov5/utils LoadWebcam.
     Returns just the image, the augmentation needed for inference is done by find.py.
     """
-
-    def __init__(self, pipe='0', capture_size=(3280, 2464), output_img_size=1280, stride=32, on_mac=True):
+    def __init__(self, pipe='0', capture_size=(2592, 1944), output_img_size=1280, stride=32, on_mac=True):
         self.capture_size = capture_size
         self.output_img_size = output_img_size
 
