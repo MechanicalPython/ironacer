@@ -44,35 +44,36 @@ def motion_detect_img_dir(path='detected/', start_number=1, detect_region=['0', 
 
     images_dir = f'{path}image/'
     os.listdir(images_dir)
-    for image in [f for f in os.listdir(images_dir) if f.endswith('.jpg')]:
-        if 'Motion' not in image:
-            continue
-        serial_number = image.split('-')[1].replace('.jpg', '')
-        # Reading frame(image) from video
-        frame = cv2.imread(f'{path}image/Motion_result-{serial_number}.jpg')
-        labels = open(f'{path}label/Motion_result-{serial_number}.txt', 'r').read().strip().split('\n')
+    while True:
+        for image in [f for f in os.listdir(images_dir) if f.endswith('.jpg')]:
+            if 'Motion' not in image:
+                continue
+            serial_number = image.split('-')[1].replace('.jpg', '')
+            # Reading frame(image) from video
+            frame = cv2.imread(f'{path}image/Motion_result-{serial_number}.jpg')
+            labels = open(f'{path}label/Motion_result-{serial_number}.txt', 'r').read().strip().split('\n')
 
-        labels.append(' '.join(detect_region))
-        for label in labels:
-            print(len(label))
-            x, y, w, h, amount_of_motion = label.split(' ')
-            x, y, w, h, amount_of_motion = int(x), int(y), int(w), int(h), str(amount_of_motion)
-            # making green rectangle around the moving object
-            cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 3)
-            cv2.putText(frame, amount_of_motion, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (36, 255, 12), 2)
+            labels.append(' '.join(detect_region))
+            for label in labels:
+                print(len(label))
+                x, y, w, h, amount_of_motion = label.split(' ')
+                x, y, w, h, amount_of_motion = int(x), int(y), int(w), int(h), str(amount_of_motion)
+                # making green rectangle around the moving object
+                cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 3)
+                cv2.putText(frame, amount_of_motion, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (36, 255, 12), 2)
 
-        cv2.imshow("Motion Box", frame)
-        time.sleep(1)
-        key = cv2.waitKey(1)
-        # if q entered whole process will stop
-        if key == ord('q'):
-            print(f'Last image shown: {image}')
-            break
-        elif key == ord('t'):
-            print(f'Image: {image}')
+            cv2.imshow("Motion Box", frame)
+            time.sleep(1)
+            key = cv2.waitKey(1)
+            # if q entered whole process will stop
+            if key == ord('q'):
+                print(f'Last image shown: {image}')
+                break
+            elif key == ord('t'):
+                print(f'Image: {image}')
 
-    # Destroying all the windows
-    cv2.destroyAllWindows()
+        # Destroying all the windows
+        cv2.destroyAllWindows()
 
 
 def motion_detected_squirrel_organiser(conf_phot_num):
@@ -115,5 +116,5 @@ def motion_detected_squirrel_organiser(conf_phot_num):
 
 
 if __name__ == '__main__':
-    motion_detect_img_dir(path='/Users/matt/detected/', start_number=1)
+    motion_detect_img_dir(path='/Users/matt/Downloads/Archive/', start_number=1)
     # motion_detected_squirrel_organiser("164 - 171, 253 - 262, 397 - 415, 980 - 999, 1919 - 1929")
