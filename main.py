@@ -8,22 +8,30 @@ Camera image -> yolov5 -> if squirrel -> fire mechanism and send photo, else do 
 
 """
 
-import datetime
-import time
 import argparse
-import sys
+import datetime
 import os
+import smtplib
+import ssl
+import sys
+import time
+import zipfile
+from email import encoders
+from email.mime.base import MIMEBase
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+
 import cv2
 import suntime
 
-
-import telegram_bot
 import strike
-from stream import LoadWebcam, show_frame
+import telegram_bot
+from stream import LoadWebcam
 
 # Have it as a class so that it can store the last 20 seconds of footage
 # todo
 #  run telegram, inference, and motion detection on seperate threads to speed it up.
+#  Auto send data to icloud email address?
 
 
 # Set as global variable.
@@ -59,13 +67,13 @@ class IronAcer:
 
         if self.motion_detection:
             from motion_detection import MotionDetection
-            print(self.detection_region)
             self.motion_detector = MotionDetection(detection_region=self.detection_region)
 
         if not surveillance_mode:
             self.claymore = strike.Claymore()
 
         self.bot = telegram_bot.TelegramBot()
+        # self.bot.chat_id = 1706759043  # Change it to private chat for testing.
         self.sun = suntime.Sun(51.5, -0.1)  # London lat long.
         self.sunrise = self.sun.get_sunrise_time().replace(tzinfo=None)
         self.sunset = self.sun.get_local_sunset_time().replace(tzinfo=None)
@@ -89,6 +97,7 @@ class IronAcer:
                     motion = [i for i in os.listdir(f'{parent_folder}/detected/image/') if 'Motion' in i]
                     msg = f"{len(motion)} motion detected photos currently saved"
                     self.bot.send_message(msg)
+                    # self.send_images_email()
 
                     time.sleep((self.sunrise - now).seconds)  # Wait until sunrise.
                     self.sunrise = self.sun.get_sunrise_time().replace(tzinfo=None)
@@ -163,6 +172,57 @@ class IronAcer:
             cv2.rectangle(frame, (x, y), (x2, y2), (0, 255, 0), 3)
             cv2.putText(frame, amount_of_motion, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (36, 255, 12), 2)
         return frame
+
+    @staticmethod
+    def send_images_email():
+        # Zip folder
+        zip_file = f"{parent_folder}/detected.zip"
+        zf = zipfile.ZipFile(zip_file, "w")
+        for dirname, subdirs, files in os.walk(f'{parent_folder}/detected/'):
+            zf.write(dirname)
+            for filename in files:
+                zf.write(os.path.join(dirname, filename))
+        zf.close()
+
+        myemail, apple_id, psk = open(f'{parent_folder}/email_auth', 'r').readlines()
+
+        subject = f"{datetime.datetime.now().strftime('%Y-%m-%d')} Ironacer Detected"
+        body = ""
+
+        # Create a multipart message and set headers
+        message = MIMEMultipart()
+        message["From"] = myemail
+        message["To"] = myemail
+        message["Subject"] = subject
+
+        # Add body to email
+        message.attach(MIMEText(body, "plain"))
+
+        filename = zip_file  # In same directory as script
+
+        # Open PDF file in binary mode
+        with open(filename, "rb") as attachment:
+            part = MIMEBase("application", "octet-stream")
+            part.set_payload(attachment.read())
+
+        # Encode file in ASCII characters to send by email
+        encoders.encode_base64(part)
+
+        # Add header as key/value pair to attachment part
+        part.add_header(
+            "Content-Disposition",
+            f"attachment; filename= {filename}",
+        )
+
+        # Add attachment to message and convert message to string
+        message.attach(part)
+        text = message.as_string()
+
+        # Log in to server using secure context and send email
+        context = ssl.create_default_context()
+        with smtplib.SMTP_SSL('smtp.mail.me.com', 587, context=context) as server:
+            server.login(apple_id, psk)
+            server.sendmail(myemail, myemail, text)
 
 
 def boolean_string(s):

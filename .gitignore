@@ -8,3 +8,4 @@ data.yaml
 *.jpg
 /venv/
 *.log
+/email_auth
