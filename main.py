@@ -65,7 +65,7 @@ class IronAcer:
             self.claymore = strike.Claymore()
 
         self.bot = telegram_bot.TelegramBot()
-        self.bot.chat_id = 1706759043  # Change it to private chat for testing.
+        # self.bot.chat_id = 1706759043  # Change it to private chat for testing.
 
         self.sun = suntime.Sun(51.5, -0.1)  # London lat long.
         self.sunrise = self.sun.get_sunrise_time().replace(tzinfo=None)
