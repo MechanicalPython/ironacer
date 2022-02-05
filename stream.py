@@ -130,16 +130,15 @@ class LoadWebcam:
 if __name__ == '__main__':
     import telegram_bot
     bot = telegram_bot.TelegramBot()
-    with LoadWebcam(on_mac=False) as stream:
+    exp = -12
+    with LoadWebcam(on_mac=True) as stream:
         for img in stream:
             if img is None:
-                print('None')
-                time.sleep(1)
                 continue
-            img = cv2.imencode('.jpg', img)[1].tobytes()  # cv2.imencode gives True, array, dtype
-            # print(type(img))
-            bot.send_photo(img)
-            quit()
+            stream.cap.set(cv2.CAP_PROP_EXPOSURE, exp)
+            print(stream.cap.get(cv2.CAP_PROP_EXPOSURE), exp)
+            exp += 1
+            show_frame(img)
 
 
 

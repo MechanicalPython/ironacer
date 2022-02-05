@@ -16,10 +16,6 @@ import ssl
 import sys
 import time
 import zipfile
-from email import encoders
-from email.mime.base import MIMEBase
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
 
 import cv2
 import suntime
@@ -73,7 +69,8 @@ class IronAcer:
             self.claymore = strike.Claymore()
 
         self.bot = telegram_bot.TelegramBot()
-        # self.bot.chat_id = 1706759043  # Change it to private chat for testing.
+        self.bot.chat_id = 1706759043  # Change it to private chat for testing.
+
         self.sun = suntime.Sun(51.5, -0.1)  # London lat long.
         self.sunrise = self.sun.get_sunrise_time().replace(tzinfo=None)
         self.sunset = self.sun.get_local_sunset_time().replace(tzinfo=None)
@@ -81,12 +78,14 @@ class IronAcer:
         self.has_sent_start_photo = False
 
     def main(self):
+        now = datetime.datetime(year=2022, month=2, day=5, hour=14, minute=00)
         with LoadWebcam(pipe=self.source, output_img_size=self.imgsz, on_mac=self.on_mac) as stream:
             for frame in stream:
                 if frame is None:
                     time.sleep(1)
                     continue
-                now = datetime.datetime.now()
+                # now = datetime.datetime.now()
+                now += datetime.timedelta(minutes=10)
                 if self.has_sent_start_photo is False and frame is not None:
                     frame = self.add_label_to_frame(frame, [self.detection_region])
                     self.bot.send_photo(cv2.imencode('.jpg', frame)[1].tobytes())
@@ -97,7 +96,7 @@ class IronAcer:
                     motion = [i for i in os.listdir(f'{parent_folder}/detected/image/') if 'Motion' in i]
                     msg = f"{len(motion)} motion detected photos currently saved"
                     self.bot.send_message(msg)
-                    # self.send_images_email()
+                    self.send_images()
 
                     time.sleep((self.sunrise - now).seconds)  # Wait until sunrise.
                     self.sunrise = self.sun.get_sunrise_time().replace(tzinfo=None)
@@ -173,56 +172,18 @@ class IronAcer:
             cv2.putText(frame, amount_of_motion, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (36, 255, 12), 2)
         return frame
 
-    @staticmethod
-    def send_images_email():
+    def send_images(self):
+        """Sends zip of the days images at end of the day."""
         # Zip folder
-        zip_file = f"{parent_folder}/detected.zip"
+        zip_file = f"{parent_folder}/detected{datetime.datetime.now().strftime('%Y-%m-%d')}.zip"
         zf = zipfile.ZipFile(zip_file, "w")
         for dirname, subdirs, files in os.walk(f'{parent_folder}/detected/'):
             zf.write(dirname)
             for filename in files:
                 zf.write(os.path.join(dirname, filename))
         zf.close()
-
-        myemail, apple_id, psk = open(f'{parent_folder}/email_auth', 'r').readlines()
-
-        subject = f"{datetime.datetime.now().strftime('%Y-%m-%d')} Ironacer Detected"
-        body = ""
-
-        # Create a multipart message and set headers
-        message = MIMEMultipart()
-        message["From"] = myemail
-        message["To"] = myemail
-        message["Subject"] = subject
-
-        # Add body to email
-        message.attach(MIMEText(body, "plain"))
-
-        filename = zip_file  # In same directory as script
-
-        # Open PDF file in binary mode
-        with open(filename, "rb") as attachment:
-            part = MIMEBase("application", "octet-stream")
-            part.set_payload(attachment.read())
-
-        # Encode file in ASCII characters to send by email
-        encoders.encode_base64(part)
-
-        # Add header as key/value pair to attachment part
-        part.add_header(
-            "Content-Disposition",
-            f"attachment; filename= {filename}",
-        )
-
-        # Add attachment to message and convert message to string
-        message.attach(part)
-        text = message.as_string()
-
-        # Log in to server using secure context and send email
-        context = ssl.create_default_context()
-        with smtplib.SMTP_SSL('smtp.mail.me.com', 587, context=context) as server:
-            server.login(apple_id, psk)
-            server.sendmail(myemail, myemail, text)
+        self.bot.send_doc(zip_file)
+        os.remove(zip_file)
 
 
 def boolean_string(s):

@@ -39,6 +39,10 @@ class TelegramBot:
     def send_video(self, vid_bytes):
         self.bot.sendVideo(self.chat_id, vid_bytes, timeout=300)
 
+    def send_doc(self, file_path):
+        with open(file_path, 'rb') as f:
+            self.bot.send_document(self.chat_id, f, timeout=300)
+
     def error(self, update: object, context: CallbackContext):
         tb_list = traceback.format_exception(None, context.error, context.error.__traceback__)
         tb_string = ''.join(tb_list)
@@ -71,6 +75,6 @@ class TelegramBot:
 if __name__ == '__main__':
     bot = TelegramBot()
     bot.chat_id = 1706759043  # Matt's chat id.
-    bot.send_message('Test')
+    bot.send_doc('./detected2022-02-05.zip')
     # bot.main()
 
