@@ -5,6 +5,12 @@ Stream raw cv2 video, as an array, that other aspects of the program can plug in
 
 import cv2
 import time
+import logging
+import os
+
+logging.basicConfig(level=logging.DEBUG,
+                    format='%(asctime)s - %(levelname)s - %(message)s',
+                    filename='stream.log')
 
 
 def show_frame(frame, rects=None):
@@ -29,6 +35,11 @@ def show_frame(frame, rects=None):
         return False
 
 
+parent_folder = os.path.dirname(__file__)
+if parent_folder == '':
+    parent_folder = '.'
+
+
 class LoadWebcam:
     """
     Taken and modified from yolov5/utils LoadWebcam.
@@ -41,9 +52,9 @@ class LoadWebcam:
         self.stride = stride
         self.pipe = eval(pipe) if pipe.isnumeric() else pipe
         self.on_mac = on_mac
-        # self.set_camera()
-        self.reset_freq = 5*60  # Frequency to reset the camera (in seconds).
+        self.reset_freq = 60*60  # Frequency to reset the camera (in seconds).
         self.t = time.time()
+        self.frames_produced = 0
 
     def set_camera(self):
         # https://github.com/yuripourre/v4l2-ctl-opencv/issues/6
@@ -87,6 +98,7 @@ class LoadWebcam:
 
     def __next__(self):
         self.count += 1
+        self.frames_produced += 1
         # Read frame
         ret_val, img = self.cap.read()
         if img is None:
@@ -97,8 +109,13 @@ class LoadWebcam:
         img = img[y1:y2, x1:x2]  # y1:y2, x1:x2 where x1y1 it top left and x2y2 is bottom right.
 
         if time.time() - self.t > self.reset_freq:
+            image_path = f'{parent_folder}/detected/image/sample_result-{time.time()}.jpg'
+            cv2.imwrite(image_path, img)
+
+            logging.debug(f'fps: {self.frames_produced / self.reset_freq}')
             self.reset_camera()
             self.t = time.time()
+            self.frames_produced = 0
         return img
 
     def reset_camera(self):
