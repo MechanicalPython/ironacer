@@ -8,9 +8,14 @@ import time
 import logging
 import os
 
+
+parent_folder = os.path.dirname(__file__)
+if parent_folder == '':
+    parent_folder = '.'
+
 logging.basicConfig(level=logging.DEBUG,
                     format='%(asctime)s - %(levelname)s - %(message)s',
-                    filename='stream.log')
+                    filename=f'{parent_folder}/detected/stream.log')
 
 
 def show_frame(frame, rects=None):
@@ -121,6 +126,7 @@ class LoadWebcam:
     def reset_camera(self):
         self.cap.read()
         self.cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 0.75)
+        logging.debug(f'Exposure: {self.cap.get(cv2.CAP_PROP_EXPOSURE)}')
 
 
 # max - 3280 × 2464 pixels
