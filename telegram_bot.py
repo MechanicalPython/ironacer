@@ -6,7 +6,6 @@ to passively send information at pre-determined times.
 
 import html
 import json
-import logging
 import traceback
 import os
 
@@ -21,10 +20,6 @@ class TelegramBot:
         self.dispatcher = self.updater.dispatcher
         self.bot = self.updater.bot
         self.chat_id = -547385621
-        logging.basicConfig(
-            format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO
-        )
-        self.logger = logging.getLogger(__name__)
 
     @staticmethod
     def start(update, context):
@@ -45,7 +40,6 @@ class TelegramBot:
         self.bot.sendVideo(self.chat_id, vid_bytes, timeout=300)
 
     def error(self, update: object, context: CallbackContext):
-        self.logger.error(msg="Exception while handling an update:", exc_info=context.error)
         tb_list = traceback.format_exception(None, context.error, context.error.__traceback__)
         tb_string = ''.join(tb_list)
 
@@ -76,5 +70,7 @@ class TelegramBot:
 
 if __name__ == '__main__':
     bot = TelegramBot()
-    bot.main()
+    bot.chat_id = 1706759043  # Matt's chat id.
+    bot.send_message('Test')
+    # bot.main()
 

@@ -6,5 +6,5 @@ detected/label/*.txt
 data.yaml
 .idea
 *.jpg
-log.log
 /venv/
+*.log

@@ -9,7 +9,6 @@ import cv2
 class MotionDetection:
     def __init__(self, detection_region):
         """
-
         :rtype: object
         """
         self.parent_folder = os.path.dirname(__file__)
@@ -18,7 +17,6 @@ class MotionDetection:
 
         self.prev_frame = None
         self.detection_region = detection_region
-        self.reset_freq = 5*60  # Frequency to reset the camera (in seconds).
 
     def detect(self, frame, motion_thresh=500):
         """
