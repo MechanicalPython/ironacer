@@ -11,8 +11,6 @@ Camera image -> yolov5 -> if squirrel -> fire mechanism and send photo, else do 
 import argparse
 import datetime
 import os
-import smtplib
-import ssl
 import sys
 import time
 import zipfile
@@ -27,8 +25,6 @@ from stream import LoadWebcam
 # Have it as a class so that it can store the last 20 seconds of footage
 # todo
 #  run telegram, inference, and motion detection on seperate threads to speed it up.
-#  Auto send data to icloud email address?
-
 
 # Set as global variable.
 parent_folder = os.path.dirname(__file__)
@@ -78,14 +74,14 @@ class IronAcer:
         self.has_sent_start_photo = False
 
     def main(self):
-        now = datetime.datetime(year=2022, month=2, day=5, hour=14, minute=00)
+        # now = datetime.datetime(year=2022, month=2, day=5, hour=14, minute=00)
         with LoadWebcam(pipe=self.source, output_img_size=self.imgsz, on_mac=self.on_mac) as stream:
             for frame in stream:
                 if frame is None:
                     time.sleep(1)
                     continue
-                # now = datetime.datetime.now()
-                now += datetime.timedelta(minutes=10)
+                now = datetime.datetime.now()
+                # now += datetime.timedelta(minutes=10)
                 if self.has_sent_start_photo is False and frame is not None:
                     frame = self.add_label_to_frame(frame, [self.detection_region])
                     self.bot.send_photo(cv2.imencode('.jpg', frame)[1].tobytes())
@@ -125,17 +121,10 @@ class IronAcer:
                     # One day, strike.javelin(result)
 
                 if self.telegram_bot_mode:
-
                     if is_squirrel:
                         # todo - this
                         pass
                         # self.bot.send_video()
-
-                # if True:
-                #     motion_detection_result.append(self.detection_region)
-                #     # print(motion_detection_result)
-                #     frame = self.add_label_to_frame(frame, motion_detection_result)
-                #     show_frame(frame)
 
     @staticmethod
     def save_results(frame, xyxyl, type):
@@ -181,6 +170,7 @@ class IronAcer:
             zf.write(dirname)
             for filename in files:
                 zf.write(os.path.join(dirname, filename))
+                os.remove(os.path.join(dirname, filename))
         zf.close()
         self.bot.send_doc(zip_file)
         os.remove(zip_file)
