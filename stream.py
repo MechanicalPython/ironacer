@@ -3,11 +3,11 @@ Stream raw cv2 video, as an array, that other aspects of the program can plug in
 
 """
 
-import cv2
-import time
 import logging
 import os
+import time
 
+import cv2
 
 parent_folder = os.path.dirname(__file__)
 if parent_folder == '':
@@ -22,7 +22,7 @@ def show_frame(frame, rects=None):
     """
 
     :param frame:
-    :param rect: list of [x, y, w, h, label] to put up labels.
+    :param rects: list of [x, y, w, h, label] to put up labels.
     :return:
     """
     if rects is not None:
@@ -50,6 +50,7 @@ class LoadWebcam:
     Taken and modified from yolov5/utils LoadWebcam.
     Returns just the image, the augmentation needed for inference is done by find.py.
     """
+
     def __init__(self, pipe='0', capture_size=(2592, 1944), output_img_size=1280, stride=32, on_mac=True):
         self.capture_size = capture_size
         self.output_img_size = output_img_size
@@ -57,7 +58,7 @@ class LoadWebcam:
         self.stride = stride
         self.pipe = eval(pipe) if pipe.isnumeric() else pipe
         self.on_mac = on_mac
-        self.reset_freq = 60*60  # Frequency to reset the camera (in seconds).
+        self.reset_freq = 60 * 60  # Frequency to reset the camera (in seconds).
         self.t = time.time()
         self.frames_produced = 0
 
@@ -125,7 +126,7 @@ class LoadWebcam:
 
     def reset_camera(self):
         self.cap.read()
-        self.cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 0.75)
+        self.cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 0.25)
         logging.debug(f'Exposure: {self.cap.get(cv2.CAP_PROP_EXPOSURE)}')
 
 
@@ -134,17 +135,6 @@ class LoadWebcam:
 
 
 if __name__ == '__main__':
-    import telegram_bot
-    bot = telegram_bot.TelegramBot()
-    exp = -12
     with LoadWebcam(on_mac=True) as stream:
         for img in stream:
-            if img is None:
-                continue
-            stream.cap.set(cv2.CAP_PROP_EXPOSURE, exp)
-            print(stream.cap.get(cv2.CAP_PROP_EXPOSURE), exp)
-            exp += 1
             show_frame(img)
-
-
-

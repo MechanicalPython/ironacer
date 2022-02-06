@@ -25,6 +25,7 @@ from stream import LoadWebcam
 # Have it as a class so that it can store the last 20 seconds of footage
 # todo
 #  run telegram, inference, and motion detection on seperate threads to speed it up.
+#  Update readme.md
 
 # Set as global variable.
 parent_folder = os.path.dirname(__file__)
