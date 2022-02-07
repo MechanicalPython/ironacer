@@ -2,7 +2,7 @@
 Stream raw cv2 video, as an array, that other aspects of the program can plug into.
 
 """
-
+import datetime
 import logging
 import os
 import time
@@ -108,26 +108,37 @@ class LoadWebcam:
         # Read frame
         ret_val, img = self.cap.read()
         if img is None:
-            return None
-
+            time.sleep(10)
+            logging.critical(f'Frame is None. {self.get_all_settings()}')
+            self.__next__()  # Recursively get the next frame if it is none.
         # Crop image to correct size.
         x1, y1, x2, y2 = self.crop_xyxy
         img = img[y1:y2, x1:x2]  # y1:y2, x1:x2 where x1y1 it top left and x2y2 is bottom right.
 
         if time.time() - self.t > self.reset_freq:
-            image_path = f'{parent_folder}/detected/image/sample_result-{time.time()}.jpg'
+            image_path = f'{parent_folder}/detected/image/sample_result-{datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S-%f")}'
             cv2.imwrite(image_path, img)
 
             logging.debug(f'fps: {self.frames_produced / self.reset_freq}')
             self.reset_camera()
             self.t = time.time()
-            self.frames_produced = 0
         return img
 
     def reset_camera(self):
         self.cap.read()
         self.cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 0.25)
         logging.debug(f'Exposure: {self.cap.get(cv2.CAP_PROP_EXPOSURE)}')
+
+    def get_all_settings(self):
+        return f"""
+        CAP_PROP_MODE:  {str(self.cap.get(cv2.CAP_PROP_MODE))}
+        CAP_PROP_FPS:  {str(self.cap.get(cv2.CAP_PROP_FPS))}
+        CAP_PROP_CONTRAST:  {str(self.cap.get(cv2.CAP_PROP_CONTRAST))}
+        CAP_PROP_GAIN:  {str(self.cap.get(cv2.CAP_PROP_GAIN))}
+        CAP_PROP_FRAME_WIDTH:  {str(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))}
+        CAP_PROP_FRAME_HEIGHT:  {str(int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT)))}
+        CAP_PROP_POS_FRAMES:  {str(self.cap.get(cv2.CAP_PROP_POS_FRAMES))}
+        CAP_PROP_EXPOSURE:  {str(self.cap.get(cv2.CAP_PROP_EXPOSURE))}"""
 
 
 # max - 3280 × 2464 pixels
@@ -137,4 +148,5 @@ class LoadWebcam:
 if __name__ == '__main__':
     with LoadWebcam(on_mac=True) as stream:
         for img in stream:
-            show_frame(img)
+            # show_frame(img)
+            pass

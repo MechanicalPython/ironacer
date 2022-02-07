@@ -6,6 +6,8 @@ Main.py controls all the sub methods and classes that do the heavy lifting.
 Workflow
 Camera image -> yolov5 -> if squirrel -> fire mechanism and send photo, else do nothing.
 
+
+
 """
 
 import argparse
@@ -73,22 +75,21 @@ class IronAcer:
         self.sunset = self.sun.get_local_sunset_time().replace(tzinfo=None)
 
         self.has_sent_start_photo = False
+        self.frames_produced = 0
 
     def main(self):
         # now = datetime.datetime(year=2022, month=2, day=5, hour=14, minute=00)
         with LoadWebcam(pipe=self.source, output_img_size=self.imgsz, on_mac=self.on_mac) as stream:
             for frame in stream:
-                if frame is None:
-                    time.sleep(1)
-                    continue
                 now = datetime.datetime.now()
                 # now += datetime.timedelta(minutes=10)
-                if self.has_sent_start_photo is False and frame is not None:
+                if self.has_sent_start_photo is False and frame is not None and self.sunrise < now < self.sunset:
+                    # Send initial image only at start of the day.
                     frame = self.add_label_to_frame(frame, [self.detection_region])
                     self.bot.send_photo(cv2.imencode('.jpg', frame)[1].tobytes())
                     self.has_sent_start_photo = True
 
-                if not self.sunrise < now < self.sunset:  # Outside of daylight, so skip it.
+                if not self.sunrise < now < self.sunset:  # Outside of daylight, so sleep.
                     self.has_sent_start_photo = False
                     motion = [i for i in os.listdir(f'{parent_folder}/detected/image/') if 'Motion' in i]
                     msg = f"{len(motion)} motion detected photos currently saved"
@@ -98,9 +99,9 @@ class IronAcer:
                     time.sleep((self.sunrise - now).seconds)  # Wait until sunrise.
                     self.sunrise = self.sun.get_sunrise_time().replace(tzinfo=None)
                     self.sunset = self.sun.get_local_sunset_time().replace(tzinfo=None)
-
                     continue
 
+                # Main body -
                 is_squirrel = False
 
                 if self.inference:
@@ -132,7 +133,7 @@ class IronAcer:
         """Saves a clean image and the label for that image.
         label = x, y, x, y, label.
         """
-        t = str(time.time())
+        t = str(datetime.datetime.now().strftime('%Y-%m-%d %H-%M-%S-%f'))
         image_path = f'{parent_folder}/detected/image/{type}_result-{t}.jpg'
         cv2.imwrite(image_path, frame)  # Write image
         label_path = f'{parent_folder}/detected/label/{type}_result-{t}.txt'
