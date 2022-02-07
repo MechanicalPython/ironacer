@@ -1,11 +1,10 @@
-/flickr_key
-/flickr_secret
 /telegram_token
-detected/image/*.jpg
-detected/label/*.txt
 data.yaml
 .idea
 *.jpg
 /venv/
 *.log
 /email_auth
+/Flickr_images/
+/results/
+/detected
