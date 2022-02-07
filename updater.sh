@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 
 cd /home/pi/ironacer
-git remote update
-if [[ `git status --porcelain` ]]; then
-  git pull origin main
-  reboot
+git remote update && git status -uno | grep -q 'Your branch is behind' && changed=1
+if [ $changed = 1 ]; then
+    git pull
+    echo "Updated successfully";
 else
-  pass
+    echo "Up-to-date"
 fi
