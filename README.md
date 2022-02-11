@@ -28,6 +28,9 @@ telegram_bot.py - runs the telegram bot to send images and videos of detected sq
 utils.py - holds random one-off functions. 
 
 ## Installations
+### Camera
+To use cv2, you need to enable the legacy camera via raspi-config. 
+
 ### Conda env
 Mostly following: https://towardsdatascience.com/yes-you-can-run-pytorch-natively-on-m1-macbooks-and-heres-how-35d2eaa07a83
 ```
