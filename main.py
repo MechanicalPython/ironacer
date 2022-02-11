@@ -106,6 +106,8 @@ class IronAcer:
                 time.sleep(self.sunrise - datetime.datetime.now())
 
             for frame in stream:
+                self.start_up(frame)
+
                 now = datetime.datetime.now()
 
                 if now > self.sunset:  # Sunset so close down.
