@@ -51,27 +51,21 @@ class LoadWebcam:
     Returns just the image, the augmentation needed for inference is done by find.py.
     """
 
-    def __init__(self, pipe='0', capture_size=(2592, 1944), output_img_size=1280, stride=32, on_mac=True):
+    def __init__(self, pipe='0', capture_size=(2592, 1944), output_img_size=1280, stride=32):
         self.capture_size = capture_size
         self.output_img_size = output_img_size
 
         self.stride = stride
         self.pipe = eval(pipe) if pipe.isnumeric() else pipe
-        self.on_mac = on_mac
         self.reset_freq = 60 * 60  # Frequency to reset the camera (in seconds).
         self.t = time.time()
         self.frames_produced = 0
+        self.cap = None
 
     def set_camera(self):
-        # https://github.com/yuripourre/v4l2-ctl-opencv/issues/6
-
         # 0.75 is manual control.
-        #
-        if self.on_mac:
-            self.cap = cv2.VideoCapture(0)
-        else:
-            self.cap = cv2.VideoCapture(0, cv2.CAP_V4L2)
 
+        self.cap = cv2.VideoCapture(0)
         self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.capture_size[0])
         self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.capture_size[1])
         self.cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)  # set buffer size
@@ -99,11 +93,9 @@ class LoadWebcam:
         self.cap.release()
 
     def __iter__(self):
-        self.count = -1
         return self
 
     def __next__(self):
-        self.count += 1
         self.frames_produced += 1
         # Read frame
         ret_val, img = self.cap.read()
@@ -146,7 +138,7 @@ class LoadWebcam:
 
 
 if __name__ == '__main__':
-    with LoadWebcam(on_mac=True) as stream:
+    with LoadWebcam() as stream:
         for img in stream:
             # show_frame(img)
             pass
