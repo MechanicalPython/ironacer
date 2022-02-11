@@ -40,11 +40,6 @@ def show_frame(frame, rects=None):
         return False
 
 
-parent_folder = os.path.dirname(__file__)
-if parent_folder == '':
-    parent_folder = '.'
-
-
 class LoadWebcam:
     """
     Taken and modified from yolov5/utils LoadWebcam.
@@ -59,29 +54,23 @@ class LoadWebcam:
         self.pipe = eval(pipe) if pipe.isnumeric() else pipe
         self.reset_freq = 60 * 60  # Frequency to reset the camera (in seconds).
         self.t = time.time()
-        self.frames_produced = 0
         self.cap = None
 
     def set_camera(self):
         # 0.75 is manual control.
-
         self.cap = cv2.VideoCapture(0)
         self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.capture_size[0])
         self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.capture_size[1])
         self.cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)  # set buffer size
         self.cap.set(cv2.CAP_PROP_FPS, 15)
-        # self.cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, self.cap.get(cv2.CAP_PROP_AUTO_EXPOSURE))
         self.cap.read()  # Clear buffer
         time.sleep(1)
 
         width, height = self.cap.get(cv2.CAP_PROP_FRAME_WIDTH), self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
-
         x1 = int((width / 2) - (self.output_img_size / 2))
         y1 = int((height / 2) - (self.output_img_size / 2))
-
         x2 = int((width / 2) + (self.output_img_size / 2))
         y2 = int((height / 2) + (self.output_img_size / 2))
-
         self.crop_xyxy = [x1, y1, x2, y2]
 
     def __enter__(self):
@@ -96,30 +85,28 @@ class LoadWebcam:
         return self
 
     def __next__(self):
-        self.frames_produced += 1
         # Read frame
         ret_val, img = self.cap.read()
         if img is None:
-            time.sleep(10)
             logging.critical(f'Frame is None. {self.get_all_settings()}')
-            self.__next__()  # Recursively get the next frame if it is none.
+            return None
         # Crop image to correct size.
         x1, y1, x2, y2 = self.crop_xyxy
         img = img[y1:y2, x1:x2]  # y1:y2, x1:x2 where x1y1 it top left and x2y2 is bottom right.
 
-        if time.time() - self.t > self.reset_freq:
-            image_path = f'{parent_folder}/detected/image/sample_result-{datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S-%f")}'
-            cv2.imwrite(image_path, img)
-
-            logging.debug(f'fps: {self.frames_produced / self.reset_freq}')
-            self.reset_camera()
-            self.t = time.time()
+        # if time.time() - self.t > self.reset_freq:
+        #     image_path = f'{parent_folder}/detected/image/sample_result-{datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S-%f")}'
+        #     cv2.imwrite(image_path, img)
+        #
+        #     logging.debug(f'fps: {self.frames_produced / self.reset_freq}')
+        #     self.reset_camera()
+        #     self.t = time.time()
         return img
 
-    def reset_camera(self):
-        self.cap.read()
-        self.cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 0.25)
-        logging.debug(f'Exposure: {self.cap.get(cv2.CAP_PROP_EXPOSURE)}')
+    # def reset_camera(self):
+    #     self.cap.read()
+    #     self.cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 0.25)
+    #     logging.debug(f'Exposure: {self.cap.get(cv2.CAP_PROP_EXPOSURE)}')
 
     def get_all_settings(self):
         return f"""
