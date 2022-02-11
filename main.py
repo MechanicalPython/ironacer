@@ -54,14 +54,15 @@ class IronAcer:
         self.surveillance_mode = surveillance_mode
         self.motion_detection = motion_detection
         self.inference = inference
-
         if self.inference:
             self.yolo = Detector(weights, imgsz)
 
         if self.motion_detection:
             self.motion_detector = MotionDetection(detection_region=self.detection_region)
 
-        self.claymore = strike.Claymore()
+        if not surveillance_mode:
+            self.claymore = strike.Claymore()
+
         self.bot = telegram_bot.TelegramBot()
 
         self.sun = suntime.Sun(51.5, -0.1)  # London lat long.
@@ -101,7 +102,7 @@ class IronAcer:
         At sunset close down and turn off.
         """
         with LoadWebcam(pipe=self.source, output_img_size=self.imgsz) as stream:
-            if datetime.datetime.now() < self.sunrise():
+            if datetime.datetime.now() < self.sunrise:
                 time.sleep(self.sunrise - datetime.datetime.now())
 
             for frame in stream:
