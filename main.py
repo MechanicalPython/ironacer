@@ -23,11 +23,12 @@ import suntime
 import strike
 import telegram_bot
 from stream import LoadWebcam
+from find import Detector
+from motion_detection import MotionDetection
 
-# Have it as a class so that it can store the last 20 seconds of footage
+
 # todo
 #  run telegram, inference, and motion detection on seperate threads to speed it up.
-#  Update readme.md
 
 # Set as global variable.
 parent_folder = os.path.dirname(__file__)
@@ -44,8 +45,7 @@ class IronAcer:
                  telegram_bot_mode=True,
                  surveillance_mode=False,  # Don't run the strike functions.
                  motion_detection=True,
-                 inference=True,
-                 on_mac=False):
+                 inference=True):
         self.detection_region = [int(i) for i in detection_region.split(',')]
         self.source = source
         self.weights = weights
@@ -54,32 +54,25 @@ class IronAcer:
         self.surveillance_mode = surveillance_mode
         self.motion_detection = motion_detection
         self.inference = inference
-        self.on_mac = on_mac
 
         if self.inference:
-            from find import Detector
             self.yolo = Detector(weights, imgsz)
 
         if self.motion_detection:
-            from motion_detection import MotionDetection
             self.motion_detector = MotionDetection(detection_region=self.detection_region)
 
-        if not surveillance_mode:
-            self.claymore = strike.Claymore()
-
+        self.claymore = strike.Claymore()
         self.bot = telegram_bot.TelegramBot()
-        # self.bot.chat_id = 1706759043  # Change it to private chat for testing.
 
         self.sun = suntime.Sun(51.5, -0.1)  # London lat long.
         self.sunrise = self.sun.get_sunrise_time().replace(tzinfo=None)
         self.sunset = self.sun.get_local_sunset_time().replace(tzinfo=None)
 
         self.has_sent_start_photo = False
-        self.frames_produced = 0
 
     def main(self):
         # now = datetime.datetime(year=2022, month=2, day=5, hour=14, minute=00)
-        with LoadWebcam(pipe=self.source, output_img_size=self.imgsz, on_mac=self.on_mac) as stream:
+        with LoadWebcam(pipe=self.source, output_img_size=self.imgsz) as stream:
             for frame in stream:
                 now = datetime.datetime.now()
                 # now += datetime.timedelta(minutes=10)
@@ -208,6 +201,8 @@ if __name__ == '__main__':
         opt.inference = False
         opt.on_mac = True
 
-    IronAcer(**vars(opt)).main()
+    IA = IronAcer(**vars(opt))
+    IA.bot.chat_id = 1706759043  # Change it to private chat for testing.
+    IA.main()
     # main(**vars(opt))
 
