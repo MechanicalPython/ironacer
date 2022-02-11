@@ -72,9 +72,48 @@ class TelegramBot:
         self.updater.idle()
 
 
+class PhotographBot(TelegramBot):
+    def __init__(self):
+        super().__init__()
+        import stream
+        self.stream = stream
+        self.webcam = self.stream.LoadWebcam()
+        self.webcam.__enter__()
+
+        import cv2
+        self.cv2 = cv2
+
+    def photo(self, update, context):
+        photo = self.webcam.__next__()
+        photo = self.cv2.imencode('.jpg', photo)[1].tobytes()
+        self.bot.sendPhoto(self.chat_id, photo, timeout=300)
+
+    def set_attr(self, update, context):
+        text = update.message.text
+        if text == '/set':
+            update.message.reply_text('update value')
+
+    def get_attr(self, update, context):
+        update.message.reply_text(self.webcam.get_all_settings())
+
+    def main(self):
+        self.dispatcher.add_handler(CommandHandler('start', self.start))
+        self.dispatcher.add_handler(CommandHandler('help', self.help))
+        self.dispatcher.add_handler(CommandHandler('photo', self.photo))
+        self.dispatcher.add_handler(CommandHandler('set', self.set_attr))
+        self.dispatcher.add_handler(CommandHandler('get', self.get_attr))
+
+        self.dispatcher.add_error_handler(self.error)
+
+        # start your shiny new bot
+        self.updater.start_polling()
+
+        # run the bot until Ctrl-C
+        self.updater.idle()
+
+
 if __name__ == '__main__':
-    bot = TelegramBot()
+    bot = PhotographBot()
     bot.chat_id = 1706759043  # Matt's chat id.
-    bot.send_doc('./detected2022-02-05.zip')
-    # bot.main()
+    bot.main()
 
