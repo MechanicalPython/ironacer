@@ -65,10 +65,7 @@ class TelegramBot:
 
         self.dispatcher.add_error_handler(self.error)
 
-        # start your shiny new bot
         self.updater.start_polling()
-
-        # run the bot until Ctrl-C
         self.updater.idle()
 
 
@@ -88,10 +85,9 @@ class PhotographBot(TelegramBot):
         photo = self.cv2.imencode('.jpg', photo)[1].tobytes()
         self.bot.sendPhoto(self.chat_id, photo, timeout=300)
 
-    def set_attr(self, update, context):
+    def set_exposure(self, update, context):
         text = update.message.text
-        if text == '/set':
-            update.message.reply_text('update value')
+        # self.webcam.cap.set((cv2.CAP_PROP_AUTO_EXPOSURE, )
 
     def get_attr(self, update, context):
         update.message.reply_text(self.webcam.get_all_settings())
@@ -100,7 +96,7 @@ class PhotographBot(TelegramBot):
         self.dispatcher.add_handler(CommandHandler('start', self.start))
         self.dispatcher.add_handler(CommandHandler('help', self.help))
         self.dispatcher.add_handler(CommandHandler('photo', self.photo))
-        self.dispatcher.add_handler(CommandHandler('set', self.set_attr))
+        self.dispatcher.add_handler(CommandHandler('set', self.set_exposure))
         self.dispatcher.add_handler(CommandHandler('get', self.get_attr))
 
         self.dispatcher.add_error_handler(self.error)
@@ -114,6 +110,6 @@ class PhotographBot(TelegramBot):
 
 if __name__ == '__main__':
     bot = PhotographBot()
-    bot.chat_id = 1706759043  # Matt's chat id.
+    # bot.chat_id = 1706759043  # Matt's chat id.
     bot.main()
 
