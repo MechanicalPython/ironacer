@@ -68,58 +68,59 @@ class IronAcer:
         self.sunrise = self.sun.get_sunrise_time().replace(tzinfo=None)
         self.sunset = self.sun.get_local_sunset_time().replace(tzinfo=None)
 
-        self.has_sent_start_photo = False
+    def start_up(self, frame):
+        # Send initial image only at start of the day.
+        frame = self.add_label_to_frame(frame, [self.detection_region])
+        self.bot.send_photo(cv2.imencode('.jpg', frame)[1].tobytes())
+
+    def close_down(self):
+        motion = [i for i in os.listdir(f'{parent_folder}/detected/image/') if 'Motion' in i]
+        msg = f"{len(motion)} motion detected photos currently saved"
+        self.bot.send_message(msg)
+        self.send_images()
+
+    def inferencer(self, frame):
+        is_squirrel, inference_result = self.yolo.inference(frame)
+        xyxy, conf, cls = inference_result  # xyxy is list of 4 items.
+
+        if is_squirrel:  # Save image
+            xyxy.append(conf)  # add conf to xyxy to save it.
+            self.save_results(frame, xyxy, 'Yolo')
+            # self.bot.send_video()  # todo - this.
+
+    def motion_detectoriser(self, frame):
+        is_motion, motion_detection_result = self.motion_detector.detect(frame)  # list of [xyxy, amount_of_motion]
+        if is_motion:  # Save image
+            self.save_results(frame, motion_detection_result, 'Motion')
 
     def main(self):
-        # now = datetime.datetime(year=2022, month=2, day=5, hour=14, minute=00)
+        """
+        Start via cron job at 2am.
+        Sleep till sunrise.
+        Take photos
+        At sunset close down and turn off.
+        """
         with LoadWebcam(pipe=self.source, output_img_size=self.imgsz) as stream:
+            if datetime.datetime.now() < self.sunrise():
+                time.sleep(self.sunrise - datetime.datetime.now())
+
             for frame in stream:
                 now = datetime.datetime.now()
-                # now += datetime.timedelta(minutes=10)
-                if self.has_sent_start_photo is False and frame is not None and self.sunrise < now < self.sunset:
-                    # Send initial image only at start of the day.
-                    frame = self.add_label_to_frame(frame, [self.detection_region])
-                    self.bot.send_photo(cv2.imencode('.jpg', frame)[1].tobytes())
-                    self.has_sent_start_photo = True
 
-                if not self.sunrise < now < self.sunset:  # Outside of daylight, so sleep.
-                    self.has_sent_start_photo = False
-                    motion = [i for i in os.listdir(f'{parent_folder}/detected/image/') if 'Motion' in i]
-                    msg = f"{len(motion)} motion detected photos currently saved"
-                    self.bot.send_message(msg)
-                    self.send_images()
-
-                    time.sleep((self.sunrise - now).seconds)  # Wait until sunrise.
-                    self.sunrise = self.sun.get_sunrise_time().replace(tzinfo=None)
-                    self.sunset = self.sun.get_local_sunset_time().replace(tzinfo=None)
-                    continue
-
-                # Main body -
-                is_squirrel = False
+                if now > self.sunset:  # Sunset so close down.
+                    self.close_down()
+                    break
 
                 if self.inference:
-                    is_squirrel, inference_result = self.yolo.inference(frame)
-                    xyxy, conf, cls = inference_result  # xyxy is list of 4 items.
-
-                    if is_squirrel:  # Save image
-                        xyxy.append(conf)  # add conf to xyxy to save it.
-                        self.save_results(frame, xyxy, 'Yolo')
+                    self.inferencer(frame)
 
                 if self.motion_detection:
-                    is_motion, motion_detection_result = self.motion_detector.detect(frame)  # list of [xyxy, amount_of_motion]
-                    if is_motion:  # Save image
-                        self.save_results(frame, motion_detection_result, 'Motion')
+                    self.motion_detectoriser(frame)
 
-                if not self.surveillance_mode:
-                    pass
+                if self.surveillance_mode is False:
                     # claymore.detonate()
                     # One day, strike.javelin(result)
-
-                if self.telegram_bot_mode:
-                    if is_squirrel:
-                        # todo - this
-                        pass
-                        # self.bot.send_video()
+                    pass
 
     @staticmethod
     def save_results(frame, xyxyl, type):
@@ -187,7 +188,6 @@ def arg_parse():
     parser.add_argument('--surveillance_mode', type=boolean_string, default=False, help='True = do strike')
     parser.add_argument('--motion_detection', type=boolean_string, default=True, help='Run motion detection')
     parser.add_argument('--inference', type=boolean_string, default=True, help='Run yolo inference or not.')
-    parser.add_argument('--on_mac', type=boolean_string, default=False, help='True if running on mac.')
     return parser.parse_args()
 
 
@@ -199,10 +199,8 @@ if __name__ == '__main__':
         opt.surveillance_mode = True
         opt.motion_detection = True
         opt.inference = False
-        opt.on_mac = True
 
     IA = IronAcer(**vars(opt))
-    IA.bot.chat_id = 1706759043  # Change it to private chat for testing.
+    # IA.bot.chat_id = 1706759043  # Change it to private chat for testing.
     IA.main()
-    # main(**vars(opt))
 
