@@ -66,7 +66,7 @@ class Timer(ContextDecorator):
 
 
 class IronTimer(IronAcer):
-    def __init__(self, interations=10, inference=False, motion_detector=True):
+    def __init__(self, interations=10, inference=True, motion_detector=True):
         super(IronTimer, self).__init__(inference=inference, motion_detection=motion_detector, surveillance_mode=True)
         self.interations =interations
 
@@ -94,6 +94,6 @@ class IronTimer(IronAcer):
 
 
 if __name__ == '__main__':
-    I = IronTimer(inference=True)
+    I = IronTimer()
     I.main()
 
