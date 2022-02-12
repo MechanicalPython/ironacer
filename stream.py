@@ -2,7 +2,6 @@
 Stream raw cv2 video, as an array, that other aspects of the program can plug into.
 
 """
-import datetime
 import logging
 import os
 import time
