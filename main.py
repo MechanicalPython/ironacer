@@ -55,7 +55,7 @@ class IronAcer:
         self.motion_detection = motion_detection
         self.inference = inference
         if self.inference:
-            self.yolo = Detector(weights, imgsz)
+            self.yolo = Detector(weights, (imgsz, imgsz))
 
         if self.motion_detection:
             self.motion_detector = MotionDetection(detection_region=self.detection_region)
