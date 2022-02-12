@@ -110,8 +110,6 @@ class Detector:
                 confidence = conf.item()
                 xyxy = [i.item() for i in xyxy]  # Convert from [tensor(x), ..] to [x, ..]
                 results.append([xyxy, confidence, cls])
-        else:
-            results = None, None, None
         return isSquirrel, results
 
     def save_labeled_video(self, frame, isSquirrel, inference):  # Save the video.

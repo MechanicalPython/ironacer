@@ -84,11 +84,14 @@ class IronAcer:
 
     def inferencer(self, frame):
         is_squirrel, inference_result = self.yolo.inference(frame)
-        xyxy, conf, cls = inference_result  # xyxy is list of 4 items.
-
+        # inference_results is just None if nothing is detected.
         if is_squirrel:  # Save image
-            xyxy.append(conf)  # add conf to xyxy to save it.
-            self.save_results(frame, xyxy, 'Yolo')
+            labels = []
+            for result in inference_result:
+                xyxy, conf, cls = result  # xyxy is list of 4 items.
+                xyxy.append(conf)  # add conf to xyxy to save it.
+                labels.append(xyxy)
+            self.save_results(frame, labels, 'Yolo')
             # self.bot.send_video()  # todo - this.
 
     def motion_detectoriser(self, frame):
@@ -136,6 +139,7 @@ class IronAcer:
     def save_results(self, frame, xyxyl, type):
         """Saves a clean image and the label for that image.
         label = x, y, x, y, label.
+        xyxyl = [[x, y, x, y, l], ..]
         """
         t = str(self.now.strftime('%Y-%m-%d %H-%M-%S-%f'))
         image_path = f'{ROOT}/detected/image/{type}_result-{t}.jpg'
