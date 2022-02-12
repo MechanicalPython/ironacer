@@ -68,6 +68,7 @@ class IronAcer:
         self.sun = suntime.Sun(51.5, -0.1)  # London lat long.
         self.sunrise = self.sun.get_sunrise_time().replace(tzinfo=None)
         self.sunset = self.sun.get_local_sunset_time().replace(tzinfo=None)
+        self._start_up = False
 
     def start_up(self, frame):
         # Send initial image only at start of the day.
@@ -90,8 +91,10 @@ class IronAcer:
             # self.bot.send_video()  # todo - this.
 
     def motion_detectoriser(self, frame):
+        print('motion')
         is_motion, motion_detection_result = self.motion_detector.detect(frame)  # list of [xyxy, amount_of_motion]
         if is_motion:  # Save image
+            print('detected')
             self.save_results(frame, motion_detection_result, 'Motion')
 
     def main(self):
@@ -101,14 +104,20 @@ class IronAcer:
         Take photos
         At sunset close down and turn off.
         """
+        # now = datetime.datetime(year=2022, month=2, day=12, hour=7, minute=20)
+        now = datetime.datetime.now()
         with LoadWebcam(pipe=self.source, output_img_size=self.imgsz) as stream:
-            if datetime.datetime.now() < self.sunrise:
-                time.sleep(self.sunrise - datetime.datetime.now())
+            if now < self.sunrise:
+                self._start_up = False  # Reset for the day.
+                time.sleep((self.sunrise - now).seconds)
 
             for frame in stream:
-                self.start_up(frame)
-
                 now = datetime.datetime.now()
+                # now += datetime.timedelta(minutes=10)
+
+                if self._start_up is False:
+                    self.start_up(frame)
+                    self._start_up = True
 
                 if now > self.sunset:  # Sunset so close down.
                     self.close_down()
@@ -204,6 +213,6 @@ if __name__ == '__main__':
         opt.inference = False
 
     IA = IronAcer(**vars(opt))
-    # IA.bot.chat_id = 1706759043  # Change it to private chat for testing.
+    IA.bot.chat_id = 1706759043  # Change it to private chat for testing.
     IA.main()
 
