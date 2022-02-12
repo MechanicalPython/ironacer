@@ -1,7 +1,9 @@
-import io
+"""
+Stream the camera for focusing and adjustment purposes.
+"""
+
 import logging
 import socketserver
-from threading import Condition
 from http import server
 
 from stream import LoadWebcam
@@ -67,6 +69,7 @@ class StreamingServer(socketserver.ThreadingMixIn, server.HTTPServer):
 
 
 if __name__ == '__main__':
+    # http://ironacer.local:8000/stream.mjpg
     address = ('', 8000)
     server = StreamingServer(address, StreamingHandler)
     server.serve_forever()
