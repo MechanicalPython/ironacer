@@ -68,6 +68,7 @@ class IronAcer:
         self.sun = suntime.Sun(51.5, -0.1)  # London lat long.
         self.sunrise = self.sun.get_sunrise_time().replace(tzinfo=None)
         self.sunset = self.sun.get_local_sunset_time().replace(tzinfo=None)
+        self.now = datetime.datetime.now()
         self._start_up = False
 
     def start_up(self, frame):
@@ -91,10 +92,8 @@ class IronAcer:
             # self.bot.send_video()  # todo - this.
 
     def motion_detectoriser(self, frame):
-        print('motion')
         is_motion, motion_detection_result = self.motion_detector.detect(frame)  # list of [xyxy, amount_of_motion]
         if is_motion:  # Save image
-            print('detected')
             self.save_results(frame, motion_detection_result, 'Motion')
 
     def main(self):
@@ -104,22 +103,22 @@ class IronAcer:
         Take photos
         At sunset close down and turn off.
         """
-        # now = datetime.datetime(year=2022, month=2, day=12, hour=7, minute=20)
-        now = datetime.datetime.now()
+        # self.now = datetime.datetime(year=2022, month=2, day=12, hour=7, minute=20, second=55)
+        self.now = datetime.datetime.now()
         with LoadWebcam(pipe=self.source, output_img_size=self.imgsz) as stream:
-            if now < self.sunrise:
+            if self.now < self.sunrise:
                 self._start_up = False  # Reset for the day.
-                time.sleep((self.sunrise - now).seconds)
+                time.sleep((self.sunrise - self.now).seconds)
 
             for frame in stream:
-                now = datetime.datetime.now()
-                # now += datetime.timedelta(minutes=10)
+                self.now = datetime.datetime.now()
+                # self.now += datetime.timedelta(minutes=10)
 
                 if self._start_up is False:
                     self.start_up(frame)
                     self._start_up = True
 
-                if now > self.sunset:  # Sunset so close down.
+                if self.now > self.sunset:  # Sunset so close down.
                     self.close_down()
                     break
 
@@ -134,12 +133,11 @@ class IronAcer:
                     # One day, strike.javelin(result)
                     pass
 
-    @staticmethod
-    def save_results(frame, xyxyl, type):
+    def save_results(self, frame, xyxyl, type):
         """Saves a clean image and the label for that image.
         label = x, y, x, y, label.
         """
-        t = str(datetime.datetime.now().strftime('%Y-%m-%d %H-%M-%S-%f'))
+        t = str(self.now.strftime('%Y-%m-%d %H-%M-%S-%f'))
         image_path = f'{ROOT}/detected/image/{type}_result-{t}.jpg'
         cv2.imwrite(image_path, frame)  # Write image
         label_path = f'{ROOT}/detected/label/{type}_result-{t}.txt'
@@ -172,7 +170,7 @@ class IronAcer:
     def send_images(self):
         """Sends zip of the days images at end of the day."""
         # Zip folder
-        zip_file = f"{ROOT}/detected{datetime.datetime.now().strftime('%Y-%m-%d')}.zip"
+        zip_file = f"{ROOT}/detected{self.now.strftime('%Y-%m-%d')}.zip"
         zf = zipfile.ZipFile(zip_file, "w")
         for dirname, subdirs, files in os.walk(f'{ROOT}/detected/'):
             zf.write(dirname)
