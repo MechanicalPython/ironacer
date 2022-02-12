@@ -100,41 +100,36 @@ class IronAcer:
             self.save_results(frame, motion_detection_result, 'Motion')
 
     def main(self):
-        """
-        Start via cron job at 2am.
-        Sleep till sunrise.
-        Take photos
-        At sunset close down and turn off.
-        """
-        # self.now = datetime.datetime(year=2022, month=2, day=12, hour=7, minute=20, second=55)
-        self.now = datetime.datetime.now()
         with LoadWebcam(pipe=self.source, output_img_size=self.imgsz) as stream:
-            if self.now < self.sunrise:
-                self._start_up = False  # Reset for the day.
-                time.sleep((self.sunrise - self.now).seconds)
+            while True:
+                isdaytime = self.sunrise < self.now < self.sunset
+                if not isdaytime:
+                    time.sleep(60)
+                    continue
 
-            for frame in stream:
-                self.now = datetime.datetime.now()
-                # self.now += datetime.timedelta(minutes=10)
+                # It is in the daytime.
+                stream.__next__()  # Clear buffer.
+                self.start_up(stream.__next__())
+                for frame in stream:
+                    if self.inference:
+                        self.inferencer(frame)
 
-                if self._start_up is False:
-                    self.start_up(frame)
-                    self._start_up = True
+                    if self.motion_detection:
+                        self.motion_detectoriser(frame)
 
-                if self.now > self.sunset:  # Sunset so close down.
-                    self.close_down()
-                    break
+                    if self.surveillance_mode is False:
+                        # claymore.detonate()
+                        # One day, strike.javelin(result)
+                        pass
 
-                if self.inference:
-                    self.inferencer(frame)
+                    self.now = datetime.datetime.now()
+                    self.sunrise = self.sun.get_sunrise_time().replace(tzinfo=None)
+                    self.sunset = self.sun.get_local_sunset_time().replace(tzinfo=None)
 
-                if self.motion_detection:
-                    self.motion_detectoriser(frame)
-
-                if self.surveillance_mode is False:
-                    # claymore.detonate()
-                    # One day, strike.javelin(result)
-                    pass
+                    isdaytime = self.sunrise < self.now < self.sunset
+                    if not isdaytime:
+                        self.close_down()
+                        break
 
     def save_results(self, frame, xyxyl, type):
         """Saves a clean image and the label for that image.
