@@ -30,10 +30,10 @@ from motion_detection import MotionDetection
 # todo
 #  run telegram, inference, and motion detection on seperate threads to speed it up.
 
-# Set as global variable.
-parent_folder = os.path.dirname(__file__)
-if parent_folder == '':
-    parent_folder = '.'
+from pathlib import Path
+
+FILE = Path(__file__).resolve()
+ROOT = Path(os.path.abspath(FILE.parents[0]))  # Absolute path
 
 
 class IronAcer:
@@ -75,7 +75,7 @@ class IronAcer:
         self.bot.send_photo(cv2.imencode('.jpg', frame)[1].tobytes())
 
     def close_down(self):
-        motion = [i for i in os.listdir(f'{parent_folder}/detected/image/') if 'Motion' in i]
+        motion = [i for i in os.listdir(f'{ROOT}/detected/image/') if 'Motion' in i]
         msg = f"{len(motion)} motion detected photos currently saved"
         self.bot.send_message(msg)
         self.send_images()
@@ -131,9 +131,9 @@ class IronAcer:
         label = x, y, x, y, label.
         """
         t = str(datetime.datetime.now().strftime('%Y-%m-%d %H-%M-%S-%f'))
-        image_path = f'{parent_folder}/detected/image/{type}_result-{t}.jpg'
+        image_path = f'{ROOT}/detected/image/{type}_result-{t}.jpg'
         cv2.imwrite(image_path, frame)  # Write image
-        label_path = f'{parent_folder}/detected/label/{type}_result-{t}.txt'
+        label_path = f'{ROOT}/detected/label/{type}_result-{t}.txt'
 
         label = ''
         for box in xyxyl:
@@ -163,9 +163,9 @@ class IronAcer:
     def send_images(self):
         """Sends zip of the days images at end of the day."""
         # Zip folder
-        zip_file = f"{parent_folder}/detected{datetime.datetime.now().strftime('%Y-%m-%d')}.zip"
+        zip_file = f"{ROOT}/detected{datetime.datetime.now().strftime('%Y-%m-%d')}.zip"
         zf = zipfile.ZipFile(zip_file, "w")
-        for dirname, subdirs, files in os.walk(f'{parent_folder}/detected/'):
+        for dirname, subdirs, files in os.walk(f'{ROOT}/detected/'):
             zf.write(dirname)
             for filename in files:
                 zf.write(os.path.join(dirname, filename))

@@ -8,14 +8,14 @@ import os
 import time
 
 import cv2
+from pathlib import Path
 
-parent_folder = os.path.dirname(__file__)
-if parent_folder == '':
-    parent_folder = '.'
+FILE = Path(__file__).resolve()
+ROOT = Path(os.path.abspath(FILE.parents[0]))  # Absolute path
 
 logging.basicConfig(level=logging.DEBUG,
                     format='%(asctime)s - %(levelname)s - %(message)s',
-                    filename=f'{parent_folder}/detected/stream.log')
+                    filename=f'{ROOT}/detected/stream.log')
 
 
 def show_frame(frame, rects=None):

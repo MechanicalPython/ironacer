@@ -8,8 +8,12 @@ import torch
 import torch.backends.cudnn as cudnn
 import sys
 import numpy as np
+from pathlib import Path
 
-sys.path.insert(0, 'yolov5/')  # To allow importing from submodule yolov5.
+FILE = Path(__file__).resolve()
+ROOT = Path(os.path.abspath(FILE.parents[0]))  # Absolute path
+
+sys.path.insert(0, f'{ROOT}/yolov5/')  # To allow importing from submodule yolov5.
 from yolov5.utils.augmentations import letterbox
 from yolov5.models.common import DetectMultiBackend
 from yolov5.utils.general import (non_max_suppression, scale_coords)

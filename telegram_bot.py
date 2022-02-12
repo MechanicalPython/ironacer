@@ -11,11 +11,15 @@ import os
 
 from telegram import Update, ParseMode
 from telegram.ext import Updater, CommandHandler, CallbackContext
+from pathlib import Path
+
+FILE = Path(__file__).resolve()
+ROOT = Path(os.path.abspath(FILE.parents[0]))  # Absolute path
 
 
 class TelegramBot:
     def __init__(self):
-        self.token = open(f'{os.path.dirname(__file__)}/telegram_token', 'r').read()
+        self.token = open(f'{ROOT}/telegram_token', 'r').read()
         self.updater = Updater(self.token, use_context=True)
         self.dispatcher = self.updater.dispatcher
         self.bot = self.updater.bot
