@@ -8,6 +8,8 @@ from http import server
 
 from stream import LoadWebcam
 import cv2
+import argparse
+
 
 PAGE = """\
 <html>
@@ -43,7 +45,7 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
             self.send_header('Content-Type', 'multipart/x-mixed-replace; boundary=FRAME')
             self.end_headers()
             try:
-                with LoadWebcam(capture_size=(4056, 3040), output_img_size=(4056, 3040)) as stream:
+                with LoadWebcam(capture_size=capture, output_img_size=output) as stream:
                     for frame in stream:
                         frame = cv2.imencode('.jpg', frame)[1].tobytes()
 
@@ -68,8 +70,21 @@ class StreamingServer(socketserver.ThreadingMixIn, server.HTTPServer):
     daemon_threads = True
 
 
+def arg_parse():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--capture', type=str, default="1080,1080")
+    parser.add_argument('--crop', type=str, default="1080,1080")
+    return parser.parse_args()
+
+
+
 if __name__ == '__main__':
     # http://ironacer.local:8000/stream.mjpg
+    opt = arg_parse()
+    capture = opt.capture
+    output = opt.crop
+    # Global var as I CBA to pass them properly.
+
     address = ('', 8000)
     server = StreamingServer(address, StreamingHandler)
     server.serve_forever()
