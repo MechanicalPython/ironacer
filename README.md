@@ -58,3 +58,18 @@ pi camera: 62.2 degrees horizontal, 48.8 degrees vertical.
 
 If it all goes wrong
 removed models and utils from the root folder.
+
+
+
+## Gadget mode for testing pi zero. 
+32 bit install. 
+
+internet sharing for Ethernet/Gadget on the mac. 
+
+Now, edit the file called cmdline.txt. Look for rootwait, and add modules-load=dwc2,g_ether immediately after.
+
+In config.txt, and append the following: dtoverlay=dwc2
+
+
+sudo apt install python3-opencv and pip3 install opencv-python-headless
+
