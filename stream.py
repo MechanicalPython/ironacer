@@ -126,4 +126,6 @@ class LoadWebcam:
 if __name__ == '__main__':
     with LoadWebcam() as stream:
         for img in stream:
-            show_frame(img)
+            cv2.imwrite('test.jpg', img)
+            # show_frame(img)
+            break
