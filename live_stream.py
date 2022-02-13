@@ -77,7 +77,6 @@ def arg_parse():
     return parser.parse_args()
 
 
-
 if __name__ == '__main__':
     # http://ironacer.local:8000/stream.mjpg
     opt = arg_parse()
@@ -85,7 +84,10 @@ if __name__ == '__main__':
     output = [int(i) for i in opt.crop.split(',')]
     print(capture, output)
     # Global var as I CBA to pass them properly.
+    try:
+        address = ('', 8000)
+        server = StreamingServer(address, StreamingHandler)
+        server.serve_forever()
+    finally:
+        pass
 
-    address = ('', 8000)
-    server = StreamingServer(address, StreamingHandler)
-    server.serve_forever()

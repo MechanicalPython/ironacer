@@ -100,7 +100,7 @@ class IronAcer:
             self.save_results(frame, motion_detection_result, 'Motion')
 
     def main(self):
-        with LoadWebcam(pipe=self.source, output_img_size=self.imgsz) as stream:
+        with LoadWebcam(pipe=self.source, output_img_size=(self.imgsz, self.imgsz)) as stream:
             while True:
                 isdaytime = self.sunrise < self.now < self.sunset
                 if not isdaytime:
