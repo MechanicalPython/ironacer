@@ -45,7 +45,7 @@ class LoadWebcam:
     Returns just the image, the augmentation needed for inference is done by find.py.
     hq camera - 4056 x 3040 pixels max resolution.
     """
-    def __init__(self, pipe='0', capture_size=(4056, 3040), output_img_size=(4056, 3040), stride=32):
+    def __init__(self, pipe='0', capture_size=(1280, 1280), output_img_size=(1280, 1280), stride=32):
         self.capture_size = capture_size
         self.output_img_size = output_img_size
 
@@ -58,19 +58,19 @@ class LoadWebcam:
     def set_camera(self):
         # 0.75 is manual control.
         self.cap = cv2.VideoCapture(0)
-        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.capture_size[0])
-        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.capture_size[1])
-        self.cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)  # set buffer size
-        self.cap.set(cv2.CAP_PROP_FPS, 15)
-        self.cap.read()  # Clear buffer
-        time.sleep(1)
-
-        width, height = self.cap.get(cv2.CAP_PROP_FRAME_WIDTH), self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
-        x1 = int((width / 2) - (self.output_img_size[0] / 2))
-        y1 = int((height / 2) - (self.output_img_size[1] / 2))
-        x2 = int((width / 2) + (self.output_img_size[0] / 2))
-        y2 = int((height / 2) + (self.output_img_size[1] / 2))
-        self.crop_xyxy = [x1, y1, x2, y2]
+        # self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.capture_size[0])
+        # self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.capture_size[1])
+        # self.cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)  # set buffer size
+        # self.cap.set(cv2.CAP_PROP_FPS, 15)
+        # self.cap.read()  # Clear buffer
+        # time.sleep(1)
+        #
+        # width, height = self.cap.get(cv2.CAP_PROP_FRAME_WIDTH), self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
+        # x1 = int((width / 2) - (self.output_img_size[0] / 2))
+        # y1 = int((height / 2) - (self.output_img_size[1] / 2))
+        # x2 = int((width / 2) + (self.output_img_size[0] / 2))
+        # y2 = int((height / 2) + (self.output_img_size[1] / 2))
+        # self.crop_xyxy = [x1, y1, x2, y2]
 
     def __enter__(self):
         print('start camera')
