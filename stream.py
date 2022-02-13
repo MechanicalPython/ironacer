@@ -58,8 +58,8 @@ class LoadWebcam:
     def set_camera(self):
         # 0.75 is manual control.
         self.cap = cv2.VideoCapture(0)
-        # self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.capture_size[0])
-        # self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.capture_size[1])
+        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.capture_size[0])
+        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.capture_size[1])
         # self.cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)  # set buffer size
         # self.cap.set(cv2.CAP_PROP_FPS, 15)
         # self.cap.read()  # Clear buffer
