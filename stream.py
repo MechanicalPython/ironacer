@@ -5,6 +5,7 @@ Stream raw cv2 video, as an array, that other aspects of the program can plug in
 import logging
 import os
 import time
+import argparse
 
 import cv2
 from pathlib import Path
@@ -60,6 +61,8 @@ class LoadWebcam:
         self.cap = cv2.VideoCapture(0)
         self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.capture_size[0])
         self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.capture_size[1])
+        print("width, height", self.cap.get(cv2.CAP_PROP_FRAME_WIDTH), self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+
         # self.cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)  # set buffer size
         # self.cap.set(cv2.CAP_PROP_FPS, 15)
         # self.cap.read()  # Clear buffer
@@ -122,9 +125,16 @@ class LoadWebcam:
 # max - 3280 × 2464 pixels
 # 1-15 fps - 2592 x 1944
 
+def arg_parse():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--capture', type=list, default=[1080, 1080])
+    parser.add_argument('--crop', type=list, default=[None, None])
+    return parser.parse_args()
+
 
 if __name__ == '__main__':
-    with LoadWebcam() as stream:
+    opt = arg_parse()
+    with LoadWebcam(capture_size=opt.capture, output_img_size=opt.crop) as stream:
         for img in stream:
             cv2.imwrite('test.jpg', img)
             # show_frame(img)
