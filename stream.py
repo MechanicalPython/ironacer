@@ -90,8 +90,8 @@ class LoadWebcam:
             logging.critical(f'Frame is None. {self.get_all_settings()}')
             return None
         # Crop image to correct size.
-        x1, y1, x2, y2 = self.crop_xyxy
-        img = img[y1:y2, x1:x2]  # y1:y2, x1:x2 where x1y1 it top left and x2y2 is bottom right.
+        # x1, y1, x2, y2 = self.crop_xyxy
+        # img = img[y1:y2, x1:x2]  # y1:y2, x1:x2 where x1y1 it top left and x2y2 is bottom right.
 
         # if time.time() - self.t > self.reset_freq:
         #     image_path = f'{parent_folder}/detected/image/sample_result-{datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S-%f")}'
