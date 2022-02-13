@@ -43,15 +43,15 @@ class LoadWebcam:
     """
     Taken and modified from yolov5/utils LoadWebcam.
     Returns just the image, the augmentation needed for inference is done by find.py.
+    hq camera - 4056 x 3040 pixels max resolution.
     """
-
-    def __init__(self, pipe='0', capture_size=(2592, 1944), output_img_size=1280, stride=32):
+    def __init__(self, pipe='0', capture_size=(4056, 3040), output_img_size=(4056, 3040), stride=32):
         self.capture_size = capture_size
         self.output_img_size = output_img_size
 
         self.stride = stride
         self.pipe = eval(pipe) if pipe.isnumeric() else pipe
-        self.reset_freq = 60 * 60  # Frequency to reset the camera (in seconds).
+        # self.reset_freq = 60 * 60  # Frequency to reset the camera (in seconds).
         self.t = time.time()
         self.cap = None
 
@@ -66,10 +66,10 @@ class LoadWebcam:
         time.sleep(1)
 
         width, height = self.cap.get(cv2.CAP_PROP_FRAME_WIDTH), self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
-        x1 = int((width / 2) - (self.output_img_size / 2))
-        y1 = int((height / 2) - (self.output_img_size / 2))
-        x2 = int((width / 2) + (self.output_img_size / 2))
-        y2 = int((height / 2) + (self.output_img_size / 2))
+        x1 = int((width / 2) - (self.output_img_size[0] / 2))
+        y1 = int((height / 2) - (self.output_img_size[1] / 2))
+        x2 = int((width / 2) + (self.output_img_size[0] / 2))
+        y2 = int((height / 2) + (self.output_img_size[1] / 2))
         self.crop_xyxy = [x1, y1, x2, y2]
 
     def __enter__(self):
@@ -126,5 +126,4 @@ class LoadWebcam:
 if __name__ == '__main__':
     with LoadWebcam() as stream:
         for img in stream:
-            # show_frame(img)
-            pass
+            show_frame(img)

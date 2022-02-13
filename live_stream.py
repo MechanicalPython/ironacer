@@ -43,7 +43,7 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
             self.send_header('Content-Type', 'multipart/x-mixed-replace; boundary=FRAME')
             self.end_headers()
             try:
-                with LoadWebcam(capture_size=(1280, 1280), output_img_size=1280) as stream:
+                with LoadWebcam(capture_size=(4056, 3040), output_img_size=None) as stream:
                     for frame in stream:
                         frame = cv2.imencode('.jpg', frame)[1].tobytes()
 
