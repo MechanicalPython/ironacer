@@ -81,8 +81,9 @@ def arg_parse():
 if __name__ == '__main__':
     # http://ironacer.local:8000/stream.mjpg
     opt = arg_parse()
-    capture = opt.capture
-    output = opt.crop
+    capture = [int(i) for i in opt.capture.split(',')]
+    output = [int(i) for i in opt.crop.split(',')]
+    print(capture, output)
     # Global var as I CBA to pass them properly.
 
     address = ('', 8000)
