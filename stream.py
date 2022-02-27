@@ -63,16 +63,16 @@ class LoadWebcam:
         self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.capture_size[1])
         print("width, height", self.cap.get(cv2.CAP_PROP_FRAME_WIDTH), self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
-        # self.cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)  # set buffer size
-        # self.cap.set(cv2.CAP_PROP_FPS, 15)
-        # self.cap.read()  # Clear buffer
-        # time.sleep(1)
-        #
-        # width, height = self.cap.get(cv2.CAP_PROP_FRAME_WIDTH), self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
-        # x1 = int((width / 2) - (self.output_img_size[0] / 2))
-        # y1 = int((height / 2) - (self.output_img_size[1] / 2))
-        # x2 = int((width / 2) + (self.output_img_size[0] / 2))
-        # y2 = int((height / 2) + (self.output_img_size[1] / 2))
+        self.cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)  # set buffer size
+        self.cap.set(cv2.CAP_PROP_FPS, 15)
+        self.cap.read()  # Clear buffer
+        time.sleep(1)
+
+        width, height = self.cap.get(cv2.CAP_PROP_FRAME_WIDTH), self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
+        x1 = int((width / 2) - (self.output_img_size[0] / 2))
+        y1 = int((height / 2) - (self.output_img_size[1] / 2))
+        x2 = int((width / 2) + (self.output_img_size[0] / 2))
+        y2 = int((height / 2) + (self.output_img_size[1] / 2))
         # self.crop_xyxy = [x1, y1, x2, y2]
 
     def __enter__(self):
