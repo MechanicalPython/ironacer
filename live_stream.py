@@ -72,8 +72,8 @@ class StreamingServer(socketserver.ThreadingMixIn, server.HTTPServer):
 
 def arg_parse():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--capture', type=str, default="1080,1080")
-    parser.add_argument('--crop', type=str, default="1080,1080")
+    parser.add_argument('--capture', type=str, default="1280,1280")
+    parser.add_argument('--crop', type=str, default="1280,1280")
     return parser.parse_args()
 
 
