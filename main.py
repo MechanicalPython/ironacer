@@ -210,6 +210,6 @@ if __name__ == '__main__':
         opt.inference = False
 
     IA = IronAcer(**vars(opt))
-    IA.bot.chat_id = 1706759043  # Change it to private chat for testing.
+    # IA.bot.chat_id = 1706759043  # Change it to private chat for testing.
     IA.main()
 
