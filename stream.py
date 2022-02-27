@@ -48,6 +48,7 @@ class LoadWebcam:
     """
     def __init__(self, pipe='0', capture_size=(1280, 1280), output_img_size=(1280, 1280), stride=32):
         self.capture_size = capture_size
+        self.check_resolution()
         self.output_img_size = output_img_size
 
         self.stride = stride
@@ -61,18 +62,17 @@ class LoadWebcam:
         self.cap = cv2.VideoCapture(0, cv2.CAP_V4L2)
         self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.capture_size[0])
         self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.capture_size[1])
-        print("width, height", self.cap.get(cv2.CAP_PROP_FRAME_WIDTH), self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
         self.cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)  # set buffer size
         self.cap.set(cv2.CAP_PROP_FPS, 15)
         self.cap.read()  # Clear buffer
         time.sleep(1)
 
-        width, height = self.cap.get(cv2.CAP_PROP_FRAME_WIDTH), self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
-        x1 = int((width / 2) - (self.output_img_size[0] / 2))
-        y1 = int((height / 2) - (self.output_img_size[1] / 2))
-        x2 = int((width / 2) + (self.output_img_size[0] / 2))
-        y2 = int((height / 2) + (self.output_img_size[1] / 2))
+        # width, height = self.cap.get(cv2.CAP_PROP_FRAME_WIDTH), self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
+        # x1 = int((width / 2) - (self.output_img_size[0] / 2))
+        # y1 = int((height / 2) - (self.output_img_size[1] / 2))
+        # x2 = int((width / 2) + (self.output_img_size[0] / 2))
+        # y2 = int((height / 2) + (self.output_img_size[1] / 2))
         # self.crop_xyxy = [x1, y1, x2, y2]
 
     def __enter__(self):
@@ -109,6 +109,14 @@ class LoadWebcam:
     #     self.cap.read()
     #     self.cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 0.25)
     #     logging.debug(f'Exposure: {self.cap.get(cv2.CAP_PROP_EXPOSURE)}')
+
+    def check_resolution(self):
+        """The camera's block size is 32x16 so any image data provided to a renderer must have a width which is a
+        multiple of 32, and a height which is a multiple of 16."""
+        if self.capture_size[0] % 32 != 0:
+            raise Exception('Width must be multiple of 32')
+        if self.capture_size[1] % 16 != 0:
+            raise Exception('Height must be multiple of 16')
 
     def get_all_settings(self):
         return f"""

@@ -31,6 +31,11 @@ utils.py - holds random one-off functions.
 ### Camera
 To use cv2, you need to enable the legacy camera via raspi-config. 
 
+The camera's block size is 32x16 so any image data provided to a renderer must have a width which is a multiple of 32,
+and a height which is a multiple of 16.
+1024 x 1024
+
+
 ### Conda env
 Mostly following: https://towardsdatascience.com/yes-you-can-run-pytorch-natively-on-m1-macbooks-and-heres-how-35d2eaa07a83
 ```
