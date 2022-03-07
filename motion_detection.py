@@ -7,7 +7,7 @@ import cv2
 
 
 class MotionDetection:
-    def __init__(self, detection_region):
+    def __init__(self):
         """
         :rtype: object
         """
@@ -16,7 +16,6 @@ class MotionDetection:
             self.parent_folder = '.'
 
         self.prev_frame = None
-        self.detection_region = detection_region
 
     def detect(self, frame, motion_thresh=500):
         """
@@ -58,42 +57,13 @@ class MotionDetection:
                 continue  # go to next contour.
             (x, y, w, h) = cv2.boundingRect(contour)
             bounding_boxes.append([x, y, x+w, y+h, amount_of_motion])  # Convert to top left and top right coords for compatibility with yolo convention.
-        is_motion, bounding_boxes = self.motion_region(bounding_boxes)
         self.prev_frame = frame
         return is_motion, bounding_boxes
-
-    def motion_region(self, bounding_boxes):
-        """Set a rectangle where motion can be detected.
-        If any part of the motion box is in the detection region it'll be counted. """
-        positive_boxes = []
-        for box in bounding_boxes:
-            x, y, a, b, _ = box  # x, y, a, b = top left, top right
-            corners = (x, y), (a, y), (x, b), (a, b)
-            for corner in corners:
-                cx, cy = corner
-                if self.coord_in_rect(cx, cy):
-                    positive_boxes.append(box)
-                    break  # To stop duplicates if 2 corners are in the detection region.
-        if len(positive_boxes) == 0:
-            return False, [[None, None, None, None, None]]
-        else:
-            return True, positive_boxes
-
-    def coord_in_rect(self, x, y):
-        """
-        x, y is coordinage from origin of top left of image. Returns bool.
-        detection region is in top left bottom right xyxy coords.
-        """
-        if self.detection_region[0] <= x <= (self.detection_region[2]) and \
-                self.detection_region[1] <= y <= (self.detection_region[3]):
-            return True
-        else:
-            return False
 
 
 if __name__ == '__main__':
     from stream import LoadWebcam
-    motion_detector = MotionDetection(detection_region=[0, 250, 500, 1280])
+    motion_detector = MotionDetection()
 
     with LoadWebcam() as stream:
         for frame in stream:

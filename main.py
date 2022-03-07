@@ -41,12 +41,10 @@ class IronAcer:
                  source="0",
                  weights='yolov5n6_best.pt',
                  imgsz=1280,  # Only every going to be square as yolo needs square inputs.
-                 detection_region='0,350,1280,600',
                  telegram_bot_mode=True,
                  surveillance_mode=False,  # Don't run the strike functions.
                  motion_detection=True,
                  inference=True):
-        self.detection_region = [int(i) for i in detection_region.split(',')]
         self.source = source
         self.weights = weights
         self.imgsz = imgsz
@@ -58,7 +56,7 @@ class IronAcer:
             self.yolo = Detector(weights, (imgsz, imgsz))
 
         if self.motion_detection:
-            self.motion_detector = MotionDetection(detection_region=self.detection_region)
+            self.motion_detector = MotionDetection()
 
         if not surveillance_mode:
             self.claymore = strike.Claymore()
@@ -73,7 +71,6 @@ class IronAcer:
 
     def start_up(self, frame):
         # Send initial image only at start of the day.
-        frame = self.add_label_to_frame(frame, [self.detection_region])
         self.bot.send_photo(cv2.imencode('.jpg', frame)[1].tobytes())
 
     def close_down(self):
