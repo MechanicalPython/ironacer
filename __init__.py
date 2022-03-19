@@ -48,11 +48,10 @@ def motion_detect_img_dir(path='detected/', start_number=1, detect_region=['0', 
         for image in [f for f in os.listdir(images_dir) if f.endswith('.jpg')]:
             if 'Motion' not in image:
                 continue
-            serial_number = image.split('-')[1].replace('.jpg', '')
+            serial_number = image.replace('.jpg', '')
             # Reading frame(image) from video
-            frame = cv2.imread(f'{path}image/Motion_result-{serial_number}.jpg')
-            labels = open(f'{path}label/Motion_result-{serial_number}.txt', 'r').read().strip().split('\n')
-
+            frame = cv2.imread(f'{path}image/{serial_number}.jpg')
+            labels = open(f'{path}label/{serial_number}.txt', 'r').read().strip().split('\n')
             labels.append(' '.join(detect_region))
             for label in labels:
                 print(len(label))
