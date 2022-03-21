@@ -217,5 +217,5 @@ if __name__ == '__main__':
 
     IA = IronAcer(**vars(opt))
     # IA.bot.chat_id = 1706759043  # Change it to private chat for testing.
-    print(IA.is_daytime())
+    IA.main()
 
