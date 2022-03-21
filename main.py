@@ -76,7 +76,7 @@ class IronAcer:
         frame = self.add_label_to_frame(frame, [self.detection_region])
         self.bot.send_photo(cv2.imencode('.jpg', frame)[1].tobytes())
 
-    def close_down(self):
+    def end_of_day_msg(self):
         motion = [i for i in os.listdir(f'{ROOT}/detected/image/') if 'Motion' in i]
         msg = f"{len(motion)} motion detected photos currently saved"
         self.bot.send_message(msg)
@@ -99,37 +99,11 @@ class IronAcer:
         if is_motion:  # Save image
             self.save_results(frame, motion_detection_result, 'Motion')
 
-    def main(self):
-        with LoadWebcam(pipe=self.source, output_img_size=(self.imgsz, self.imgsz)) as stream:
-            while True:
-                isdaytime = self.sunrise < self.now < self.sunset
-                if not isdaytime:
-                    time.sleep(60)
-                    continue
-
-                # It is in the daytime.
-                stream.__next__()  # Clear buffer.
-                self.start_up(stream.__next__())
-                for frame in stream:
-                    if self.inference:
-                        self.inferencer(frame)
-
-                    if self.motion_detection:
-                        self.motion_detectoriser(frame)
-
-                    if self.surveillance_mode is False:
-                        # claymore.detonate()
-                        # One day, strike.javelin(result)
-                        pass
-
-                    self.now = datetime.datetime.now()
-                    self.sunrise = self.sun.get_sunrise_time().replace(tzinfo=None)
-                    self.sunset = self.sun.get_local_sunset_time().replace(tzinfo=None)
-
-                    isdaytime = self.sunrise < self.now < self.sunset
-                    if not isdaytime:
-                        self.close_down()
-                        break
+    def is_daytime(self):
+        self.now = datetime.datetime.now()
+        self.sunrise = self.sun.get_sunrise_time().replace(tzinfo=None)
+        self.sunset = self.sun.get_local_sunset_time().replace(tzinfo=None)
+        return self.sunrise < self.now < self.sunset
 
     def save_results(self, frame, xyxyl, type):
         """Saves a clean image and the label for that image.
@@ -180,6 +154,36 @@ class IronAcer:
         self.bot.send_doc(zip_file)
         os.remove(zip_file)
 
+    def main(self):
+        """
+        Runs forever with a service: https://www.tomshardware.com/how-to/run-long-running-scripts-raspberry-pi
+        """
+        with LoadWebcam(pipe=self.source, output_img_size=(self.imgsz, self.imgsz)) as stream:
+            while True:
+                if not self.is_daytime():
+                    time.sleep(60)
+                    continue
+
+                # It is in the daytime.
+                stream.__next__()  # Clear buffer.
+                self.start_up(stream.__next__())
+                for frame in stream:
+                    if self.inference:
+                        self.inferencer(frame)
+
+                    if self.motion_detection:
+                        self.motion_detectoriser(frame)
+
+                    if self.surveillance_mode is False:
+                        # claymore.detonate()
+                        # One day, strike.javelin(result)
+                        pass
+
+                    if not self.is_daytime():
+                        print('End of day')
+                        self.end_of_day_msg()
+                        break
+
 
 def boolean_string(s):
     if s not in {'False', 'True'}:
@@ -213,5 +217,5 @@ if __name__ == '__main__':
 
     IA = IronAcer(**vars(opt))
     # IA.bot.chat_id = 1706759043  # Change it to private chat for testing.
-    IA.main()
+    print(IA.is_daytime())
 
