@@ -196,7 +196,7 @@ def arg_parse():
     parser.add_argument('--source', type=str, default="0")
     parser.add_argument('--weights', type=str, default='yolov5n6_best.pt', help='File path to yolo weights.pt')
     parser.add_argument('--imgsz', type=int, default=1280, help='Square image size.')
-    parser.add_argument('--detection_region', type=str, default='0,600,1280,1000', help='Set detection region:x,y,x,y')
+    parser.add_argument('--detection_region', type=str, default='0,300,1280,800', help='Set detection region:x,y,x,y')
     parser.add_argument('--telegram_bot_mode', type=boolean_string, default=True, help='Run telegram or not.')
     parser.add_argument('--surveillance_mode', type=boolean_string, default=False, help='True = do strike')
     parser.add_argument('--motion_detection', type=boolean_string, default=True, help='Run motion detection')
