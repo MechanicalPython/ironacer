@@ -1,13 +1,8 @@
-#! /usr/local/bin/python3.7
-
 """
 Main.py controls all the sub methods and classes that do the heavy lifting.
 
 Workflow
 Camera image -> yolov5 -> if squirrel -> fire mechanism and send photo, else do nothing.
-
-
-
 """
 
 import argparse
@@ -16,6 +11,7 @@ import os
 import sys
 import time
 import zipfile
+import threading
 
 import cv2
 import suntime
@@ -26,11 +22,12 @@ from stream import LoadWebcam
 from find import Detector
 from motion_detection import MotionDetection
 
+from pathlib import Path
 
 # todo
 #  run telegram, inference, and motion detection on seperate threads to speed it up.
+#  CPU temperature alert.
 
-from pathlib import Path
 
 FILE = Path(__file__).resolve()
 ROOT = Path(os.path.abspath(FILE.parents[0]))  # Absolute path
@@ -154,10 +151,23 @@ class IronAcer:
         self.bot.send_doc(zip_file)
         os.remove(zip_file)
 
+    def cpu_temp(self):
+        """
+        Continuous thread for checking the cpu temp and messaging telegram.
+        """
+        while True:
+            with open('/sys/class/thermal/thermal_zone0/temp') as f:
+                temp = int(f.read().strip()) / 1000
+                if temp > 80:
+                    self.bot.send_message(f'Warning: CPU temperature is {temp}')
+            time.sleep(5)
+
     def main(self):
         """
         Runs forever with a service: https://www.tomshardware.com/how-to/run-long-running-scripts-raspberry-pi
         """
+        temp_thread = threading.Thread(target=self.cpu_temp, daemon=True)
+        temp_thread.start()
         with LoadWebcam(pipe=self.source, output_img_size=(self.imgsz, self.imgsz)) as stream:
             while True:
                 if not self.is_daytime():
@@ -218,4 +228,3 @@ if __name__ == '__main__':
     IA = IronAcer(**vars(opt))
     # IA.bot.chat_id = 1706759043  # Change it to private chat for testing.
     IA.main()
-
