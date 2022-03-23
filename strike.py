@@ -1,17 +1,9 @@
-#! /usr/local/bin/python3.7
-
 """
 Strike.py - employ the anti-squirrel measures.
 """
 
-# todo - Needs to be written so it can run and execute from a mac.
-#  convert camera distance and angle to target to gun distance and angle.
-#  locstat to trajectory required
 
-try:
-    import RPi.GPIO as GPIO
-except ImportError:
-    pass
+import RPi.GPIO as GPIO
 from time import sleep
 
 
@@ -42,15 +34,6 @@ class Claymore:
         self.firing_pin.on()
         sleep(2)
         self.firing_pin.off()
-
-
-def javelin(loc_stat):
-    """
-    :param: loc_stat - the location of the squirrel.
-    Launch stike against squirrel
-    :return:
-    """
-    pass
 
 
 if __name__ == '__main__':

@@ -26,7 +26,6 @@ from pathlib import Path
 
 # todo
 #  run telegram, inference, and motion detection on seperate threads to speed it up.
-#  CPU temperature alert.
 
 
 FILE = Path(__file__).resolve()
@@ -170,14 +169,21 @@ class IronAcer:
         temp_thread.start()
         with LoadWebcam(pipe=self.source, output_img_size=(self.imgsz, self.imgsz)) as stream:
             while True:
+                # If it is nighttime, just go to sleep like you should.
                 if not self.is_daytime():
                     time.sleep(60)
                     continue
 
-                # It is in the daytime.
+                # It is in the daytime so get to work.
+                # These two lines clear ths buffer (buffer is set to 1) and send the morning message to telegram.
                 stream.__next__()  # Clear buffer.
                 self.start_up(stream.__next__())
-                for frame in stream:
+
+                for frame in stream:  # For threading, the next frame if gotten and put into a buffer, so no need to
+                    # wait for another frame to be loaded.
+
+                    # todo - rolling buffer of the previous X number of frames for filming purposes?
+
                     if self.inference:
                         self.inferencer(frame)
 
@@ -185,8 +191,10 @@ class IronAcer:
                         self.motion_detectoriser(frame)
 
                     if self.surveillance_mode is False:
-                        # claymore.detonate()
-                        # One day, strike.javelin(result)
+                        # todo - set up this as a thread to film the ongoing event while keeping the valve open.
+                        #  May need to be done inside the claymore method?
+                        self.claymore.detonate()
+                        self.film_event()
                         pass
 
                     if not self.is_daytime():
