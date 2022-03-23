@@ -80,7 +80,18 @@ class IronAcer:
         motion = [i for i in os.listdir(f'{ROOT}/detected/image/') if 'Motion' in i]
         msg = f"{len(motion)} motion detected photos currently saved"
         self.bot.send_message(msg)
-        self.send_images()
+
+        # Make zip file and send it.
+        zip_file = f"{ROOT}/detected{self.now.strftime('%Y-%m-%d')}.zip"
+        zf = zipfile.ZipFile(zip_file, "w")
+        for dirname, subdirs, files in os.walk(f'{ROOT}/detected/'):
+            zf.write(dirname)
+            for filename in files:
+                zf.write(os.path.join(dirname, filename))
+                os.remove(os.path.join(dirname, filename))
+        zf.close()
+        self.bot.send_doc(zip_file)
+        os.remove(zip_file)
 
     def inferencer(self, frame):
         is_squirrel, inference_result = self.yolo.inference(frame)
@@ -139,20 +150,6 @@ class IronAcer:
             cv2.rectangle(frame, (x, y), (x2, y2), (0, 255, 0), 3)
             cv2.putText(frame, amount_of_motion, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (36, 255, 12), 2)
         return frame
-
-    def send_images(self):
-        """Sends zip of the days images at end of the day."""
-        # Zip folder
-        zip_file = f"{ROOT}/detected{self.now.strftime('%Y-%m-%d')}.zip"
-        zf = zipfile.ZipFile(zip_file, "w")
-        for dirname, subdirs, files in os.walk(f'{ROOT}/detected/'):
-            zf.write(dirname)
-            for filename in files:
-                zf.write(os.path.join(dirname, filename))
-                os.remove(os.path.join(dirname, filename))
-        zf.close()
-        self.bot.send_doc(zip_file)
-        os.remove(zip_file)
 
     def main(self):
         """

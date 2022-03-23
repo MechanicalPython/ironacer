@@ -18,7 +18,7 @@ class MotionDetection:
         self.prev_frame = None
         self.detection_region = detection_region
 
-    def detect(self, frame, motion_thresh=500):
+    def detect(self, frame, motion_thresh=1000):
         """
         If there is motion between frame A and frame B, this saves frame B and the bounding boxes for that motion
         in a labels file.
@@ -57,7 +57,7 @@ class MotionDetection:
             if amount_of_motion < motion_thresh:  # this is the threshold for motion.
                 continue  # go to next contour.
             (x, y, w, h) = cv2.boundingRect(contour)
-            bounding_boxes.append([x, y, x+w, y+h, amount_of_motion])  # Convert to top left and top right coords for compatibility with yolo convention.
+            bounding_boxes.append([x, y, w, h, amount_of_motion])  # Convert to top left and top right coords for compatibility with yolo convention.
         is_motion, bounding_boxes = self.motion_region(bounding_boxes)
         self.prev_frame = frame
         return is_motion, bounding_boxes

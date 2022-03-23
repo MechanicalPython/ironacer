@@ -89,10 +89,6 @@ class PhotographBot(TelegramBot):
         photo = self.cv2.imencode('.jpg', photo)[1].tobytes()
         self.bot.sendPhoto(self.chat_id, photo, timeout=300)
 
-    def set_exposure(self, update, context):
-        text = update.message.text
-        # self.webcam.cap.set((cv2.CAP_PROP_AUTO_EXPOSURE, )
-
     def get_attr(self, update, context):
         update.message.reply_text(self.webcam.get_all_settings())
 
@@ -100,7 +96,6 @@ class PhotographBot(TelegramBot):
         self.dispatcher.add_handler(CommandHandler('start', self.start))
         self.dispatcher.add_handler(CommandHandler('help', self.help))
         self.dispatcher.add_handler(CommandHandler('photo', self.photo))
-        self.dispatcher.add_handler(CommandHandler('set', self.set_exposure))
         self.dispatcher.add_handler(CommandHandler('get', self.get_attr))
 
         self.dispatcher.add_error_handler(self.error)
