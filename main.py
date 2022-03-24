@@ -6,7 +6,11 @@ Main.py controls all the sub methods and classes that do the heavy lifting.
 Workflow
 Camera image -> yolov5 -> if squirrel -> fire mechanism and send photo, else do nothing.
 
+## Data gathering
 
+
+
+Runs forever with a service: https://www.tomshardware.com/how-to/run-long-running-scripts-raspberry-pi
 
 """
 
@@ -103,12 +107,6 @@ class IronAcer:
                 xyxy.append(conf)  # add conf to xyxy to save it.
                 labels.append(xyxy)
             self.save_results(frame, labels, 'Yolo')
-            # self.bot.send_video()  # todo - this.
-
-    def motion_detectoriser(self, frame):
-        is_motion, motion_detection_result = self.motion_detector.detect(frame)  # list of [xyxy, amount_of_motion]
-        if is_motion:  # Save image
-            self.save_results(frame, motion_detection_result, 'Motion')
 
     def is_daytime(self):
         self.now = datetime.datetime.now()
@@ -120,7 +118,17 @@ class IronAcer:
         """Saves a clean image and the label for that image.
         label = x, y, x, y, label.
         xyxyl = [[x, y, x, y, l], ..]
+
+        Can convert the yolo [[xyxy, confidence, cls], ..] if type is yolo.
         """
+        if type == 'Yolo':
+            labels = []  # Convert yolo results into cv2 labels.
+            for result in xyxyl:
+                xyxy, conf, cls = result  # xyxy is list of 4 items.
+                xyxy.append(conf)  # add conf to xyxy to save it.
+                labels.append(xyxy)
+            xyxyl = labels
+
         t = str(self.now.strftime('%Y-%m-%d %H-%M-%S-%f'))
         image_path = f'{ROOT}/detected/image/{type}_result-{t}.jpg'
         cv2.imwrite(image_path, frame)  # Write image
@@ -151,9 +159,9 @@ class IronAcer:
             cv2.putText(frame, amount_of_motion, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (36, 255, 12), 2)
         return frame
 
-    def main(self):
+    def gather_data_motion_detection(self):
         """
-        Runs forever with a service: https://www.tomshardware.com/how-to/run-long-running-scripts-raspberry-pi
+        Runs the data gathering with motion detection.
         """
         with LoadWebcam(pipe=self.source, output_img_size=(self.imgsz, self.imgsz)) as stream:
             while True:
@@ -165,16 +173,48 @@ class IronAcer:
                 stream.__next__()  # Clear buffer.
                 self.start_up(stream.__next__())
                 for frame in stream:
-                    if self.inference:
-                        self.inferencer(frame)
 
-                    if self.motion_detection:
-                        self.motion_detectoriser(frame)
+                    is_motion, motion_detection_result = self.motion_detector.detect(frame)
+                    # motion_detection_result = [[xyxy, amount_of_motion], ..]
 
-                    if self.surveillance_mode is False:
-                        # claymore.detonate()
-                        # One day, strike.javelin(result)
-                        pass
+                    if is_motion:  # There is enough motion, so save the result.
+                        self.save_results(frame, motion_detection_result, 'Motion')
+
+                    if not self.is_daytime():
+                        print('End of day')
+                        self.end_of_day_msg()
+                        break
+
+    def main(self):
+        """
+        Runs yolo inference on frames with enough motion detection, to save power and reduce constant load on the
+        pi.
+
+        """
+        with LoadWebcam(pipe=self.source, output_img_size=(self.imgsz, self.imgsz)) as stream:
+            while True:
+                if not self.is_daytime():
+                    time.sleep(60)
+                    continue
+
+                # It is in the daytime.
+                stream.__next__()  # Clear buffer.
+                self.start_up(stream.__next__())
+                for frame in stream:
+                    # If there is motion:
+                    #   If yolo finds a squirrel:
+                    #       Run anti-squirrel measures.
+
+                    is_motion, motion_detection_result = self.motion_detector.detect(frame)
+                    if is_motion:
+                        # todo - save results to try and capture data when running inference?
+                        self.save_results(frame, motion_detection_result, 'Motion')
+                        is_squirrel, inference_result = self.yolo.inference(frame)
+                        if is_squirrel:
+                            if self.surveillance_mode is False:
+                                self.claymore.detonate()
+                                # One day, strike.javelin(result)
+                                pass
 
                     if not self.is_daytime():
                         print('End of day')
@@ -194,23 +234,16 @@ def arg_parse():
     parser.add_argument('--weights', type=str, default='yolov5n6_best.pt', help='File path to yolo weights.pt')
     parser.add_argument('--imgsz', type=int, default=1280, help='Square image size.')
     parser.add_argument('--detection_region', type=str, default='0,300,1280,800', help='Set detection region:x,y,x,y')
-    parser.add_argument('--telegram_bot_mode', type=boolean_string, default=True, help='Run telegram or not.')
     parser.add_argument('--surveillance_mode', type=boolean_string, default=False, help='True = do strike')
-    parser.add_argument('--motion_detection', type=boolean_string, default=True, help='Run motion detection')
-    parser.add_argument('--inference', type=boolean_string, default=True, help='Run yolo inference or not.')
     return parser.parse_args()
 
 
 if __name__ == '__main__':
-    # 0430 is the earliest sunrise possible.
-
     opt = arg_parse()
     if len(sys.argv) == 1:  # Run this if from pycharm, otherwise it's command line.
         opt.imgsz = 720
         opt.detection_region = '400,400,500,500'
         opt.surveillance_mode = True
-        opt.motion_detection = True
-        opt.inference = False
 
     IA = IronAcer(**vars(opt))
     # IA.bot.chat_id = 1706759043  # Change it to private chat for testing.
