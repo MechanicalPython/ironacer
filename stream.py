@@ -59,21 +59,15 @@ class LoadWebcam:
 
     def set_camera(self):
         # 0.75 is manual control.
-        self.cap = cv2.VideoCapture(0)   #, cv2.CAP_V4L2)
+        self.cap = cv2.VideoCapture(0)   # For pi0 - VideoCapture(0, cv2.CAP_V4L2)
         self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.capture_size[0])
         self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.capture_size[1])
 
-        self.cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)  # set buffer size
+        self.cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
         self.cap.set(cv2.CAP_PROP_FPS, 15)
+        self.cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 0.25)  # 0.25 is automatic exposure. 0.75 is manual control.
         self.cap.read()  # Clear buffer
         time.sleep(1)
-
-        # width, height = self.cap.get(cv2.CAP_PROP_FRAME_WIDTH), self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
-        # x1 = int((width / 2) - (self.output_img_size[0] / 2))
-        # y1 = int((height / 2) - (self.output_img_size[1] / 2))
-        # x2 = int((width / 2) + (self.output_img_size[0] / 2))
-        # y2 = int((height / 2) + (self.output_img_size[1] / 2))
-        # self.crop_xyxy = [x1, y1, x2, y2]
 
     def __enter__(self):
         print('start camera')
@@ -92,23 +86,12 @@ class LoadWebcam:
         if img is None:
             logging.critical(f'Frame is None. {self.get_all_settings()}')
             return None
-        # Crop image to correct size.
-        # x1, y1, x2, y2 = self.crop_xyxy
-        # img = img[y1:y2, x1:x2]  # y1:y2, x1:x2 where x1y1 it top left and x2y2 is bottom right.
 
-        # if time.time() - self.t > self.reset_freq:
-        #     image_path = f'{parent_folder}/detected/image/sample_result-{datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S-%f")}'
-        #     cv2.imwrite(image_path, img)
-        #
-        #     logging.debug(f'fps: {self.frames_produced / self.reset_freq}')
-        #     self.reset_camera()
-        #     self.t = time.time()
-        return img
-
-    # def reset_camera(self):
-    #     self.cap.read()
-    #     self.cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 0.25)
-    #     logging.debug(f'Exposure: {self.cap.get(cv2.CAP_PROP_EXPOSURE)}')
+    @staticmethod
+    def digital_crop(frame, x1, y1, x2, y2):
+        """Digital crop. x1 and y1 is the top left of the image. x2 and y2 is the bottom right."""
+        frame = frame[y1:y2, x1:x2]  # y1:y2, x1:x2 where x1y1 it top left and x2y2 is bottom right.
+        return frame
 
     def check_resolution(self):
         """The camera's block size is 32x16 so any image data provided to a renderer must have a width which is a
@@ -132,18 +115,3 @@ class LoadWebcam:
 
 # max - 3280 × 2464 pixels
 # 1-15 fps - 2592 x 1944
-
-def arg_parse():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--capture', type=list, default=[1080, 1080])
-    parser.add_argument('--crop', type=list, default=[None, None])
-    return parser.parse_args()
-
-
-if __name__ == '__main__':
-    opt = arg_parse()
-    with LoadWebcam(capture_size=opt.capture, output_img_size=opt.crop) as stream:
-        for img in stream:
-            cv2.imwrite('test.jpg', img)
-            # show_frame(img)
-            break
