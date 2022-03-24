@@ -158,10 +158,23 @@ class IronAcer:
             cv2.putText(frame, amount_of_motion, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (36, 255, 12), 2)
         return frame
 
+    def cpu_temp(self):
+        """
+        Continuous thread for checking the cpu temp and messaging telegram.
+        """
+        while True:
+            with open('/sys/class/thermal/thermal_zone0/temp') as f:
+                temp = int(f.read().strip()) / 1000
+                if temp > 80:
+                    self.bot.send_message(f'Warning: CPU temperature is {temp}')
+            time.sleep(5)
+
     def gather_data_motion_detection(self):
         """
         Runs the data gathering with motion detection.
         """
+        temp_thread = threading.Thread(target=self.cpu_temp, daemon=True)
+        temp_thread.start()
         with LoadWebcam(pipe=self.source, output_img_size=(self.imgsz, self.imgsz)) as stream:
             while True:
                 if not self.is_daytime():
@@ -183,17 +196,6 @@ class IronAcer:
                         print('End of day')
                         self.end_of_day_msg()
                         break
-
-    def cpu_temp(self):
-        """
-        Continuous thread for checking the cpu temp and messaging telegram.
-        """
-        while True:
-            with open('/sys/class/thermal/thermal_zone0/temp') as f:
-                temp = int(f.read().strip()) / 1000
-                if temp > 80:
-                    self.bot.send_message(f'Warning: CPU temperature is {temp}')
-            time.sleep(5)
 
     def main(self):
         """
