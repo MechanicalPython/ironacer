@@ -59,7 +59,7 @@ class LoadWebcam:
 
     def set_camera(self):
         # 0.75 is manual control.
-        self.cap = cv2.VideoCapture(0)   # For pi0 - VideoCapture(0, cv2.CAP_V4L2)
+        self.cap = cv2.VideoCapture(self.pipe)   # For pi0 - VideoCapture(0, cv2.CAP_V4L2)
         self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.capture_size[0])
         self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.capture_size[1])
 
@@ -86,6 +86,7 @@ class LoadWebcam:
         if img is None:
             logging.critical(f'Frame is None. {self.get_all_settings()}')
             return None
+        return img
 
     @staticmethod
     def digital_crop(frame, x1, y1, x2, y2):
@@ -115,3 +116,9 @@ class LoadWebcam:
 
 # max - 3280 × 2464 pixels
 # 1-15 fps - 2592 x 1944
+
+if __name__ == '__main__':
+    with LoadWebcam(pipe='0', output_img_size=(1280, 1280)) as stream:
+        for frame in stream:
+            print(type(frame))
+
