@@ -1,5 +1,3 @@
-#! /usr/local/bin/python3.7
-
 """
 Main.py controls all the sub methods and classes that do the heavy lifting.
 
@@ -20,6 +18,7 @@ import os
 import sys
 import time
 import zipfile
+import threading
 
 import cv2
 import suntime
@@ -30,11 +29,11 @@ from stream import LoadWebcam
 from find import Detector
 from motion_detection import MotionDetection
 
+from pathlib import Path
 
 # todo
 #  run telegram, inference, and motion detection on seperate threads to speed it up.
 
-from pathlib import Path
 
 FILE = Path(__file__).resolve()
 ROOT = Path(os.path.abspath(FILE.parents[0]))  # Absolute path
@@ -185,19 +184,34 @@ class IronAcer:
                         self.end_of_day_msg()
                         break
 
+    def cpu_temp(self):
+        """
+        Continuous thread for checking the cpu temp and messaging telegram.
+        """
+        while True:
+            with open('/sys/class/thermal/thermal_zone0/temp') as f:
+                temp = int(f.read().strip()) / 1000
+                if temp > 80:
+                    self.bot.send_message(f'Warning: CPU temperature is {temp}')
+            time.sleep(5)
+
     def main(self):
         """
         Runs yolo inference on frames with enough motion detection, to save power and reduce constant load on the
         pi.
 
         """
+        temp_thread = threading.Thread(target=self.cpu_temp, daemon=True)
+        temp_thread.start()
         with LoadWebcam(pipe=self.source, output_img_size=(self.imgsz, self.imgsz)) as stream:
             while True:
+                # If it is nighttime, just go to sleep like you should.
                 if not self.is_daytime():
                     time.sleep(60)
                     continue
 
-                # It is in the daytime.
+                # It is in the daytime so get to work.
+                # These two lines clear ths buffer (buffer is set to 1) and send the morning message to telegram.
                 stream.__next__()  # Clear buffer.
                 self.start_up(stream.__next__())
                 for frame in stream:
@@ -248,4 +262,3 @@ if __name__ == '__main__':
     IA = IronAcer(**vars(opt))
     # IA.bot.chat_id = 1706759043  # Change it to private chat for testing.
     IA.main()
-
