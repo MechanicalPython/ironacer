@@ -25,8 +25,8 @@ class MotionDetection:
 
         Based on Webcam Motion Detector from https://www.geeksforgeeks.org/webcam-motion-detector-python/
 
-        Bounding boxes are x, y, width, height. Origin is top left of the image.
-        :param motion_thresh: 500 is low to capture everything, but gets a lot of leaf movement.
+        ## Bounding boxes are x, y, x, y. (top left, bottom right). Origin is top left of image.
+        :param motion_thresh: 500 is very low, over 4000 is roughly that of an average squirrel.
         :param frame:
         :return: is_motion, list of [x, y, x, y, amount of motion]
         """
@@ -56,8 +56,11 @@ class MotionDetection:
             amount_of_motion = cv2.contourArea(contour)
             if amount_of_motion < motion_thresh:  # this is the threshold for motion.
                 continue  # go to next contour.
-            (x, y, w, h) = cv2.boundingRect(contour)
-            bounding_boxes.append([x, y, w, h, amount_of_motion])  # Convert to top left and top right coords for compatibility with yolo convention.
+
+            # cv2.boundingRect gives x, y, width of box, height of box. This is then converted to the yolo
+            # format: x, y, x, y (top left, bottom right).
+            (x, y, w, h) = cv2.boundingRect(contour)  # cv2.boundingRect gives
+            bounding_boxes.append([x, y, w+x, h+y, amount_of_motion])  # Convert x, y, x, y for yolo.
         is_motion, bounding_boxes = self.motion_region(bounding_boxes)
         self.prev_frame = frame
         return is_motion, bounding_boxes
@@ -97,11 +100,14 @@ if __name__ == '__main__':
 
     with LoadWebcam() as stream:
         for frame in stream:
-            is_motion, results = motion_detector.detect(frame)  # results = [[[x, y, x, y], motion],.. ]
+            is_motion, results = motion_detector.detect(frame)  # results = [[x, y, x, y, motion],.. ]
             rectangles = [[0, 250, 500, 1280, 'DETECT']]
             if results is None:
                 continue
-            for xyxy, motion in results:
-                xyxy.append(motion)
-                rectangles.append(xyxy)
+            frame = add_label_to_frame(frame, results)
+            cv2.imshow("frame", frame)
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
+
+        cv2.destroyAllWindows()
 

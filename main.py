@@ -22,6 +22,7 @@ import threading
 import cv2
 import suntime
 
+from . import add_label_to_frame
 import strike
 import telegram_bot
 from stream import LoadWebcam
@@ -57,7 +58,7 @@ class IronAcer:
             self.yolo = Detector(weights, (imgsz, imgsz))
 
         self.motion_detector = MotionDetection(detection_region=self.detection_region)
-        self.claymore = strike.Claymore()
+        # self.claymore = strike.Claymore()
 
         self.bot = telegram_bot.TelegramBot()
 
@@ -68,7 +69,7 @@ class IronAcer:
 
     def start_up(self, frame):
         # Send initial image only at start of the day.
-        frame = self.add_label_to_frame(frame, [self.detection_region])
+        frame = add_label_to_frame(frame, [self.detection_region])
         self.bot.send_photo(cv2.imencode('.jpg', frame)[1].tobytes())
 
     def end_of_day_msg(self):
@@ -133,23 +134,6 @@ class IronAcer:
         with open(label_path, 'w') as f:
             f.write(label)
 
-    @staticmethod
-    def add_label_to_frame(frame, xyxyl):
-        """
-        xyxyl = [[x, y, x, y, label], ] top left, bottom right.
-        """
-        for label in xyxyl:
-            if None in label:
-                continue
-            if len(label) == 4:
-                label.append(' ')
-            x, y, x2, y2, amount_of_motion = label
-            x, y, x2, y2, amount_of_motion = int(x), int(y), int(x2), int(y2), str(amount_of_motion)
-            # making green rectangle around the moving object
-            cv2.rectangle(frame, (x, y), (x2, y2), (0, 255, 0), 3)
-            cv2.putText(frame, amount_of_motion, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (36, 255, 12), 2)
-        return frame
-
     def cpu_temp(self):
         """
         Continuous thread for checking the cpu temp and messaging telegram.
@@ -175,17 +159,15 @@ class IronAcer:
         """Runs the inference for finding squirrels.
         If there is motion:
           If yolo finds a squirrel:
-              Run anti-squirrel measures."""
+              Run anti-squirrel measures in a thread."""
         is_motion, motion_detection_result = self.motion_detector.detect(frame)
         if is_motion:
             # todo - save results to try and capture data when running inference?
             self.save_results(frame, motion_detection_result, 'Motion')
             is_squirrel, inference_result = self.yolo.inference(frame)
             if is_squirrel:
-                if self.surveillance_mode is False:
-                    self.claymore.detonate()
-                    # One day, strike.javelin(result)
-                    pass
+                return True
+        return False
 
     def main(self):
         """
@@ -208,7 +190,9 @@ class IronAcer:
                     if self.gather_data:
                         self.gather_data_motion_detection(frame)
                     else:
-                        self.find_squirrels(frame)
+                        if self.find_squirrels(frame) is True:
+                            if self.surveillance_mode is False:
+                                threading.Thread(target=self.claymore.detonate).start()
 
                     if not self.is_daytime():
                         print('End of day')

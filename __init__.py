@@ -1,43 +1,30 @@
 """
 Mostly to hold random methods and classes.
 """
-import os
 
+import cv2
 
-def next_free_path(path_pattern):
+def add_label_to_frame(frame, xyxyl):
     """
-    Method to save a file to a directory and increment the number on it.
-    eg. save result-x.jpg to a directory and automatically increment x.
-    From: https://stackoverflow.com/questions/17984809/how-do-i-create-an-incrementing-filename-in-python#17984925
-
-    Finds the next free path in a sequentially named list of files
-
-    e.g. path_pattern = 'file-%s.txt':
-    file-1.txt
-    file-2.txt
-    file-3.txt
-
-    Runs in log(n) time where n is the number of existing files in sequence
-     :return:
+    xyxyl = [[x, y, x, y, label], ] top left, bottom right.
     """
-    i = 1
-
-    # First do an exponential search
-    while os.path.exists(path_pattern % i):
-        i = i * 2
-
-    # Result lies somewhere in the interval (i/2..i]
-    # We call this interval (a..b] and narrow it down until a + 1 = b
-    a, b = (i // 2, i)
-    while a + 1 < b:
-        c = (a + b) // 2  # interval midpoint
-        a, b = (c, b) if os.path.exists(path_pattern % c) else (a, c)
-    return path_pattern % b
+    for label in xyxyl:
+        if None in label:
+            continue
+        if len(label) == 4:
+            label.append(' ')
+        x, y, x2, y2, amount_of_motion = label
+        x, y, x2, y2, amount_of_motion = int(x), int(y), int(x2), int(y2), str(amount_of_motion)
+        # making green rectangle around the moving object
+        cv2.rectangle(frame, (x, y), (x2, y2), (0, 255, 0), 3)
+        cv2.putText(frame, amount_of_motion, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (36, 255, 12), 2)
+    return frame
 
 
 def motion_detect_img_dir(path='detected/', detect_region=['0', '350', '1280', '600', 'Detect']):
     """Saves labeld images to new directory to analyse easily."""
     import cv2
+    import os
 
     if not os.path.exists(f'{path}labeled_images'):
         os.mkdir(f'{path}labeled_images')
