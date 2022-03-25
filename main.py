@@ -22,12 +22,11 @@ import threading
 import cv2
 import suntime
 
-from . import add_label_to_frame
 import strike
 import telegram_bot
 from stream import LoadWebcam
 from find import Detector
-from motion_detection import MotionDetection
+from motion_detection import MotionDetection, add_label_to_frame
 
 from pathlib import Path
 
@@ -58,7 +57,7 @@ class IronAcer:
             self.yolo = Detector(weights, (imgsz, imgsz))
 
         self.motion_detector = MotionDetection(detection_region=self.detection_region)
-        # self.claymore = strike.Claymore()
+        self.claymore = strike.Claymore()
 
         self.bot = telegram_bot.TelegramBot()
 

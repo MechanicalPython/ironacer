@@ -94,6 +94,23 @@ class MotionDetection:
             return False
 
 
+def add_label_to_frame(frame, xyxyl):
+    """
+    xyxyl = [[x, y, x, y, label], ] top left, bottom right.
+    """
+    for label in xyxyl:
+        if None in label:
+            continue
+        if len(label) == 4:
+            label.append(' ')
+        x, y, x2, y2, amount_of_motion = label
+        x, y, x2, y2, amount_of_motion = int(x), int(y), int(x2), int(y2), str(amount_of_motion)
+        # making green rectangle around the moving object
+        cv2.rectangle(frame, (x, y), (x2, y2), (0, 255, 0), 3)
+        cv2.putText(frame, amount_of_motion, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (36, 255, 12), 2)
+    return frame
+
+
 if __name__ == '__main__':
     from stream import LoadWebcam
     motion_detector = MotionDetection(detection_region=[0, 250, 500, 1280])
