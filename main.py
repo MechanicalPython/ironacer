@@ -15,7 +15,6 @@ Runs forever with a service: https://www.tomshardware.com/how-to/run-long-runnin
 import argparse
 import datetime
 import os
-import sys
 import time
 import zipfile
 import threading
@@ -66,7 +65,6 @@ class IronAcer:
         self.sunrise = self.sun.get_sunrise_time().replace(tzinfo=None)
         self.sunset = self.sun.get_local_sunset_time().replace(tzinfo=None)
         self.now = datetime.datetime.now()
-        self._start_up = False
 
     def start_up(self, frame):
         # Send initial image only at start of the day.

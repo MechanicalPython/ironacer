@@ -82,6 +82,7 @@ class LoadWebcam:
 
     def __next__(self):
         # Read frame
+        self.cap.set(cv2.CAP_PROP_EXPOSURE, 0.75)  # Hopefully running this will adjust the exposure for each frame.
         ret_val, img = self.cap.read()
         if img is None:
             logging.critical(f'Frame is None. {self.get_all_settings()}')
