@@ -2,7 +2,8 @@
 Mostly to hold random methods and classes.
 """
 
-def motion_detect_img_dir(path='detected/', detect_region=['0', '350', '1280', '600', 'Detect']):
+
+def motion_detect_img_dir(path='detected/', detect_region=['0', '300', '1280', '800', 'Detect']):
     """Saves labeld images to new directory to analyse easily."""
     import cv2
     import os

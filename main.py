@@ -43,9 +43,9 @@ class IronAcer:
                  source="0",
                  weights='yolov5n6_best.pt',
                  imgsz=1280,  # Only every going to be square as yolo needs square inputs.
-                 detection_region='0,350,1280,600',
+                 detection_region='0,300,1280,800',
                  surveillance_mode=False,  # Don't run the strike functions.
-                 gather_data=False):
+                 gather_data=True):
         self.detection_region = [int(i) for i in detection_region.split(',')]
         self.source = source
         self.weights = weights
