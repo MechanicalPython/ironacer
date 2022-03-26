@@ -85,8 +85,9 @@ class IronAcer:
                 zf.write(os.path.join(dirname, filename))
                 os.remove(os.path.join(dirname, filename))
         zf.close()
-        self.bot.send_doc(zip_file)
-        os.remove(zip_file)
+        # Stop sending out the zip files, they're too big and causes a memory error crash.
+        # self.bot.send_doc(zip_file)
+        # os.remove(zip_file)
 
     def is_daytime(self):
         self.now = datetime.datetime.now()
