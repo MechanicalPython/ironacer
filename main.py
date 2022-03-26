@@ -31,7 +31,7 @@ from motion_detection import MotionDetection, add_label_to_frame
 from pathlib import Path
 
 # todo
-#  run telegram, inference, and motion detection on seperate threads to speed it up.
+#  run telegram, inference, and motion detection on separate threads to speed it up.
 
 
 FILE = Path(__file__).resolve()
@@ -87,17 +87,6 @@ class IronAcer:
         zf.close()
         self.bot.send_doc(zip_file)
         os.remove(zip_file)
-
-    def inferencer(self, frame):
-        is_squirrel, inference_result = self.yolo.inference(frame)
-        # inference_results is just None if nothing is detected.
-        if is_squirrel:  # Save image
-            labels = []
-            for result in inference_result:
-                xyxy, conf, cls = result  # xyxy is list of 4 items.
-                xyxy.append(conf)  # add conf to xyxy to save it.
-                labels.append(xyxy)
-            self.save_results(frame, labels, 'Yolo')
 
     def is_daytime(self):
         self.now = datetime.datetime.now()
@@ -175,6 +164,8 @@ class IronAcer:
         """
         temp_thread = threading.Thread(target=self.cpu_temp, daemon=True)
         temp_thread.start()
+        telegram_thread = threading.Thread(target=self.bot.main, daemon=True)
+        telegram_thread.start()
         with LoadWebcam(pipe=self.source, output_img_size=(self.imgsz, self.imgsz)) as stream:
             while True:
                 # If it is nighttime, just go to sleep like you should.
@@ -186,6 +177,7 @@ class IronAcer:
                 stream.__next__()  # Clear buffer.
                 self.start_up(stream.__next__())
                 for frame in stream:
+                    self.bot.latest_frame = cv2.imencode('.jpg', frame)[1].tobytes()
                     if self.gather_data:
                         self.gather_data_motion_detection(frame)
                     else:
@@ -212,7 +204,7 @@ def arg_parse():
     parser.add_argument('--imgsz', type=int, default=1280, help='Square image size.')
     parser.add_argument('--detection_region', type=str, default='0,300,1280,800', help='Set detection region:x,y,x,y')
     parser.add_argument('--surveillance_mode', type=boolean_string, default=False, help='True = do strike')
-    parser.add_argument('--gather_data', action='store_true', help='True = do strike')
+    parser.add_argument('--gather_data', action='store_true', help='Only gather data with motion detection')
     return parser.parse_args()
 
 

@@ -60,7 +60,7 @@ class MotionDetection:
             # cv2.boundingRect gives x, y, width of box, height of box. This is then converted to the yolo
             # format: x, y, x, y (top left, bottom right).
             (x, y, w, h) = cv2.boundingRect(contour)  # cv2.boundingRect gives
-            bounding_boxes.append([x, y, w+x, h+y, amount_of_motion])  # Convert x, y, x, y for yolo.
+            bounding_boxes.append([x, y, w+x, h+y, int(amount_of_motion)])  # Convert x, y, x, y for yolo.
         is_motion, bounding_boxes = self.motion_region(bounding_boxes)
         self.prev_frame = frame
         return is_motion, bounding_boxes
@@ -84,7 +84,7 @@ class MotionDetection:
 
     def coord_in_rect(self, x, y):
         """
-        x, y is coordinage from origin of top left of image. Returns bool.
+        x, y is coordinate from origin of top left of image. Returns bool.
         detection region is in top left bottom right xyxy coords.
         """
         if self.detection_region[0] <= x <= (self.detection_region[2]) and \
@@ -118,10 +118,10 @@ if __name__ == '__main__':
     with LoadWebcam() as stream:
         for frame in stream:
             is_motion, results = motion_detector.detect(frame)  # results = [[x, y, x, y, motion],.. ]
-            rectangles = [[0, 250, 500, 1280, 'DETECT']]
             if results is None:
                 continue
             frame = add_label_to_frame(frame, results)
+            frame = add_label_to_frame(frame, [[0, 250, 500, 1280, 'DETECT']])  # Add detection box.
             cv2.imshow("frame", frame)
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break

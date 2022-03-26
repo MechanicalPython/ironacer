@@ -1,4 +1,3 @@
-#! /usr/local/bin/python3.7
 """
 Telegram bot either had to be run in a parallel thread to be used a real time 2-way interaction, or it can be used
 to passively send information at pre-determined times.
@@ -24,6 +23,7 @@ class TelegramBot:
         self.dispatcher = self.updater.dispatcher
         self.bot = self.updater.bot
         self.chat_id = -547385621
+        self.latest_frame = None
 
     @staticmethod
     def start(update, context):
@@ -33,6 +33,9 @@ class TelegramBot:
     def help(update, context):
         update.message.reply_text('/photo to take a test photo. \n'
                                   '/ping to check connection.')
+
+    def latest_view(self, update, context):
+        update.message.reply_photo(self.latest_frame, timeout=300)
 
     def send_message(self, text):
         self.bot.send_message(self.chat_id, text)
@@ -66,7 +69,7 @@ class TelegramBot:
     def main(self):
         self.dispatcher.add_handler(CommandHandler('start', self.start))
         self.dispatcher.add_handler(CommandHandler('help', self.help))
-
+        self.dispatcher.add_handler(CommandHandler('view', self.latest_view))
         self.dispatcher.add_error_handler(self.error)
 
         self.updater.start_polling()
@@ -109,6 +112,6 @@ class PhotographBot(TelegramBot):
 
 if __name__ == '__main__':
     bot = PhotographBot()
-    # bot.chat_id = 1706759043  # Matt's chat id.
+    bot.chat_id = 1706759043  # Matt's chat id.
     bot.main()
 
