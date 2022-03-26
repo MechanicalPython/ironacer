@@ -73,7 +73,7 @@ class TelegramBot:
         self.dispatcher.add_error_handler(self.error)
 
         self.updater.start_polling()
-        self.updater.idle()
+        # self.updater.idle()  # Comment out to run main inside a thread in main.py.
 
 
 class PhotographBot(TelegramBot):
