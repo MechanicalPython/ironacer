@@ -53,12 +53,11 @@ class LoadWebcam:
 
         self.stride = stride
         self.pipe = eval(pipe) if pipe.isnumeric() else pipe
-        # self.reset_freq = 60 * 60  # Frequency to reset the camera (in seconds).
-        self.t = time.time()
+        self.reset_time = time.time()
+        self.reset_freq = 60 * 15  # Reset the camera every 15 mins to prevent the exposure problem.
         self.cap = None
 
     def set_camera(self):
-        # 0.75 is manual control.
         self.cap = cv2.VideoCapture(self.pipe)   # For pi0 - VideoCapture(0, cv2.CAP_V4L2)
         self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.capture_size[0])
         self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.capture_size[1])
@@ -81,13 +80,19 @@ class LoadWebcam:
         return self
 
     def __next__(self):
+        if time.time() - self.reset_time > self.reset_freq:
+            self.cap.release()
+            self.set_camera()
+            self.reset_time = time.time()
         # Read frame
-        self.cap.set(cv2.CAP_PROP_EXPOSURE, 0.75)  # Hopefully running this will adjust the exposure for each frame.
+        self.cap.set(cv2.CAP_PROP_EXPOSURE, 0.25)
         ret_val, img = self.cap.read()
         if img is None:
             logging.critical(f'Frame is None. {self.get_all_settings()}')
             return None
         return img
+
+
 
     @staticmethod
     def digital_crop(frame, x1, y1, x2, y2):
@@ -118,8 +123,10 @@ class LoadWebcam:
 # max - 3280 × 2464 pixels
 # 1-15 fps - 2592 x 1944
 
+
 if __name__ == '__main__':
     with LoadWebcam(pipe='0', output_img_size=(1280, 1280)) as stream:
         for frame in stream:
-            print(type(frame))
+            show_frame(frame)
+            # print(type(frame))
 
