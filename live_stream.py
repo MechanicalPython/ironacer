@@ -9,6 +9,7 @@ from http import server
 from stream import LoadWebcam
 import cv2
 import argparse
+import os
 
 
 PAGE = """\
@@ -18,7 +19,7 @@ PAGE = """\
 </head>
 <body>
 <h1>PiCamera MJPEG Streaming Demo</h1>
-<img src="stream.mjpg" width="640" height="480" />
+<img src="stream.mjpg" width="640" height="640" />
 </body>
 </html>
 """
@@ -45,10 +46,18 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
             self.send_header('Content-Type', 'multipart/x-mixed-replace; boundary=FRAME')
             self.end_headers()
             try:
-                with LoadWebcam(capture_size=capture, output_img_size=output) as stream:
+                with LoadWebcam(capture_size=capture) as stream:
                     for frame in stream:
                         frame = cv2.imencode('.jpg', frame)[1].tobytes()
-
+                        with open('exposure.txt') as f:
+                            exposure = float(f.read().strip())
+                            if exposure == 0.25:
+                                stream.cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, exposure)
+                            elif exposure == 0.75:
+                                stream.cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, exposure)
+                            else:
+                                stream.cap.set(cv2.CAP_PROP_EXPOSURE, exposure)
+                            print(exposure)
                         self.wfile.write(b'--FRAME\r\n')
                         self.send_header('Content-Type', 'image/jpeg')
                         self.send_header('Content-Length', len(frame))
@@ -73,16 +82,17 @@ class StreamingServer(socketserver.ThreadingMixIn, server.HTTPServer):
 def arg_parse():
     parser = argparse.ArgumentParser()
     parser.add_argument('--capture', type=str, default="1280,1280")
-    parser.add_argument('--crop', type=str, default="1280,1280")
     return parser.parse_args()
 
 
 if __name__ == '__main__':
+    if not os.path.exists('exposure.txt'):
+        with open('exposure.txt', 'w') as f:
+            f.write('0.25')
     # http://ironacer.local:8000/stream.mjpg
     opt = arg_parse()
     capture = [int(i) for i in opt.capture.split(',')]
-    output = [int(i) for i in opt.crop.split(',')]
-    print(capture, output)
+    print(capture)
     # Global var as I CBA to pass them properly.
     try:
         address = ('', 8000)
