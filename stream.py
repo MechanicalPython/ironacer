@@ -112,8 +112,8 @@ class LoadWebcam:
         CAP_PROP_FRAME_WIDTH:  {str(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))}
         CAP_PROP_FRAME_HEIGHT:  {str(int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT)))}
         CAP_PROP_POS_FRAMES:  {str(self.cap.get(cv2.CAP_PROP_POS_FRAMES))}
-        CAP_PROP_EXPOSURE:  {str(self.cap.get(cv2.CAP_PROP_EXPOSURE))}"""
-
+        CAP_PROP_EXPOSURE:  {str(self.cap.get(cv2.CAP_PROP_EXPOSURE))}
+        CAP_PROP_AUTO_EXPOSURE:  {str(self.cap.get(cv2.CAP_PROP_AUTO_EXPOSURE))}"""
 
 # max - 3280 × 2464 pixels
 # 1-15 fps - 2592 x 1944
