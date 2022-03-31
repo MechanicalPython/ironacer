@@ -52,5 +52,5 @@ def motion_detect_img_dir(path='detected/', detect_region=['0', '300', '1280', '
 
 
 if __name__ == '__main__':
-    # motion_detect_img_dir(path='/Users/matt/detected/')
-    label_by_total_motion('/Users/matt/detected/')
+    motion_detect_img_dir(path='/Users/matt/detected/')
+    # label_by_total_motion('/Users/matt/detected/')
