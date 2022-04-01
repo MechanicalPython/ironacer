@@ -36,6 +36,8 @@ def save_results(frame, xyxyl, type):
 def add_label_to_frame(frame, xyxyl):
     """
     xyxyl = [[x, y, x, y, label], ] top left, bottom right.
+
+    If using on DETECTION_REGION put it inside a list.
     """
     for label in xyxyl:
         if None in label:
