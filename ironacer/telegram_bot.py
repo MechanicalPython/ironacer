@@ -1,24 +1,35 @@
-"""
-Telegram bot either had to be run in a parallel thread to be used a real time 2-way interaction, or it can be used
-to passively send information at pre-determined times.
-"""
 
 import html
 import json
 import traceback
-import os
 
 from telegram import Update, ParseMode
 from telegram.ext import Updater, CommandHandler, CallbackContext
-from pathlib import Path
 
-FILE = Path(__file__).resolve()
-ROOT = Path(os.path.abspath(FILE.parents[0]))  # Absolute path
+from ironacer import ROOT  # = ironacer/ironacer
 
 
 class TelegramBot:
+    """
+    Standard telegram bot
+
+    # Bot Commands
+    help
+    view - takes a photo of the current view.
+
+    # Methods
+    send_message - takes text.
+    send_photo - takes photo as bytes.
+    send_video - takes video as bytes.
+    send_doc - takes file_path.
+
+    # Notes
+    Telegram bot either had to be run in a parallel thread to be used a real time 2-way interaction, or it can be used
+    to passively send information at pre-determined times.
+    """
+
     def __init__(self):
-        self.token = open(f'{ROOT}/telegram_token', 'r').read()
+        self.token = open(f'{ROOT.parent}/telegram_token', 'r').read()
         self.updater = Updater(self.token, use_context=True)
         self.dispatcher = self.updater.dispatcher
         self.bot = self.updater.bot
@@ -26,13 +37,8 @@ class TelegramBot:
         self.latest_frame = None
 
     @staticmethod
-    def start(update, context):
-        update.message.reply_text('start command received.')
-
-    @staticmethod
     def help(update, context):
-        update.message.reply_text('/photo to take a test photo. \n'
-                                  '/ping to check connection.')
+        update.message.reply_text('/view to take a photo.')
 
     def latest_view(self, update, context):
         update.message.reply_photo(self.latest_frame, timeout=300)
@@ -67,7 +73,6 @@ class TelegramBot:
         context.bot.send_message(chat_id=self.chat_id, text=message, parse_mode=ParseMode.HTML)
 
     def main(self):
-        self.dispatcher.add_handler(CommandHandler('start', self.start))
         self.dispatcher.add_handler(CommandHandler('help', self.help))
         self.dispatcher.add_handler(CommandHandler('view', self.latest_view))
         self.dispatcher.add_error_handler(self.error)

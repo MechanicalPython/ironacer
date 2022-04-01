@@ -3,62 +3,43 @@ Stream raw cv2 video, as an array, that other aspects of the program can plug in
 
 """
 import logging
-import os
 import time
-import argparse
 
 import cv2
-from pathlib import Path
-
-FILE = Path(__file__).resolve()
-ROOT = Path(os.path.abspath(FILE.parents[0]))  # Absolute path
+from ironacer import ROOT
+from utils import show_frame
 
 logging.basicConfig(level=logging.DEBUG,
                     format='%(asctime)s - %(levelname)s - %(message)s',
                     filename=f'{ROOT}/detected/stream.log')
 
 
-def show_frame(frame, rects=None):
+class LoadCamera:
     """
+    # A class to load a camera as context manager.
+    Uses cv2 VideoCapture(0)
 
-    :param frame:
-    :param rects: list of [x, y, w, h, label] to put up labels.
-    :return:
-    """
-    if rects is not None:
-        for rect in rects:
-            x, y, w, h, label = rect
-            x, y, w, h, label = int(x), int(y), int(w), int(h), str(label)
-            # making green rectangle around the moving object
-            cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 3)
-            cv2.putText(frame, label, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (36, 255, 12), 2)
+    # Usage
+    with LoadCamera(output_img_size=(self.imgsz, self.imgsz)) as stream:
+        for frame in stream:
+            do something with the frame.
 
-    cv2.imshow("Motion Box", frame)
-    key = cv2.waitKey(1)
-    # if q entered whole process will stop
-    if key == ord('q'):
-        return False
+    # Notes
+        hq camera - 4056 x 3040 pixels max resolution.
 
-
-class LoadWebcam:
-    """
+    # Credit
     Taken and modified from yolov5/utils LoadWebcam.
-    Returns just the image, the augmentation needed for inference is done by find.py.
-    hq camera - 4056 x 3040 pixels max resolution.
     """
-    def __init__(self, pipe='0', capture_size=(1280, 1280), output_img_size=(1280, 1280), stride=32):
-        self.capture_size = capture_size
-        self.check_resolution()
-        self.output_img_size = output_img_size
+    def __init__(self, resolution=(1280, 1280)):
+        self.capture_size = resolution
+        self._check_resolution(resolution)  # Errors out if not correct sizes.
 
-        self.stride = stride
-        self.pipe = eval(pipe) if pipe.isnumeric() else pipe
         self.reset_time = time.time()
         self.reset_freq = 60 * 15  # Reset the camera every 15 mins to prevent the exposure problem.
         self.cap = None
 
     def set_camera(self):
-        self.cap = cv2.VideoCapture(self.pipe)   # For pi0 - VideoCapture(0, cv2.CAP_V4L2)
+        self.cap = cv2.VideoCapture(0)   # For pi0 - VideoCapture(0, cv2.CAP_V4L2)
         self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.capture_size[0])
         self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.capture_size[1])
 
@@ -92,20 +73,19 @@ class LoadWebcam:
             return None
         return img
 
-
-
     @staticmethod
-    def digital_crop(frame, x1, y1, x2, y2):
+    def _digital_crop(frame, x1, y1, x2, y2):
         """Digital crop. x1 and y1 is the top left of the image. x2 and y2 is the bottom right."""
         frame = frame[y1:y2, x1:x2]  # y1:y2, x1:x2 where x1y1 it top left and x2y2 is bottom right.
         return frame
 
-    def check_resolution(self):
+    @staticmethod
+    def _check_resolution(resolution):
         """The camera's block size is 32x16 so any image data provided to a renderer must have a width which is a
         multiple of 32, and a height which is a multiple of 16."""
-        if self.capture_size[0] % 32 != 0:
+        if resolution[0] % 32 != 0:
             raise Exception('Width must be multiple of 32')
-        if self.capture_size[1] % 16 != 0:
+        if resolution[1] % 16 != 0:
             raise Exception('Height must be multiple of 16')
 
     def get_all_settings(self):
@@ -125,7 +105,7 @@ class LoadWebcam:
 
 
 if __name__ == '__main__':
-    with LoadWebcam(pipe='0', output_img_size=(1280, 1280)) as stream:
+    with LoadCamera(pipe='0', output_img_size=(1280, 1280)) as stream:
         for frame in stream:
             show_frame(frame)
             # print(type(frame))

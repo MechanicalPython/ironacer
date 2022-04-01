@@ -34,10 +34,3 @@ class Claymore:
         self.firing_pin.on()
         sleep(2)
         self.firing_pin.off()
-
-
-if __name__ == '__main__':
-    claymore = Claymore()
-    while True:
-        claymore.detonate()
-        sleep(5)

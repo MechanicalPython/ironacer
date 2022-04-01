@@ -6,10 +6,9 @@ import logging
 import socketserver
 from http import server
 
-from stream import LoadWebcam
+from ironacer.stream import LoadCamera
 import cv2
 import argparse
-import os
 
 
 PAGE = """\
@@ -46,7 +45,7 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
             self.send_header('Content-Type', 'multipart/x-mixed-replace; boundary=FRAME')
             self.end_headers()
             try:
-                with LoadWebcam(capture_size=capture) as stream:
+                with LoadCamera(resolution=capture) as stream:
                     for frame in stream:
                         frame = cv2.imencode('.jpg', frame)[1].tobytes()
                         with open('exposure.txt') as f:
@@ -86,9 +85,6 @@ def arg_parse():
 
 
 if __name__ == '__main__':
-    if not os.path.exists('exposure.txt'):
-        with open('exposure.txt', 'w') as f:
-            f.write('0.25')
     # http://ironacer.local:8000/stream.mjpg
     opt = arg_parse()
     capture = [int(i) for i in opt.capture.split(',')]

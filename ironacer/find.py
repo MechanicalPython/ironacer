@@ -171,11 +171,11 @@ def convert_xyxy_to_yolo_label(frame, xyxy):
 
 
 if __name__ == '__main__':
-    from stream import LoadWebcam
+    from ironacer.stream import LoadCamera
 
     detect = Detector()
 
-    with LoadWebcam() as stream:
+    with LoadCamera() as stream:
         for frame in stream:
             inf = detect.inference(frame)
             print(inf)

@@ -1,16 +1,3 @@
-"""
-Main.py controls all the sub methods and classes that do the heavy lifting.
-
-Workflow
-Camera image -> yolov5 -> if squirrel -> fire mechanism and send photo, else do nothing.
-
-## Data gathering
-
-
-
-Runs forever with a service: https://www.tomshardware.com/how-to/run-long-running-scripts-raspberry-pi
-
-"""
 
 import argparse
 import datetime
@@ -22,53 +9,48 @@ import threading
 import cv2
 import suntime
 
-import strike
-import telegram_bot
-from stream import LoadWebcam
-from find import Detector
-from motion_detection import MotionDetection, add_label_to_frame
+from ironacer import strike, telegram_bot, stream, find, motion_detection, utils
 
-from pathlib import Path
+from ironacer import ROOT, DETECTION_REGION, YOLO_WEIGHTS, IMGSZ, MOTION_THRESH
+
 
 # todo
 #  run telegram, inference, and motion detection on separate threads to speed it up.
 
 
-FILE = Path(__file__).resolve()
-ROOT = Path(os.path.abspath(FILE.parents[0]))  # Absolute path
-
-
 class IronAcer:
+    """
+    Controls all the sub methods and classes that do the heavy lifting.
+
+    Workflow
+    Camera image -> yolov5 -> if squirrel -> fire mechanism and send photo, else do nothing.
+
+    ## Data gathering
+
+    Runs forever with a service: https://www.tomshardware.com/how-to/run-long-running-scripts-raspberry-pi
+
+    """
+
     def __init__(self,
-                 source="0",
-                 weights='yolov5n6_best.pt',
-                 imgsz=1280,  # Only every going to be square as yolo needs square inputs.
-                 detection_region='0,300,1280,800',
                  surveillance_mode=False,  # Don't run the strike functions.
                  gather_data=True):
-        self.detection_region = [int(i) for i in detection_region.split(',')]
-        self.source = source
-        self.weights = weights
-        self.imgsz = imgsz
         self.surveillance_mode = surveillance_mode
         self.gather_data = gather_data
 
         if not gather_data:  # Only load in yolo if needed.
-            self.yolo = Detector(weights, (imgsz, imgsz))
+            self.yolo = find.Detector(YOLO_WEIGHTS, (IMGSZ, IMGSZ))
 
-        self.motion_detector = MotionDetection(detection_region=self.detection_region)
+        self.motion_detector = motion_detection.MotionDetection(
+            detection_region=DETECTION_REGION, motion_thresh=MOTION_THRESH)
         self.claymore = strike.Claymore()
 
         self.bot = telegram_bot.TelegramBot()
 
         self.sun = suntime.Sun(51.5, -0.1)  # London lat long.
-        self.sunrise = self.sun.get_sunrise_time().replace(tzinfo=None)
-        self.sunset = self.sun.get_local_sunset_time().replace(tzinfo=None)
-        self.now = datetime.datetime.now()
 
     def start_up(self, frame):
         # Send initial image only at start of the day.
-        frame = add_label_to_frame(frame, [self.detection_region])
+        frame = utils.add_label_to_frame(frame, DETECTION_REGION.append(''))
         self.bot.send_photo(cv2.imencode('.jpg', frame)[1].tobytes())
 
     def end_of_day_msg(self):
@@ -77,7 +59,7 @@ class IronAcer:
         self.bot.send_message(msg)
 
         # Make zip file and send it.
-        zip_file = f"{ROOT}/detected{self.now.strftime('%Y-%m-%d')}.zip"
+        zip_file = f"{ROOT}/detected{datetime.datetime.now().strftime('%Y-%m-%d')}.zip"
         zf = zipfile.ZipFile(zip_file, "w")
         for dirname, subdirs, files in os.walk(f'{ROOT}/detected/'):
             zf.write(dirname)
@@ -90,38 +72,9 @@ class IronAcer:
         # os.remove(zip_file)
 
     def is_daytime(self):
-        self.now = datetime.datetime.now()
-        self.sunrise = self.sun.get_sunrise_time().replace(tzinfo=None)
-        self.sunset = self.sun.get_local_sunset_time().replace(tzinfo=None)
-        return self.sunrise < self.now < self.sunset
-
-    def save_results(self, frame, xyxyl, type):
-        """Saves a clean image and the label for that image.
-        label = x, y, x, y, label.
-        xyxyl = [[x, y, x, y, l], ..]
-
-        Can convert the yolo [[xyxy, confidence, cls], ..] if type is yolo.
-        """
-        if type == 'Yolo':
-            labels = []  # Convert yolo results into cv2 labels.
-            for result in xyxyl:
-                xyxy, conf, cls = result  # xyxy is list of 4 items.
-                xyxy.append(conf)  # add conf to xyxy to save it.
-                labels.append(xyxy)
-            xyxyl = labels
-
-        t = str(self.now.strftime('%Y-%m-%d %H-%M-%S-%f'))
-        image_path = f'{ROOT}/detected/image/{type}_result-{t}.jpg'
-        cv2.imwrite(image_path, frame)  # Write image
-        label_path = f'{ROOT}/detected/label/{type}_result-{t}.txt'
-
-        label = ''
-        for box in xyxyl:
-            box = [str(i) for i in box]
-            label = f'{label}{" ".join(box)}\n'
-
-        with open(label_path, 'w') as f:
-            f.write(label)
+        sunrise = self.sun.get_sunrise_time().replace(tzinfo=None)
+        sunset = self.sun.get_local_sunset_time().replace(tzinfo=None)
+        return sunrise < datetime.datetime.now() < sunset
 
     def cpu_temp(self):
         """
@@ -142,7 +95,7 @@ class IronAcer:
         # motion_detection_result = [[xyxy, amount_of_motion], ..]
 
         if is_motion:  # There is enough motion, so save the result.
-            self.save_results(frame, motion_detection_result, 'Motion')
+            utils.save_results(frame, motion_detection_result, 'Motion')
 
     def find_squirrels(self, frame):
         """Runs the inference for finding squirrels.
@@ -152,7 +105,7 @@ class IronAcer:
         is_motion, motion_detection_result = self.motion_detector.detect(frame)
         if is_motion:
             # todo - save results to try and capture data when running inference?
-            self.save_results(frame, motion_detection_result, 'Motion')
+            utils.save_results(frame, motion_detection_result, 'Motion')
             is_squirrel, inference_result = self.yolo.inference(frame)
             if is_squirrel:
                 return True
@@ -167,7 +120,7 @@ class IronAcer:
         temp_thread.start()
         telegram_thread = threading.Thread(target=self.bot.main, daemon=True)
         telegram_thread.start()
-        with LoadWebcam(pipe=self.source, output_img_size=(self.imgsz, self.imgsz)) as stream:
+        with stream.LoadCamera(resolution=(IMGSZ, IMGSZ)) as frames:
             while True:
                 # If it is nighttime, just go to sleep like you should.
                 if not self.is_daytime():
@@ -175,9 +128,9 @@ class IronAcer:
                     continue
 
                 # These two lines clear ths buffer (buffer is set to 1) and send the morning message to telegram.
-                stream.__next__()  # Clear buffer.
-                self.start_up(stream.__next__())
-                for frame in stream:
+                frames.__next__()  # Clear buffer.
+                self.start_up(frames.__next__())
+                for frame in frames:
                     self.bot.latest_frame = cv2.imencode('.jpg', frame)[1].tobytes()
                     if self.gather_data:
                         self.gather_data_motion_detection(frame)
@@ -200,10 +153,6 @@ def boolean_string(s):
 
 def arg_parse():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--source', type=str, default="0")
-    parser.add_argument('--weights', type=str, default='yolov5n6_best.pt', help='File path to yolo weights.pt')
-    parser.add_argument('--imgsz', type=int, default=1280, help='Square image size.')
-    parser.add_argument('--detection_region', type=str, default='0,300,1280,800', help='Set detection region:x,y,x,y')
     parser.add_argument('--surveillance_mode', type=boolean_string, default=False, help='True = do strike')
     parser.add_argument('--gather_data', action='store_true', help='Only gather data with motion detection')
     return parser.parse_args()
