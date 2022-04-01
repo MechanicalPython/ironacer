@@ -50,7 +50,7 @@ class IronAcer:
 
     def start_up(self, frame):
         # Send initial image only at start of the day.
-        frame = utils.add_label_to_frame(frame, DETECTION_REGION)
+        frame = utils.add_label_to_frame(frame, [DETECTION_REGION])
         self.bot.send_photo(cv2.imencode('.jpg', frame)[1].tobytes())
 
     def end_of_day_msg(self):
