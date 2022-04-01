@@ -50,7 +50,7 @@ class IronAcer:
 
     def start_up(self, frame):
         # Send initial image only at start of the day.
-        frame = utils.add_label_to_frame(frame, DETECTION_REGION.append(''))
+        frame = utils.add_label_to_frame(frame, DETECTION_REGION)
         self.bot.send_photo(cv2.imencode('.jpg', frame)[1].tobytes())
 
     def end_of_day_msg(self):
@@ -92,7 +92,6 @@ class IronAcer:
         Runs the data gathering with motion detection.
         """
         is_motion, motion_detection_result = self.motion_detector.detect(frame)
-        # motion_detection_result = [[xyxy, amount_of_motion], ..]
 
         if is_motion:  # There is enough motion, so save the result.
             utils.save_results(frame, motion_detection_result, 'Motion')
@@ -161,5 +160,5 @@ def arg_parse():
 if __name__ == '__main__':
     opt = arg_parse()
     IA = IronAcer(**vars(opt))
-    # IA.bot.chat_id = 1706759043  # Change it to private chat for testing.
+    IA.bot.chat_id = 1706759043  # Change it to private chat for testing.
     IA.main()

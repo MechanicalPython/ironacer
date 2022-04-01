@@ -2,16 +2,9 @@
 Stream raw cv2 video, as an array, that other aspects of the program can plug into.
 
 """
-import logging
 import time
 
 import cv2
-from ironacer import ROOT
-from utils import show_frame
-
-logging.basicConfig(level=logging.DEBUG,
-                    format='%(asctime)s - %(levelname)s - %(message)s',
-                    filename=f'{ROOT}/detected/stream.log')
 
 
 class LoadCamera:
@@ -69,7 +62,7 @@ class LoadCamera:
         self.cap.set(cv2.CAP_PROP_EXPOSURE, 0.25)
         ret_val, img = self.cap.read()
         if img is None:
-            logging.critical(f'Frame is None. {self.get_all_settings()}')
+            print(f'Frame is None. {self.get_all_settings()}')
             return None
         return img
 
@@ -99,14 +92,4 @@ class LoadCamera:
         CAP_PROP_POS_FRAMES:  {str(self.cap.get(cv2.CAP_PROP_POS_FRAMES))}
         CAP_PROP_EXPOSURE:  {str(self.cap.get(cv2.CAP_PROP_EXPOSURE))}
         CAP_PROP_AUTO_EXPOSURE:  {str(self.cap.get(cv2.CAP_PROP_AUTO_EXPOSURE))}"""
-
-# max - 3280 × 2464 pixels
-# 1-15 fps - 2592 x 1944
-
-
-if __name__ == '__main__':
-    with LoadCamera(pipe='0', output_img_size=(1280, 1280)) as stream:
-        for frame in stream:
-            show_frame(frame)
-            # print(type(frame))
 

@@ -1,17 +1,11 @@
-"""
-FIND.py - find the exact location of the squirrel in the image in 3d space.
-"""
-
 import os
 import cv2
 import torch
 import torch.backends.cudnn as cudnn
 import sys
 import numpy as np
-from pathlib import Path
 
-FILE = Path(__file__).resolve()
-ROOT = Path(os.path.abspath(FILE.parents[0]))  # Absolute path
+from ironacer import ROOT
 
 sys.path.insert(0, f'{ROOT}/yolov5/')  # To allow importing from submodule yolov5.
 from yolov5.utils.augmentations import letterbox
@@ -37,6 +31,7 @@ def angle_from_center(fov, total_width, object_loc):
 
 class Detector:
     """Class to detect and read a stream from a pi camera to then run yolo inference on each frame."""
+
     def __init__(self, weights='best.pt', imgsz=(1280, 1280), conf_thres=0.25):
         self.weights = weights
         self.imgsz = imgsz  # inference size (height, width)
@@ -58,12 +53,13 @@ class Detector:
         self.dnn = False  # use OpenCV DNN for ONNX inference
         self.model = DetectMultiBackend(self.weights, device=self.device, dnn=self.dnn)
         self.stride, self.names, self.pt, jit, self.onnx, engine = self.model.stride, self.model.names, self.model.pt, self.model.jit, self.model.onnx, self.model.engine
-        self.half &= (self.pt or jit or engine) and self.device.type != 'cpu'  # half precision only supported by PyTorch on CUDA
+        self.half &= (
+                                 self.pt or jit or engine) and self.device.type != 'cpu'  # half precision only supported by PyTorch on CUDA
 
         if self.pt or jit:
             self.model.model.half() if self.half else self.model.model.float()
         cudnn.benchmark = True  # set True to speed up constant image size inference
-        self.model.warmup(imgsz=(1, 3, *imgsz), half=self.half)  # warmup
+        self.model.warmup(imgsz=(1, 3, *imgsz))  # warmup
         self.number_of_frames_without_squirrel = 0  # How many frames in a row can be false before resetting the vid
         self.vid_writer = None
 
@@ -92,7 +88,8 @@ class Detector:
 
         pred = self.model(im, augment=self.augment, visualize=self.visualize)
         # NMS
-        pred = non_max_suppression(pred, self.conf_thres, self.iou_thres, self.classes, self.agnostic_nms, max_det=self.max_det)
+        pred = non_max_suppression(pred, self.conf_thres, self.iou_thres, self.classes, self.agnostic_nms,
+                                   max_det=self.max_det)
         # Process predictions
         pred = pred[0]
 
@@ -144,7 +141,8 @@ class Detector:
                     vid_num = len([i for i in os.listdir(save_dir) if i.endswith(".mp4")]) + 1
                     self.current_vid_path = str(f'{save_dir}result-{vid_num}.mp4')
                     fps, w, h = 6, im0.shape[1], im0.shape[0]
-                    self.vid_writer = cv2.VideoWriter(self.current_vid_path, cv2.VideoWriter_fourcc(*'mp4v'), fps, (w, h))
+                    self.vid_writer = cv2.VideoWriter(self.current_vid_path, cv2.VideoWriter_fourcc(*'mp4v'), fps,
+                                                      (w, h))
                     self.vid_writer.write(im0)
             else:  # Done recording the video
                 if isinstance(self.vid_writer, cv2.VideoWriter):  # If a video has been recorded
@@ -179,4 +177,3 @@ if __name__ == '__main__':
         for frame in stream:
             inf = detect.inference(frame)
             print(inf)
-

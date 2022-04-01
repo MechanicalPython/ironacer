@@ -57,15 +57,6 @@ exp2 - exp5 are trained with 1280 image size.
 yolov5 has runs in gitignore. 
 
 
-### Angle
-pi camera: 62.2 degrees horizontal, 48.8 degrees vertical.
-
-
-If it all goes wrong
-removed models and utils from the root folder.
-
-
-
 ## Gadget mode for testing pi zero. 
 32 bit install. 
 

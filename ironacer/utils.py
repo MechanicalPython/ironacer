@@ -84,7 +84,7 @@ def demonstrate_motion_detection():
             if results is None:
                 continue
             frame = add_label_to_frame(frame, results)
-            frame = add_label_to_frame(frame,  DETECTION_REGION.append('DETECT'))  # Append to add the label.
+            frame = add_label_to_frame(frame, DETECTION_REGION)  # Append to add the label.
             cv2.imshow("frame", frame)
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
