@@ -10,7 +10,6 @@ import cv2
 import suntime
 
 from ironacer import strike, telegram_bot, stream, find, motion_detection, utils
-
 from ironacer import ROOT, DETECTION_REGION, YOLO_WEIGHTS, IMGSZ, MOTION_THRESH
 
 

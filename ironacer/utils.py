@@ -136,12 +136,12 @@ def list_images_and_labels(path):
         yield frame, labels, serial_number
 
 
-def motion_detect_img_dir(path='detected/', detect_region=DETECTION_REGION.append('Detect')):
+def motion_detect_img_dir(path='detected/'):
     """Saves labeled images to new directory to analyse easily."""
     if not os.path.exists(f'{path}labeled_images'):
         os.mkdir(f'{path}labeled_images')
 
-    for frame, labels, serial_number in list_images_and_labels():
+    for frame, labels, serial_number in list_images_and_labels(path):
         for label in labels:
             x, y, w, h, amount_of_motion = label.split(' ')
             x, y, w, h, amount_of_motion = int(x), int(y), int(w), int(h), str(amount_of_motion)
