@@ -1,12 +1,16 @@
 
 import html
 import json
+import os
 import traceback
 
 from telegram import Update, ParseMode
 from telegram.ext import Updater, CommandHandler, CallbackContext
 
-from ironacer import ROOT  # = ironacer/ironacer
+from ironacer import ROOT, DETECTION_REGION
+from ironacer import utils
+
+# todo - command to get number of images in detected.
 
 
 class TelegramBot:
@@ -15,7 +19,8 @@ class TelegramBot:
 
     # Bot Commands
     help
-    view - takes a photo of the current view.
+    view - takes a photo of the current view with detection region box.
+    saved - get number of saved images in detected/image
 
     # Methods
     send_message - takes text.
@@ -38,10 +43,15 @@ class TelegramBot:
 
     @staticmethod
     def help(update, context):
-        update.message.reply_text('/view to take a photo.')
+        update.message.reply_text('/view to take a photo.\n'
+                                  '/saved to get number of saved photos')
 
     def latest_view(self, update, context):
-        update.message.reply_photo(self.latest_frame, timeout=300)
+        frame = utils.add_label_to_frame(self.latest_frame, DETECTION_REGION)
+        update.message.reply_photo(frame, timeout=300)
+
+    def get_current_number_of_images(self, update, context):
+        update.message.reply_text(f"{len(os.listdir(f'{ROOT}/detected/image/'))} images currently saved")
 
     def send_message(self, text):
         self.bot.send_message(self.chat_id, text)
@@ -75,6 +85,7 @@ class TelegramBot:
     def main(self):
         self.dispatcher.add_handler(CommandHandler('help', self.help))
         self.dispatcher.add_handler(CommandHandler('view', self.latest_view))
+        self.dispatcher.add_handler(CommandHandler('saved', self.get_current_number_of_images))
         self.dispatcher.add_error_handler(self.error)
 
         self.updater.start_polling()
