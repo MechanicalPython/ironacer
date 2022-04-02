@@ -2,6 +2,7 @@ import os
 import cv2
 from ironacer import DETECTION_REGION, ROOT, MOTION_THRESH
 import datetime
+import shutil
 
 
 def save_results(frame, xyxyl, type):
@@ -31,6 +32,33 @@ def save_results(frame, xyxyl, type):
 
     with open(label_path, 'w') as f:
         f.write(label)
+
+
+def average_green(path):
+    """Scale of green to not green
+
+    Take the green value of a section of image and calculate average greenness.
+    """
+    if not os.path.exists(f'{path}green'):
+        os.mkdir(f'{path}green')
+
+    for image, labels, serial_number in list_images_and_labels(path):
+        greenness = []
+        for label in labels:
+            x1, y1, w, h, amount_of_motion = [int(i) for i in label.split(' ')]
+            x2 = x1 + w
+            y2 = y1 + h
+            image_box = image[y1:y2, x1:x2]  # Crop image
+            height, width, channels = image_box.shape
+            total_greenness = 0
+            for row in image_box:
+                for pixel in row:
+                    red, green, blue = pixel
+                    total_greenness += green
+            avg_green = int(total_greenness / (height * width))
+            greenness.append(avg_green)
+
+        shutil.copy(f'{path}image/{serial_number}.jpg', f'{path}green/{min(greenness)}-{serial_number}.jpg')
 
 
 def add_label_to_frame(frame, xyxyl):
@@ -93,11 +121,8 @@ def demonstrate_motion_detection():
         cv2.destroyAllWindows()
 
 
-def motion_detect_img_dir(path='detected/', detect_region=DETECTION_REGION.append('Detect')):
-    """Saves labeled images to new directory to analyse easily."""
-    if not os.path.exists(f'{path}labeled_images'):
-        os.mkdir(f'{path}labeled_images')
-
+def list_images_and_labels(path):
+    """Return read image and labels from detected directory."""
     images = os.listdir(f'{path}image/')
     images.sort()
     for image in [f for f in images if f.endswith('.jpg')]:
@@ -108,7 +133,15 @@ def motion_detect_img_dir(path='detected/', detect_region=DETECTION_REGION.appen
         # Reading frame(image) from video
         frame = cv2.imread(f'{path}image/{serial_number}.jpg')
         labels = open(f'{path}label/{serial_number}.txt', 'r').read().strip().split('\n')
-        labels.append(' '.join(detect_region))
+        yield frame, labels, serial_number
+
+
+def motion_detect_img_dir(path='detected/', detect_region=DETECTION_REGION.append('Detect')):
+    """Saves labeled images to new directory to analyse easily."""
+    if not os.path.exists(f'{path}labeled_images'):
+        os.mkdir(f'{path}labeled_images')
+
+    for frame, labels, serial_number in list_images_and_labels():
         for label in labels:
             x, y, w, h, amount_of_motion = label.split(' ')
             x, y, w, h, amount_of_motion = int(x), int(y), int(w), int(h), str(amount_of_motion)
