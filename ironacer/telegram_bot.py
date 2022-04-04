@@ -27,6 +27,7 @@ class TelegramBot:
     send_photo - takes photo as bytes.
     send_video - takes video as bytes.
     send_doc - takes file_path.
+    Max file size is 50MB or 10MB photo.
 
     # Notes
     Telegram bot either had to be run in a parallel thread to be used a real time 2-way interaction, or it can be used
@@ -47,7 +48,7 @@ class TelegramBot:
                                   '/saved to get number of saved photos')
 
     def latest_view(self, update, context):
-        frame = utils.add_label_to_frame(self.latest_frame, DETECTION_REGION)
+        frame = utils.add_label_to_frame(self.latest_frame, [DETECTION_REGION])
         update.message.reply_photo(frame, timeout=300)
 
     def get_current_number_of_images(self, update, context):

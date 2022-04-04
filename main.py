@@ -15,6 +15,8 @@ from ironacer import ROOT, DETECTION_REGION, YOLO_WEIGHTS, IMGSZ, MOTION_THRESH
 
 # todo
 #  run telegram, inference, and motion detection on separate threads to speed it up.
+#  Too many photos.
+#  Sending the zip file in chunks.
 
 
 class IronAcer:
