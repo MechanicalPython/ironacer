@@ -52,7 +52,7 @@ class IronAcer:
     def start_up(self, frame):
         # Send initial image only at start of the day.
         frame = utils.add_label_to_frame(frame, [DETECTION_REGION])
-        self.bot.send_photo(cv2.imencode('.jpg', frame)[1].tobytes())
+        self.bot.send_photo(frame)
 
     def end_of_day_msg(self):
         motion = [i for i in os.listdir(f'{ROOT}/detected/image/') if 'Motion' in i]
@@ -131,7 +131,7 @@ class IronAcer:
                 frames.__next__()  # Clear buffer.
                 self.start_up(frames.__next__())
                 for frame in frames:
-                    self.bot.latest_frame = cv2.imencode('.jpg', frame)[1].tobytes()
+                    self.bot.latest_frame = frame
                     if self.gather_data:
                         self.gather_data_motion_detection(frame)
                     else:

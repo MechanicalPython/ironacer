@@ -3,6 +3,7 @@ import html
 import json
 import os
 import traceback
+import cv2
 
 from telegram import Update, ParseMode
 from telegram.ext import Updater, CommandHandler, CallbackContext
@@ -10,7 +11,7 @@ from telegram.ext import Updater, CommandHandler, CallbackContext
 from ironacer import ROOT, DETECTION_REGION
 from ironacer import utils
 
-# todo - command to get number of images in detected.
+# todo - command to fire the hose and record the time before and after that.
 
 
 class TelegramBot:
@@ -48,7 +49,9 @@ class TelegramBot:
                                   '/saved to get number of saved photos')
 
     def latest_view(self, update, context):
+        """Accepts self.latest_frame which is a cv2 np.array()"""
         frame = utils.add_label_to_frame(self.latest_frame, [DETECTION_REGION])
+        frame = cv2.imencode('.jpg', frame)[1].tobytes()
         update.message.reply_photo(frame, timeout=300)
 
     def get_current_number_of_images(self, update, context):
@@ -57,8 +60,13 @@ class TelegramBot:
     def send_message(self, text):
         self.bot.send_message(self.chat_id, text)
 
-    def send_photo(self, photo_bytes):
-        self.bot.sendPhoto(self.chat_id, photo_bytes, timeout=300)
+    def send_photo(self, frame):
+        """
+        Accepts cv2 frame array as input only.
+        :param photo: cv2 frame np.array()
+        """
+        frame = cv2.imencode('.jpg', frame)[1].tobytes()
+        self.bot.sendPhoto(self.chat_id, frame, timeout=300)
 
     def send_video(self, vid_bytes):
         self.bot.sendVideo(self.chat_id, vid_bytes, timeout=300)
