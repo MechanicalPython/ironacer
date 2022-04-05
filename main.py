@@ -43,7 +43,6 @@ class IronAcer:
 
         self.motion_detector = motion_detection.MotionDetection(
             detection_region=DETECTION_REGION, motion_thresh=MOTION_THRESH)
-        self.claymore = strike.Claymore()
 
         self.bot = telegram_bot.TelegramBot()
 
@@ -137,7 +136,7 @@ class IronAcer:
                     else:
                         if self.find_squirrels(frame) is True:
                             if self.surveillance_mode is False:
-                                threading.Thread(target=self.claymore.detonate).start()
+                                strike.threaded_strike()
 
                     if not self.is_daytime():
                         print('End of day')
