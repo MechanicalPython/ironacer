@@ -43,7 +43,6 @@ class LoadCamera:
         time.sleep(1)
 
     def __enter__(self):
-        print('start camera')
         self.set_camera()
         return self
 

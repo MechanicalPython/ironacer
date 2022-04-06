@@ -2,17 +2,16 @@ import os
 import cv2
 from ironacer import DETECTION_REGION, ROOT, MOTION_THRESH
 import datetime
-import shutil
 
 
-def save_results(frame, xyxyl, type):
+def save_frame(frame, xyxyl, origin):
     """Saves the inputted frame and label in ironacer/detected/image and ironacer/detected/label.
     label = x, y, x, y, label.
     xyxyl = [[x, y, x, y, l], ..]
 
     Can convert the yolo [[xyxy, confidence, cls], ..] if type is yolo.
     """
-    if type == 'Yolo':
+    if origin == 'Yolo':
         labels = []  # Convert yolo results into cv2 labels.
         for result in xyxyl:
             xyxy, conf, cls = result  # xyxy is list of 4 items.
@@ -21,9 +20,9 @@ def save_results(frame, xyxyl, type):
         xyxyl = labels
 
     t = str(datetime.datetime.now().strftime('%Y-%m-%d %H-%M-%S-%f'))
-    image_path = f'{ROOT}/detected/image/{type}_result-{t}.jpg'
+    image_path = f'{ROOT}/detected/image/{origin}_result-{t}.jpg'
     cv2.imwrite(image_path, frame)  # Write image
-    label_path = f'{ROOT}/detected/label/{type}_result-{t}.txt'
+    label_path = f'{ROOT}/detected/label/{origin}_result-{t}.txt'
 
     label = ''
     for box in xyxyl:
@@ -32,33 +31,6 @@ def save_results(frame, xyxyl, type):
 
     with open(label_path, 'w') as f:
         f.write(label)
-
-
-def average_green(path):
-    """Scale of green to not green
-
-    Take the green value of a section of image and calculate average greenness.
-    """
-    if not os.path.exists(f'{path}green'):
-        os.mkdir(f'{path}green')
-
-    for image, labels, serial_number in list_images_and_labels(path):
-        greenness = []
-        for label in labels:
-            x1, y1, w, h, amount_of_motion = [int(i) for i in label.split(' ')]
-            x2 = x1 + w
-            y2 = y1 + h
-            image_box = image[y1:y2, x1:x2]  # Crop image
-            height, width, channels = image_box.shape
-            total_greenness = 0
-            for row in image_box:
-                for pixel in row:
-                    red, green, blue = pixel
-                    total_greenness += green
-            avg_green = int(total_greenness / (height * width))
-            greenness.append(avg_green)
-
-        shutil.copy(f'{path}image/{serial_number}.jpg', f'{path}green/{min(greenness)}-{serial_number}.jpg')
 
 
 def add_label_to_frame(frame, xyxyl):

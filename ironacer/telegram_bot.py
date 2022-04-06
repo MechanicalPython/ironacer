@@ -9,7 +9,7 @@ from telegram import Update, ParseMode
 from telegram.ext import Updater, CommandHandler, CallbackContext
 
 from ironacer import ROOT, DETECTION_REGION
-from ironacer import utils
+from ironacer import utils, strike
 
 # todo - command to fire the hose and record the time before and after that.
 
@@ -56,6 +56,16 @@ class TelegramBot:
 
     def get_current_number_of_images(self, update, context):
         update.message.reply_text(f"{len(os.listdir(f'{ROOT}/detected/image/'))} images currently saved")
+
+    def fire_water(self, update, context):
+        """Fires water for a given amount of time. Default is 2 seconds."""
+        args = update.message.text.split(' ')
+        try:
+            duration = int(args[1])
+        except ValueError:
+            update.message.reply_text('Invalid integer, defaulting to 2 seconds')
+            duration = 2
+        strike.threaded_strike(duration)
 
     def send_message(self, text):
         self.bot.send_message(self.chat_id, text)

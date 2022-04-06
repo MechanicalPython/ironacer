@@ -5,6 +5,7 @@ Strike.py - employ the anti-squirrel measures.
 
 import RPi.GPIO as GPIO
 from time import sleep
+import threading
 
 
 class Relay:
@@ -27,10 +28,16 @@ class Relay:
 
 class Claymore:
     """Initiates an AOE blast"""
-    def __init__(self):
+    def __init__(self, duration=2):
         self.firing_pin = Relay('R1')
+        self.duration = duration
 
     def detonate(self):
         self.firing_pin.on()
-        sleep(2)
+        sleep(self.duration)
         self.firing_pin.off()
+
+
+def threaded_strike(duration=2):
+    claymore = Claymore(duration)
+    threading.Thread(target=claymore.detonate, daemon=True).start()

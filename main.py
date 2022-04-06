@@ -7,6 +7,7 @@ import zipfile
 import threading
 
 import cv2
+import numpy as np
 import suntime
 
 from ironacer import strike, telegram_bot, stream, find, motion_detection, utils
@@ -38,12 +39,10 @@ class IronAcer:
         self.surveillance_mode = surveillance_mode
         self.gather_data = gather_data
 
-        if not gather_data:  # Only load in yolo if needed.
-            self.yolo = find.Detector(YOLO_WEIGHTS, (IMGSZ, IMGSZ))
+        self.yolo = find.Detector(YOLO_WEIGHTS, (IMGSZ, IMGSZ))
 
         self.motion_detector = motion_detection.MotionDetection(
             detection_region=DETECTION_REGION, motion_thresh=MOTION_THRESH)
-        self.claymore = strike.Claymore()
 
         self.bot = telegram_bot.TelegramBot()
 
@@ -54,10 +53,8 @@ class IronAcer:
         frame = utils.add_label_to_frame(frame, [DETECTION_REGION])
         self.bot.send_photo(frame)
 
-    def end_of_day_msg(self):
-        motion = [i for i in os.listdir(f'{ROOT}/detected/image/') if 'Motion' in i]
-        msg = f"{len(motion)} motion detected photos currently saved"
-        self.bot.send_message(msg)
+    def close_down(self):
+        self.bot.send_message(f"{len(os.listdir(f'{ROOT}/detected/image/'))} images currently saved")
 
         # Make zip file and send it.
         zip_file = f"{ROOT}/detected{datetime.datetime.now().strftime('%Y-%m-%d')}.zip"
@@ -95,7 +92,7 @@ class IronAcer:
         is_motion, motion_detection_result = self.motion_detector.detect(frame)
 
         if is_motion:  # There is enough motion, so save the result.
-            utils.save_results(frame, motion_detection_result, 'Motion')
+            utils.save_frame(frame, motion_detection_result, 'Motion')
 
     def find_squirrels(self, frame):
         """Runs the inference for finding squirrels.
@@ -105,9 +102,9 @@ class IronAcer:
         is_motion, motion_detection_result = self.motion_detector.detect(frame)
         if is_motion:
             # todo - save results to try and capture data when running inference?
-            utils.save_results(frame, motion_detection_result, 'Motion')
             is_squirrel, inference_result = self.yolo.inference(frame)
             if is_squirrel:
+                utils.save_frame(frame, inference_result, 'Yolo')
                 return True
         return False
 
@@ -128,7 +125,8 @@ class IronAcer:
                     continue
 
                 # These two lines clear ths buffer (buffer is set to 1) and send the morning message to telegram.
-                frames.__next__()  # Clear buffer.
+                frames.__next__()  # Clear buffer twice to fix the black image at start up problem.
+                frames.__next__()
                 self.start_up(frames.__next__())
                 for frame in frames:
                     self.bot.latest_frame = frame
@@ -137,23 +135,16 @@ class IronAcer:
                     else:
                         if self.find_squirrels(frame) is True:
                             if self.surveillance_mode is False:
-                                threading.Thread(target=self.claymore.detonate).start()
+                                strike.threaded_strike()
 
                     if not self.is_daytime():
-                        print('End of day')
-                        self.end_of_day_msg()
+                        self.close_down()
                         break
-
-
-def boolean_string(s):
-    if s not in {'False', 'True'}:
-        raise ValueError('Not a valid boolean string')
-    return s == 'True'
 
 
 def arg_parse():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--surveillance_mode', type=boolean_string, default=False, help='True = do strike')
+    parser.add_argument('--surveillance_mode', action='store_true', help='Flag to not fire water.')
     parser.add_argument('--gather_data', action='store_true', help='Only gather data with motion detection')
     return parser.parse_args()
 
