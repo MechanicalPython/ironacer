@@ -42,7 +42,6 @@ class TelegramBot:
         self.bot = self.updater.bot
         self.chat_id = -547385621
         self.latest_frame = None
-        self.claymore = strike.Claymore()
 
     @staticmethod
     def help(update, context):

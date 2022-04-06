@@ -1,3 +1,14 @@
+"""
+Notes
+running at 640x640 detect.py analyses an image around 0.2-0.3 seconds on my mac mini.
+At 1280x1280 that's at 0.7-1.2 seconds. There was a drop in accuracy at 640 but mostly in including too many things
+as squirrels. The pi may have to run at 640 detection in order to maintain performance. See runs/detect/exp3 and 4
+for 1280 and 640 respectively.
+
+
+"""
+
+
 import os
 import cv2
 import torch
@@ -15,26 +26,12 @@ from yolov5.utils.plots import Annotator, colors
 from yolov5.utils.torch_utils import select_device
 
 
-def angle_from_center(fov, total_width, object_loc):
-    """
-    Takes fov and image data to work out on what angle the obejct is from the
-    center of the camera.
-    :param fov: in total degrees of vision
-    :param total_width: in pixels, probably 1080.
-    :param object_loc: in pixels
-    :return: angle relative from the center of the camera.
-    """
-    rel_loc = (object_loc - (total_width / 2)) / (total_width / 2)
-    angle = rel_loc * fov / 2
-    return angle
-
-
 class Detector:
     """Class to detect and read a stream from a pi camera to then run yolo inference on each frame."""
 
-    def __init__(self, weights='best.pt', imgsz=(1280, 1280), conf_thres=0.25):
+    def __init__(self, weights='best.pt', imgsz=1280, conf_thres=0.25):
         self.weights = weights
-        self.imgsz = imgsz  # inference size (height, width)
+        self.imgsz = (imgsz, imgsz)  # inference size (height, width)
 
         self.conf_thres = conf_thres  # confidence threshold
         self.iou_thres = 0.45  # NMS IOU threshold
@@ -59,7 +56,7 @@ class Detector:
         if self.pt or jit:
             self.model.model.half() if self.half else self.model.model.float()
         cudnn.benchmark = True  # set True to speed up constant image size inference
-        self.model.warmup(imgsz=(1, 3, *imgsz))  # warmup
+        self.model.warmup(imgsz=(1, 3, *self.imgsz))  # warmup
         self.number_of_frames_without_squirrel = 0  # How many frames in a row can be false before resetting the vid
         self.vid_writer = None
 
@@ -153,27 +150,12 @@ class Detector:
         return vid_done
 
 
-def convert_xyxy_to_yolo_label(frame, xyxy):
-    """
-    class (0 for squirrel, x_center y_center width height from top right of image and normalised to be 0-1.
-    return:
-    """
-
-    xmin, ymin, xmax, ymax = xyxy[0]
-    im_width, im_height = frame.shape[1], frame.shape[0]
-    x_center = (ymin + ((ymax - ymin) / 2)) / im_width
-    y_center = (xmin + ((xmax - xmin) / 2)) / im_height
-    width = (xmax - xmin) / im_width
-    height = (ymax - ymin) / im_height
-    return [0, x_center, y_center, width, height]
-
-
 if __name__ == '__main__':
-    from ironacer.stream import LoadCamera
+    stream = os.listdir('../Ironacer.v1-batch-1.yolov5pytorch/test/images/')
+    stream = [i for i in stream if i.endswith('jpg')]
+    detect = Detector(weights='../best.pt')
+    for frame in stream:
 
-    detect = Detector()
-
-    with LoadCamera() as stream:
-        for frame in stream:
-            inf = detect.inference(frame)
-            print(inf)
+        frame = cv2.imread(f'../Ironacer.v1-batch-1.yolov5pytorch/test/images/{frame}')
+        inf = detect.inference(frame)
+        print(inf)
