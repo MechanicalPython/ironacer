@@ -1,9 +1,14 @@
+"""
+Notes:
+    Not going to try and account for false negatives. It's too complex. If it turns out that the AI is missing squirrels
+    then I'll do something about it.
 
+
+"""
 import argparse
 import datetime
 import os
 import time
-import zipfile
 import threading
 
 import cv2
@@ -16,18 +21,16 @@ from ironacer import ROOT, DETECTION_REGION, YOLO_WEIGHTS, IMGSZ, MOTION_THRESH
 
 # todo
 #  run telegram, inference, and motion detection on separate threads to speed it up.
-#  Too many photos.
-#  Sending the zip file in chunks.
+#  Too many photos - pull_motion...sh could go back to downloading the individual photos, not the zip.
+#  Sending the zip file in chunks. - maybe just fuck that off? Rely on dad doing it.
+#  Conceptual idea of what photos to take and save.
 
 
 class IronAcer:
     """
-    Controls all the sub methods and classes that do the heavy lifting.
+    Motion detection just used to trigger yolo or not.
 
-    Workflow
-    Camera image -> yolov5 -> if squirrel -> fire mechanism and send photo, else do nothing.
-
-    ## Data gathering
+    Only saves yolo detected images of squirrels plus previous image and the next 5 images.
 
     Runs forever with a service: https://www.tomshardware.com/how-to/run-long-running-scripts-raspberry-pi
 
@@ -43,31 +46,12 @@ class IronAcer:
 
         self.motion_detector = motion_detection.MotionDetection(
             detection_region=DETECTION_REGION, motion_thresh=MOTION_THRESH)
+        self.claymore = strike.Claymore()
 
         self.bot = telegram_bot.TelegramBot()
+        self.bot.claymore = self.claymore
 
         self.sun = suntime.Sun(51.5, -0.1)  # London lat long.
-
-    def start_up(self, frame):
-        # Send initial image only at start of the day.
-        frame = utils.add_label_to_frame(frame, [DETECTION_REGION])
-        self.bot.send_photo(frame)
-
-    def close_down(self):
-        self.bot.send_message(f"{len(os.listdir(f'{ROOT}/detected/image/'))} images currently saved")
-
-        # Make zip file and send it.
-        zip_file = f"{ROOT}/detected{datetime.datetime.now().strftime('%Y-%m-%d')}.zip"
-        zf = zipfile.ZipFile(zip_file, "w")
-        for dirname, subdirs, files in os.walk(f'{ROOT}/detected/'):
-            zf.write(dirname)
-            for filename in files:
-                zf.write(os.path.join(dirname, filename))
-                os.remove(os.path.join(dirname, filename))
-        zf.close()
-        # Stop sending out the zip files, they're too big and causes a memory error crash.
-        # self.bot.send_doc(zip_file)
-        # os.remove(zip_file)
 
     def is_daytime(self):
         sunrise = self.sun.get_sunrise_time().replace(tzinfo=None)
@@ -85,29 +69,6 @@ class IronAcer:
                     self.bot.send_message(f'Warning: CPU temperature is {temp}')
             time.sleep(5)
 
-    def gather_data_motion_detection(self, frame):
-        """
-        Runs the data gathering with motion detection.
-        """
-        is_motion, motion_detection_result = self.motion_detector.detect(frame)
-
-        if is_motion:  # There is enough motion, so save the result.
-            utils.save_frame(frame, motion_detection_result, 'Motion')
-
-    def find_squirrels(self, frame):
-        """Runs the inference for finding squirrels.
-        If there is motion:
-          If yolo finds a squirrel:
-              Run anti-squirrel measures in a thread."""
-        is_motion, motion_detection_result = self.motion_detector.detect(frame)
-        if is_motion:
-            # todo - save results to try and capture data when running inference?
-            is_squirrel, inference_result = self.yolo.inference(frame)
-            if is_squirrel:
-                utils.save_frame(frame, inference_result, 'Yolo')
-                return True
-        return False
-
     def main(self):
         """
         Runs yolo inference on frames with enough motion detection, to save power and reduce constant load on the
@@ -117,6 +78,8 @@ class IronAcer:
         temp_thread.start()
         telegram_thread = threading.Thread(target=self.bot.main, daemon=True)
         telegram_thread.start()
+
+        squirrel_cooldown = 0
         with stream.LoadCamera(resolution=(IMGSZ, IMGSZ)) as frames:
             while True:
                 # If it is nighttime, just go to sleep like you should.
@@ -124,21 +87,28 @@ class IronAcer:
                     time.sleep(60)
                     continue
 
-                # These two lines clear ths buffer (buffer is set to 1) and send the morning message to telegram.
                 frames.__next__()  # Clear buffer twice to fix the black image at start up problem.
                 frames.__next__()
-                self.start_up(frames.__next__())
+                self.bot.send_photo(utils.add_label_to_frame(frame, [DETECTION_REGION]))  # Telegram start up msg.
                 for frame in frames:
                     self.bot.latest_frame = frame
-                    if self.gather_data:
-                        self.gather_data_motion_detection(frame)
-                    else:
-                        if self.find_squirrels(frame) is True:
-                            if self.surveillance_mode is False:
-                                strike.threaded_strike()
+
+                    is_motion, motion_detection_result = self.motion_detector.detect(frame)
+                    if is_motion:
+                        is_squirrel, inference_result = self.yolo.inference(frame)
+                        if is_squirrel:
+                            squirrel_cooldown = 10
+                            self.claymore.start()
+                        else:
+                            squirrel_cooldown -= 1
+
+                        if squirrel_cooldown > 0:
+                            utils.save_frame(frame, inference_result, 'Yolo')
+                        else:
+                            self.claymore.stop()
 
                     if not self.is_daytime():
-                        self.close_down()
+                        self.bot.send_message(f"{len(os.listdir(f'{ROOT}/detected/image/'))} images currently saved")
                         break
 
 

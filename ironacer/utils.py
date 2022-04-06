@@ -4,6 +4,26 @@ from ironacer import DETECTION_REGION, ROOT, MOTION_THRESH
 import datetime
 
 
+def make_video(images_dir, video_path, fps):
+    """Should just need a frame and det.
+    return None when the video is not ready. Return video path when ready to send out.
+
+    Inputs: isSquirrel, xyxy, confidence, cls,
+    """
+    images = os.listdir(images_dir)
+    images = [f'{images_dir}{i}' for i in images if i.endswith('jpg')]
+
+    w, h, colours = cv2.imread(images[0]).shape
+    vid_writer = cv2.VideoWriter(video_path, cv2.VideoWriter_fourcc(*'mp4v'), fps, (w, h))
+
+    for frame in images:
+        vid_writer.write(cv2.imread(frame))
+
+    vid_writer.release()  # release previous video writer
+
+    return video_path
+
+
 def save_frame(frame, xyxyl, origin):
     """Saves the inputted frame and label in ironacer/detected/image and ironacer/detected/label.
     label = x, y, x, y, label.
@@ -11,6 +31,13 @@ def save_frame(frame, xyxyl, origin):
 
     Can convert the yolo [[xyxy, confidence, cls], ..] if type is yolo.
     """
+    if not os.path.exists(f'{ROOT}/detected/'):
+        os.mkdir(f'{ROOT}/detected/')
+    if not os.path.exists(f'{ROOT}/detected/image'):
+        os.mkdir(f'{ROOT}/detected/image')
+    if not os.path.exists(f'{ROOT}/detected/label'):
+        os.mkdir(f'{ROOT}/detected/label')
+
     if origin == 'Yolo':
         labels = []  # Convert yolo results into cv2 labels.
         for result in xyxyl:
@@ -31,6 +58,8 @@ def save_frame(frame, xyxyl, origin):
 
     with open(label_path, 'w') as f:
         f.write(label)
+
+    return image_path, label_path
 
 
 def add_label_to_frame(frame, xyxyl):
@@ -124,5 +153,6 @@ def motion_detect_img_dir(path='detected/'):
 
 
 if __name__ == '__main__':
-    motion_detect_img_dir(path='/Users/matt/detected/')
-    # label_by_total_motion('/Users/matt/detected/')
+    make_video('../Ironacer.v1-batch-1.yolov5pytorch/test/images/', 'test.mp4', 6)
+
+    # motion_detect_img_dir(path='/Users/matt/detected/')

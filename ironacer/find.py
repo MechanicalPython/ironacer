@@ -22,7 +22,6 @@ sys.path.insert(0, f'{ROOT}/yolov5/')  # To allow importing from submodule yolov
 from yolov5.utils.augmentations import letterbox
 from yolov5.models.common import DetectMultiBackend
 from yolov5.utils.general import (non_max_suppression, scale_coords)
-from yolov5.utils.plots import Annotator, colors
 from yolov5.utils.torch_utils import select_device
 
 
@@ -38,10 +37,8 @@ class Detector:
         self.max_det = 1000  # maximum detections per image
         self.classes = None  # filter by class: --class 0, or --class 0 2 3
         self.agnostic_nms = False  # class-agnostic NMS
-        self.nosave = False  # do not save images/videos
         self.augment = False  # augmented inference
         self.visualize = False  # visualize features
-        self.line_thickness = 3  # bounding box thickness (pixels)
         self.hide_labels = False  # hide labels
         self.hide_conf = False  # hide confidences
         self.device = ''  # cuda device, i.e. 0 or 0,1,2,3 or cpu
@@ -57,8 +54,7 @@ class Detector:
             self.model.model.half() if self.half else self.model.model.float()
         cudnn.benchmark = True  # set True to speed up constant image size inference
         self.model.warmup(imgsz=(1, 3, *self.imgsz))  # warmup
-        self.number_of_frames_without_squirrel = 0  # How many frames in a row can be false before resetting the vid
-        self.vid_writer = None
+
 
     @torch.no_grad()
     def inference(self, img0):
@@ -105,49 +101,6 @@ class Detector:
                 xyxy = [i.item() for i in xyxy]  # Convert from [tensor(x), ..] to [x, ..]
                 results.append([xyxy, confidence, cls])
         return isSquirrel, results
-
-    def save_labeled_video(self, frame, isSquirrel, inference):  # Save the video.
-        """Should just need a frame and det.
-        return None when the video is not ready. Return video path when ready to send out.
-
-        Inputs: isSquirrel, xyxy, confidence, cls,
-        """
-        save_dir = 'results/'
-        if not os.path.exists(save_dir):
-            os.mkdir(save_dir)
-
-        annotator = Annotator(frame, line_width=self.line_thickness, example=str(self.names))
-        if isSquirrel:
-            self.number_of_frames_without_squirrel = 10
-            for xyxy, conf, cls in inference:
-                # Add box to image.
-                c = int(cls)  # integer class
-                label = (self.names[c] if self.hide_conf else f'{self.names[c]} {conf:.2f}')
-                annotator.box_label(xyxy, label, color=colors(c, True))
-        else:
-            if self.number_of_frames_without_squirrel > 0:
-                self.number_of_frames_without_squirrel -= 1
-
-        vid_done = False
-        if not self.nosave:
-            im0 = annotator.result()
-            if isSquirrel or self.number_of_frames_without_squirrel > 0:  # record video
-                if isinstance(self.vid_writer, cv2.VideoWriter):  # Vid_writer has already been created.
-                    self.vid_writer.write(im0)
-                else:  # Create a new vid_writer and write frame to it.
-                    vid_num = len([i for i in os.listdir(save_dir) if i.endswith(".mp4")]) + 1
-                    self.current_vid_path = str(f'{save_dir}result-{vid_num}.mp4')
-                    fps, w, h = 6, im0.shape[1], im0.shape[0]
-                    self.vid_writer = cv2.VideoWriter(self.current_vid_path, cv2.VideoWriter_fourcc(*'mp4v'), fps,
-                                                      (w, h))
-                    self.vid_writer.write(im0)
-            else:  # Done recording the video
-                if isinstance(self.vid_writer, cv2.VideoWriter):  # If a video has been recorded
-                    self.vid_writer.release()  # release previous video writer
-                    self.vid_writer = None
-                    prev_vid_num = len([i for i in os.listdir(save_dir) if i.endswith(".mp4")])
-                    vid_done = str(f'{save_dir}result-{prev_vid_num}.mp4')
-        return vid_done
 
 
 if __name__ == '__main__':

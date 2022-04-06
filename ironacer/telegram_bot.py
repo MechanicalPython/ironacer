@@ -42,6 +42,7 @@ class TelegramBot:
         self.bot = self.updater.bot
         self.chat_id = -547385621
         self.latest_frame = None
+        self.claymore = strike.Claymore()
 
     @staticmethod
     def help(update, context):
@@ -65,7 +66,7 @@ class TelegramBot:
         except ValueError:
             update.message.reply_text('Invalid integer, defaulting to 2 seconds')
             duration = 2
-        strike.threaded_strike(duration)
+        self.manual_fire_water = duration
 
     def send_message(self, text):
         self.bot.send_message(self.chat_id, text)
