@@ -62,12 +62,19 @@ def save_frame(frame, xyxyl, origin):
     return image_path, label_path
 
 
-def add_label_to_frame(frame, xyxyl):
+def add_label_to_frame(frame, xyxyl, yolo=False):
     """
     xyxyl = [[x, y, x, y, label], ] top left, bottom right.
 
     If using on DETECTION_REGION put it inside a list.
     """
+    if yolo:
+        labels = []  # Convert yolo results into cv2 labels.
+        for result in xyxyl:
+            xyxy, conf, cls = result  # xyxy is list of 4 items.
+            xyxy.append(conf)  # add conf to xyxy to save it.
+            labels.append(xyxy)
+        xyxyl = labels
     for label in xyxyl:
         if None in label:
             continue
@@ -122,6 +129,24 @@ def demonstrate_motion_detection():
         cv2.destroyAllWindows()
 
 
+def demonstrate_yolo():
+    #  Demonstrate motion detection on macbook webcam.
+    from stream import LoadCamera
+    from find import Detector
+    yolo = Detector(weights='../best.pt')
+
+    with LoadCamera() as stream:
+        for frame in stream:
+            is_squirrel, results = yolo.inference(frame)  # results = [[x, y, x, y, motion],.. ]
+            if is_squirrel:
+
+                frame = add_label_to_frame(frame, results, yolo=True)
+            cv2.imshow("frame", frame)
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
+        cv2.destroyAllWindows()
+
+
 def list_images_and_labels(path):
     """Return read image and labels from detected directory."""
     images = os.listdir(f'{path}image/')
@@ -153,6 +178,7 @@ def motion_detect_img_dir(path='detected/'):
 
 
 if __name__ == '__main__':
-    make_video('../Ironacer.v1-batch-1.yolov5pytorch/test/images/', 'test.mp4', 6)
+    demonstrate_yolo()
+    # make_video('../Ironacer.v1-batch-1.yolov5pytorch/test/images/', 'test.mp4', 6)
 
     # motion_detect_img_dir(path='/Users/matt/detected/')

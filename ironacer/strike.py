@@ -29,10 +29,15 @@ class Claymore:
     """Initiates an AOE blast"""
     def __init__(self):
         self.firing_pin = Relay('R1')
+        self.is_on = False
 
     def start(self):
         self.firing_pin.on()
+        self.is_on = True
 
     def stop(self):
-        self.firing_pin.off()
+        if self.is_on:
+            self.firing_pin.off()
+            self.is_on = False
+
 

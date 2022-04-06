@@ -79,7 +79,7 @@ class IronAcer:
         telegram_thread = threading.Thread(target=self.bot.main, daemon=True)
         telegram_thread.start()
 
-        squirrel_cooldown = 0
+        squirrel_cooldown = -1
         with stream.LoadCamera(resolution=(IMGSZ, IMGSZ)) as frames:
             while True:
                 # If it is nighttime, just go to sleep like you should.
@@ -89,7 +89,7 @@ class IronAcer:
 
                 frames.__next__()  # Clear buffer twice to fix the black image at start up problem.
                 frames.__next__()
-                self.bot.send_photo(utils.add_label_to_frame(frame, [DETECTION_REGION]))  # Telegram start up msg.
+                self.bot.send_photo(utils.add_label_to_frame(frames.__next__(), [DETECTION_REGION]))  # Telegram start up msg.
                 for frame in frames:
                     self.bot.latest_frame = frame
 
@@ -98,14 +98,26 @@ class IronAcer:
                         is_squirrel, inference_result = self.yolo.inference(frame)
                         if is_squirrel:
                             squirrel_cooldown = 10
-                            self.claymore.start()
+                            # vid_writer = cv2.VideoWriter('temp.mp4', cv2.VideoWriter_fourcc(*'mp4v'), 10, (IMGSZ, IMGSZ))
+                            # self.claymore.start()
                         else:
                             squirrel_cooldown -= 1
+                    else:
+                        squirrel_cooldown -= 1
 
                     if squirrel_cooldown > 0:
                         utils.save_frame(frame, inference_result, 'Yolo')
-                    else:
-                        self.claymore.stop()
+                        # vid_writer.write(utils.add_label_to_frame(frame, inference_result, 'Yolo'))
+                    if squirrel_cooldown == 0:
+                        # self.claymore.stop()
+                        # vid_writer.release()
+                        # with open('temp.mp4') as f:
+                        #     self.bot.send_video(f)
+                        # os.remove('temp.mp4')
+                        squirrel_cooldown = -1
+                    print(squirrel_cooldown)
+                    if squirrel_cooldown < -3:
+                        squirrel_cooldown = -1
 
                     if not self.is_daytime():
                         self.bot.send_message(f"{len(os.listdir(f'{ROOT}/detected/image/'))} images currently saved")
