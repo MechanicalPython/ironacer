@@ -115,7 +115,6 @@ class IronAcer:
                         #     self.bot.send_video(f)
                         # os.remove('temp.mp4')
                         squirrel_cooldown = -1
-                    print(squirrel_cooldown)
                     if squirrel_cooldown < -3:
                         squirrel_cooldown = -1
 
