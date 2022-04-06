@@ -2,6 +2,7 @@
 import html
 import json
 import os
+import time
 import traceback
 import cv2
 
@@ -66,7 +67,9 @@ class TelegramBot:
         except ValueError:
             update.message.reply_text('Invalid integer, defaulting to 2 seconds')
             duration = 2
-        self.manual_fire_water = duration
+        self.claymore.start()
+        time.sleep(duration)
+        self.claymore.stop()
 
     def send_message(self, text):
         self.bot.send_message(self.chat_id, text)

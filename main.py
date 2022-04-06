@@ -102,10 +102,10 @@ class IronAcer:
                         else:
                             squirrel_cooldown -= 1
 
-                        if squirrel_cooldown > 0:
-                            utils.save_frame(frame, inference_result, 'Yolo')
-                        else:
-                            self.claymore.stop()
+                    if squirrel_cooldown > 0:
+                        utils.save_frame(frame, inference_result, 'Yolo')
+                    else:
+                        self.claymore.stop()
 
                     if not self.is_daytime():
                         self.bot.send_message(f"{len(os.listdir(f'{ROOT}/detected/image/'))} images currently saved")
