@@ -34,6 +34,8 @@ class TelegramBot:
     send_doc - takes file_path.
     Max file size is 50MB or 10MB photo.
 
+    Around 75 photos is 50MB.
+
     # Notes
     Telegram bot either had to be run in a parallel thread to be used a real time 2-way interaction, or it can be used
     to passively send information at pre-determined times.
@@ -135,7 +137,6 @@ class TelegramBot:
         self.dispatcher.add_handler(CommandHandler('help', self.help))
         self.dispatcher.add_handler(CommandHandler('view', self.latest_view))
         self.dispatcher.add_handler(CommandHandler('saved', self.get_current_number_of_images))
-        self.dispatcher.add_handler(CommandHandler('set_detect', self.set_detection_region))
         self.dispatcher.add_handler(CommandHandler('fire', self.fire_water))
 
         self.dispatcher.add_error_handler(self.error)

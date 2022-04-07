@@ -65,8 +65,10 @@ class IronAcer:
 
     def main(self):
         """
-        Runs yolo inference on frames with enough motion detection, to save power and reduce constant load on the
-        pi.
+        Main thread for ironacer
+
+        Note: AI is not accurate enough to reliably fire water yet. Keep training it.
+
         """
         temp_thread = threading.Thread(target=self.cpu_temp, daemon=True)
         temp_thread.start()
