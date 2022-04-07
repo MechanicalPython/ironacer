@@ -10,9 +10,6 @@ import datetime
 import os
 import time
 import threading
-
-import cv2
-import numpy as np
 import suntime
 
 from ironacer import strike, telegram_bot, stream, find, motion_detection, utils
@@ -22,8 +19,6 @@ from ironacer import ROOT, DETECTION_REGION, YOLO_WEIGHTS, IMGSZ, MOTION_THRESH
 # todo
 #  run telegram, inference, and motion detection on separate threads to speed it up.
 #  Too many photos - pull_motion...sh could go back to downloading the individual photos, not the zip.
-#  Sending the zip file in chunks. - maybe just fuck that off? Rely on dad doing it.
-#  Conceptual idea of what photos to take and save.
 
 
 class IronAcer:
@@ -38,9 +33,8 @@ class IronAcer:
 
     def __init__(self,
                  surveillance_mode=False,  # Don't run the strike functions.
-                 gather_data=True):
+                 gather_data=True):  # Keep as the systemctl service expects it.
         self.surveillance_mode = surveillance_mode
-        self.gather_data = gather_data
 
         self.yolo = find.Detector(YOLO_WEIGHTS, (IMGSZ, IMGSZ))
 

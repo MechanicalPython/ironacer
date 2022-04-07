@@ -5,6 +5,8 @@ import os
 import time
 import traceback
 import cv2
+import subprocess
+import configparser
 
 from telegram import Update, ParseMode
 from telegram.ext import Updater, CommandHandler, CallbackContext
@@ -13,6 +15,7 @@ from ironacer import ROOT, DETECTION_REGION
 from ironacer import utils, strike
 
 # todo - command to fire the hose and record the time before and after that.
+#  Set detection region by telegram.
 
 
 class TelegramBot:
@@ -47,8 +50,10 @@ class TelegramBot:
 
     @staticmethod
     def help(update, context):
-        update.message.reply_text('/view to take a photo.\n'
-                                  '/saved to get number of saved photos')
+        update.message.reply_text('/view: take a photo.\n'
+                                  '/saved: get number of saved photos\n'
+                                  '/set_detect x,y,x,y: set detection region\n'
+                                  '/fire x: fire water for x seconds\n')
 
     def latest_view(self, update, context):
         """Accepts self.latest_frame which is a cv2 np.array()"""
@@ -56,8 +61,29 @@ class TelegramBot:
         frame = cv2.imencode('.jpg', frame)[1].tobytes()
         update.message.reply_photo(frame, timeout=300)
 
+    def update_ironacer(self, update, context):
+        p = subprocess.Popen(["bash", "/home/pi/ironacer/updater.sh"], stdout=subprocess.PIPE)
+        out, err = p.communicate()
+        update.message.reply_text(out)
+
     def get_current_number_of_images(self, update, context):
-        update.message.reply_text(f"{len(os.listdir(f'{ROOT}/detected/image/'))} images currently saved")
+        update.message.reply_text(
+            f"{len([i for i in os.listdir(f'{ROOT}/detected/image/') if 'yolo' in i.lower()])} yolo images and "
+            f"{len([i for i in os.listdir(f'{ROOT}/detected/image/') if 'motion' in i.lower()])} motion images"
+        )
+
+    def set_detection_region(self, update, context):
+        # todo - how to update in real time?
+        """Input is /set_detect x,y,x,y
+        """
+        args = update.message.text.split(' ')[1]
+        parser = configparser.ConfigParser()
+        parser.read(f'{ROOT}/settings.cfg')
+
+        parser.set('Settings', 'DETECTION_REGION', args)
+        with open(f'{ROOT}/settings.cfg', 'w') as configfile:
+            parser.write(configfile)
+        subprocess.Popen(["sudo", "systemctl", "restart", "ironacer"], stdout=subprocess.PIPE)
 
     def fire_water(self, update, context):
         """Fires water for a given amount of time. Default is 2 seconds."""
@@ -109,6 +135,9 @@ class TelegramBot:
         self.dispatcher.add_handler(CommandHandler('help', self.help))
         self.dispatcher.add_handler(CommandHandler('view', self.latest_view))
         self.dispatcher.add_handler(CommandHandler('saved', self.get_current_number_of_images))
+        self.dispatcher.add_handler(CommandHandler('set_detect', self.set_detection_region))
+        self.dispatcher.add_handler(CommandHandler('fire', self.fire_water))
+
         self.dispatcher.add_error_handler(self.error)
 
         self.updater.start_polling()
