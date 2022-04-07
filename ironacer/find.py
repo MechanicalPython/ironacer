@@ -104,11 +104,20 @@ class Detector:
 
 
 if __name__ == '__main__':
-    stream = os.listdir('../Ironacer.v1-batch-1.yolov5pytorch/test/images/')
-    stream = [i for i in stream if i.endswith('jpg')]
-    detect = Detector(weights='../best.pt')
-    for frame in stream:
+    import shutil
+    stream = os.listdir('/Users/Matt/Downloads/image/')
+    stream = [f'{i}' for i in stream if i.endswith('jpg')]
+    stream.sort()
+    detect = Detector(weights='../best.pt', imgsz=640)
+    tracker = 0
+    for image_path in stream:
+        frame = cv2.imread(f'/Users/Matt/Downloads/image/{image_path}')
+        is_squirrel, results = detect.inference(frame)
+        print(f'{is_squirrel}: {tracker}/{len(stream)}')
+        tracker += 1
 
-        frame = cv2.imread(f'../Ironacer.v1-batch-1.yolov5pytorch/test/images/{frame}')
-        inf = detect.inference(frame)
-        print(inf)
+        if is_squirrel:
+            index = stream.index(image_path)
+            for image in stream[index-4:index+1]:
+                shutil.copy(f'/Users/Matt/Downloads/image/{image}', f'/Users/Matt/Downloads/found/{image}')
+

@@ -138,6 +138,7 @@ class TelegramBot:
         self.dispatcher.add_handler(CommandHandler('view', self.latest_view))
         self.dispatcher.add_handler(CommandHandler('saved', self.get_current_number_of_images))
         self.dispatcher.add_handler(CommandHandler('fire', self.fire_water))
+        self.dispatcher.add_handler(CommandHandler('update', self.update_ironacer))
 
         self.dispatcher.add_error_handler(self.error)
 
