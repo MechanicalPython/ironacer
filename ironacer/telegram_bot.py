@@ -64,9 +64,8 @@ class TelegramBot:
         update.message.reply_photo(frame, timeout=300)
 
     def update_ironacer(self, update, context):
-        p = subprocess.Popen(["bash", "/home/pi/ironacer/updater.sh"], stdout=subprocess.PIPE)
-        out, err = p.communicate()
-        update.message.reply_text(out)
+        update.message.reply_text('Updating...')
+        subprocess.Popen(["bash", "/home/pi/ironacer/updater.sh"], stdout=subprocess.PIPE)
 
     def get_current_number_of_images(self, update, context):
         update.message.reply_text(
@@ -76,6 +75,7 @@ class TelegramBot:
 
     def set_detection_region(self, update, context):
         # todo - how to update in real time?
+        #  Git problem. local changes and then push to github?
         """Input is /set_detect x,y,x,y
         """
         args = update.message.text.split(' ')[1]
