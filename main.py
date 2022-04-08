@@ -93,6 +93,7 @@ class IronAcer:
                     if is_motion:
                         is_squirrel, inference_result = self.yolo.inference(frame)
                         if is_squirrel:
+                            utils.save_frame(frame, inference_result, 'Yolo')
                             squirrel_cooldown = 10
                             # vid_writer = cv2.VideoWriter('temp.mp4', cv2.VideoWriter_fourcc(*'mp4v'), 10, (IMGSZ, IMGSZ))
                             # self.claymore.start()
@@ -101,8 +102,8 @@ class IronAcer:
                     else:
                         squirrel_cooldown -= 1
 
-                    if squirrel_cooldown > 0:
-                        utils.save_frame(frame, inference_result, 'Yolo')
+                    if 10 > squirrel_cooldown > 0:
+                        utils.save_frame(frame, inference_result, 'Motion')
                         # vid_writer.write(utils.add_label_to_frame(frame, inference_result, 'Yolo'))
                     if squirrel_cooldown == 0:
                         # self.claymore.stop()
