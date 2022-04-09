@@ -178,7 +178,4 @@ def motion_detect_img_dir(path='detected/'):
 
 
 if __name__ == '__main__':
-    demonstrate_yolo()
-    # make_video('../Ironacer.v1-batch-1.yolov5pytorch/test/images/', 'test.mp4', 6)
-
-    # motion_detect_img_dir(path='/Users/matt/detected/')
+    send_detected_as_chunks('../detected/')

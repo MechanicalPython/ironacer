@@ -7,12 +7,13 @@ import traceback
 import cv2
 import subprocess
 import configparser
+import zipfile
 
 from telegram import Update, ParseMode
 from telegram.ext import Updater, CommandHandler, CallbackContext
 
 from ironacer import ROOT, DETECTION_REGION
-from ironacer import utils, strike
+from ironacer import utils#, strike
 
 # todo - command to fire the hose and record the time before and after that.
 #  Set detection region by telegram.
@@ -42,13 +43,13 @@ class TelegramBot:
     """
 
     def __init__(self):
-        self.token = open(f'{ROOT}/telegram_token', 'r').read()
+        self.token = '1848027900:AAFZFN63qwvlMWtWgQtmcatOA8fCErergro' #open(f'{ROOT}/telegram_token', 'r').read()
         self.updater = Updater(self.token, use_context=True)
         self.dispatcher = self.updater.dispatcher
         self.bot = self.updater.bot
         self.chat_id = -547385621
         self.latest_frame = None
-        self.claymore = strike.Claymore()
+        #self.claymore = strike.Claymore()
 
     @staticmethod
     def detected_info():
@@ -67,22 +68,19 @@ class TelegramBot:
                                   '/saved: get number of saved photos\n'
                                   '/set_detect x,y,x,y: set detection region\n'
                                   '/fire x: fire water for x seconds\n'
-                                  '/update: update from github and reboot.')
+                                  '/update: update from github and reboot.\n'
+                                  '/download: downloads all images in ./detected as zips.')
 
-    def latest_view(self, update, context):
+    def view(self, update, context):
         """Accepts self.latest_frame which is a cv2 np.array()"""
         frame = utils.add_label_to_frame(self.latest_frame, [DETECTION_REGION])
         frame = cv2.imencode('.jpg', frame)[1].tobytes()
         update.message.reply_photo(frame, timeout=300)
 
-    def update_ironacer(self, update, context):
-        update.message.reply_text('Updating...')
-        subprocess.Popen(["bash", "/home/pi/ironacer/updater.sh"], stdout=subprocess.PIPE)
-
-    def get_current_number_of_images(self, update, context):
+    def saved(self, update, context):
         update.message.reply_text(self.detected_info())
 
-    def set_detection_region(self, update, context):
+    def set_detect(self, update, context):
         # todo - how to update in real time?
         #  Git problem. local changes and then push to github?
         """Input is /set_detect x,y,x,y
@@ -96,7 +94,7 @@ class TelegramBot:
             parser.write(configfile)
         subprocess.Popen(["sudo", "systemctl", "restart", "ironacer"], stdout=subprocess.PIPE)
 
-    def fire_water(self, update, context):
+    def fire(self, update, context):
         """Fires water for a given amount of time. Default is 2 seconds."""
         args = update.message.text.split(' ')
         try:
@@ -107,6 +105,39 @@ class TelegramBot:
         self.claymore.start()
         time.sleep(duration)
         self.claymore.stop()
+
+    def update(self, update, context):
+        update.message.reply_text('Updating...')
+        subprocess.Popen(["bash", "/home/pi/ironacer/updater.sh"], stdout=subprocess.PIPE)
+
+    def download(self, path=f'{ROOT}/detected/', max_zip_size=45):
+        zf = zipfile.ZipFile(f"{ROOT}/detected.zip", 'w')
+
+        total_size = 0  # Bytes. divide by 1000000 to get MB.
+        for dirname, subdirs, files in os.walk(path):
+            for filename in files:
+                if not (filename.endswith('.jpg') or filename.endswith('.txt')):  # Filter out .DS_Store
+                    continue
+
+                file_size = os.path.getsize(f'{dirname}/{filename}') / 1000000  # Convert to MB.
+                if file_size > max_zip_size:
+                    self.bot.send_message(f'{filename} too large to send.')
+                elif total_size + file_size > max_zip_size:
+                    # Close zip file, send it, make a new one and continue.
+                    zf.close()
+                    self.send_doc(f"{ROOT}/detected.zip")
+                    os.remove(f"{ROOT}/detected.zip")
+                    zf = zipfile.ZipFile(f"{ROOT}/detected.zip", 'w')
+                    total_size = 0
+
+                else:
+                    zf.write(f'{dirname}/{filename}')
+                    total_size += file_size
+                    os.remove(f'{dirname}/{filename}')
+        # At the end, send the last zip file.
+        zf.close()
+        self.send_doc(f"{ROOT}/detected.zip")
+        os.remove(f"{ROOT}/detected.zip")
 
     def send_message(self, text):
         self.bot.send_message(self.chat_id, text)
@@ -144,10 +175,11 @@ class TelegramBot:
 
     def main(self):
         self.dispatcher.add_handler(CommandHandler('help', self.help))
-        self.dispatcher.add_handler(CommandHandler('view', self.latest_view))
-        self.dispatcher.add_handler(CommandHandler('saved', self.get_current_number_of_images))
-        self.dispatcher.add_handler(CommandHandler('fire', self.fire_water))
-        self.dispatcher.add_handler(CommandHandler('update', self.update_ironacer))
+        self.dispatcher.add_handler(CommandHandler('view', self.view))
+        self.dispatcher.add_handler(CommandHandler('saved', self.saved))
+        self.dispatcher.add_handler(CommandHandler('fire', self.fire))
+        self.dispatcher.add_handler(CommandHandler('update', self.update))
+        self.dispatcher.add_handler(CommandHandler('download', self.download))
 
         self.dispatcher.add_error_handler(self.error)
 
