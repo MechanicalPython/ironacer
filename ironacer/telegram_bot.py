@@ -13,7 +13,7 @@ from telegram import Update, ParseMode
 from telegram.ext import Updater, CommandHandler, CallbackContext
 
 from ironacer import ROOT, DETECTION_REGION
-from ironacer import utils#, strike
+from ironacer import utils, strike
 
 # todo - command to fire the hose and record the time before and after that.
 #  Set detection region by telegram.
@@ -49,7 +49,7 @@ class TelegramBot:
         self.bot = self.updater.bot
         self.chat_id = -547385621
         self.latest_frame = None
-        #self.claymore = strike.Claymore()
+        self.claymore = strike.Claymore()
 
     @staticmethod
     def detected_info():
@@ -110,7 +110,10 @@ class TelegramBot:
         update.message.reply_text('Updating...')
         subprocess.Popen(["bash", "/home/pi/ironacer/updater.sh"], stdout=subprocess.PIPE)
 
-    def download(self, path=f'{ROOT}/detected/', max_zip_size=45):
+    def download(self, update, context):
+        self.zip_and_send()
+
+    def zip_and_send(self, path=f'{ROOT}/detected/', max_zip_size=45):
         zf = zipfile.ZipFile(f"{ROOT}/detected.zip", 'w')
 
         total_size = 0  # Bytes. divide by 1000000 to get MB.
