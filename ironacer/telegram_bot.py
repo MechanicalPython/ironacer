@@ -43,7 +43,7 @@ class TelegramBot:
     """
 
     def __init__(self):
-        self.token = '1848027900:AAFZFN63qwvlMWtWgQtmcatOA8fCErergro' #open(f'{ROOT}/telegram_token', 'r').read()
+        self.token = open(f'{ROOT}/telegram_token', 'r').read()
         self.updater = Updater(self.token, use_context=True)
         self.dispatcher = self.updater.dispatcher
         self.bot = self.updater.bot
