@@ -2,6 +2,29 @@ import os
 import cv2
 from ironacer import DETECTION_REGION, ROOT, MOTION_THRESH
 import datetime
+from zipfile import ZipFile
+import shutil
+
+
+def unzip_and_merge(path):
+    """Designed to split images and labels."""
+    if not path.endswith('/'):
+        path = path + '/'
+
+    os.mkdir(f'{path}image')
+    os.mkdir(f'{path}label')
+    for z in [i for i in os.listdir(path) if i.endswith('.zip')]:
+        with ZipFile(f'{path}{z}', 'r') as zf:
+            zf.extractall(f'{path}temp/')
+            for dirname, subdirs, files in os.walk(f'{path}temp/'):
+                for file in files:
+                    if file.endswith('.jpg'):
+                        os.rename(f'{dirname}/{file}', f'{path}image/{file}')
+                    elif file.endswith('.txt'):
+                        os.rename(f'{dirname}/{file}', f'{path}label/{file}')
+                    else:
+                        pass
+            shutil.rmtree(f'{path}temp/')
 
 
 def make_video(images_dir, video_path, fps):
@@ -177,5 +200,28 @@ def motion_detect_img_dir(path='detected/'):
         cv2.imwrite(f'{path}labeled_images/{serial_number}.jpg', frame)
 
 
+def comparison():
+    import sys
+    from PIL import Image
+    for image in os.listdir('../yolov5/runs/detect/exp2/'):
+        im1 = Image.open(f'../yolov5/runs/detect/exp2/{image}')
+        im2 = Image.open(f'../yolov5/runs/detect/exp3/{image}')
+        images = [im1, im2]
+        widths, heights = zip(*(i.size for i in images))
+
+        total_width = sum(widths)
+        max_height = max(heights)
+
+        new_im = Image.new('RGB', (total_width, max_height))
+
+        x_offset = 0
+        for im in images:
+            new_im.paste(im, (x_offset, 0))
+            x_offset += im.size[0]
+
+        new_im.save(f'../comparison/{image}')
+
+
 if __name__ == '__main__':
-    send_detected_as_chunks('../detected/')
+    comparison()
+    # unzip_and_merge('/Users/Matt/Downloads/')

@@ -15,8 +15,7 @@ from telegram.ext import Updater, CommandHandler, CallbackContext
 from ironacer import ROOT, DETECTION_REGION
 from ironacer import utils, strike
 
-# todo - command to fire the hose and record the time before and after that.
-#  Set detection region by telegram.
+# todo - record the time before and after /fire.
 
 
 class TelegramBot:
