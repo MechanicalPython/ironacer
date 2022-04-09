@@ -116,7 +116,7 @@ class IronAcer:
                         squirrel_cooldown = -1
 
                     if not self.is_daytime():
-                        self.bot.send_message(f"{len(os.listdir(f'{ROOT}/detected/image/'))} images currently saved")
+                        self.bot.send_message(self.bot.detected_info())
                         break
 
 

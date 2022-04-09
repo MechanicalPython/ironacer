@@ -51,6 +51,16 @@ class TelegramBot:
         self.claymore = strike.Claymore()
 
     @staticmethod
+    def detected_info():
+        # todo - get total file size.
+        images_size = sum(os.path.getsize(f) for f in os.listdir(f'{ROOT}/detected/image/') if os.path.isfile(f))/1000
+        labels_size = sum(os.path.getsize(f) for f in os.listdir(f'{ROOT}/detected/label/') if os.path.isfile(f))/1000
+        total = round(images_size + labels_size, 2)
+        return f"{total}MB total\n" \
+               f"{len([i for i in os.listdir(f'{ROOT}/detected/image/') if 'yolo' in i.lower()])} yolo images and " \
+               f"{len([i for i in os.listdir(f'{ROOT}/detected/image/') if 'motion' in i.lower()])} motion images"
+
+    @staticmethod
     def help(update, context):
         update.message.reply_text('/view: take a photo.\n'
                                   '/saved: get number of saved photos\n'
@@ -68,10 +78,7 @@ class TelegramBot:
         subprocess.Popen(["bash", "/home/pi/ironacer/updater.sh"], stdout=subprocess.PIPE)
 
     def get_current_number_of_images(self, update, context):
-        update.message.reply_text(
-            f"{len([i for i in os.listdir(f'{ROOT}/detected/image/') if 'yolo' in i.lower()])} yolo images and "
-            f"{len([i for i in os.listdir(f'{ROOT}/detected/image/') if 'motion' in i.lower()])} motion images"
-        )
+        update.message.reply_text(self.detected_info())
 
     def set_detection_region(self, update, context):
         # todo - how to update in real time?
