@@ -52,20 +52,22 @@ class TelegramBot:
 
     @staticmethod
     def detected_info():
-        # todo - get total file size.
-        images_size = sum(os.path.getsize(f) for f in os.listdir(f'{ROOT}/detected/image/') if os.path.isfile(f))/1000
-        labels_size = sum(os.path.getsize(f) for f in os.listdir(f'{ROOT}/detected/label/') if os.path.isfile(f))/1000
+        img_dir = f'{ROOT}/detected/image/'
+        label_dir = f'{ROOT}/detected/label/'
+        images_size = sum([os.path.getsize(f'{img_dir}{f}') for f in os.listdir(img_dir)])/1000000
+        labels_size = sum([os.path.getsize(f'{label_dir}{f}') for f in os.listdir(label_dir)])/1000000
         total = round(images_size + labels_size, 2)
         return f"{total}MB total\n" \
-               f"{len([i for i in os.listdir(f'{ROOT}/detected/image/') if 'yolo' in i.lower()])} yolo images and " \
-               f"{len([i for i in os.listdir(f'{ROOT}/detected/image/') if 'motion' in i.lower()])} motion images"
+               f"{len([i for i in os.listdir(img_dir) if 'yolo' in i.lower()])} yolo images and " \
+               f"{len([i for i in os.listdir(img_dir) if 'motion' in i.lower()])} motion images"
 
     @staticmethod
     def help(update, context):
         update.message.reply_text('/view: take a photo.\n'
                                   '/saved: get number of saved photos\n'
                                   '/set_detect x,y,x,y: set detection region\n'
-                                  '/fire x: fire water for x seconds\n')
+                                  '/fire x: fire water for x seconds\n'
+                                  '/update: update from github and reboot.')
 
     def latest_view(self, update, context):
         """Accepts self.latest_frame which is a cv2 np.array()"""
