@@ -7,18 +7,18 @@ Notes:
 """
 import argparse
 import datetime
-import os
-import time
 import threading
+import time
+
 import suntime
 
+from ironacer import DETECTION_REGION, YOLO_WEIGHTS, IMGSZ, MOTION_THRESH
 from ironacer import strike, telegram_bot, stream, find, motion_detection, utils
-from ironacer import ROOT, DETECTION_REGION, YOLO_WEIGHTS, IMGSZ, MOTION_THRESH
 
 
 # todo
 #  run telegram, inference, and motion detection on separate threads to speed it up.
-#  Too many photos - pull_motion...sh could go back to downloading the individual photos, not the zip.
+#  Benchmark fps while running yolo on the pi.
 
 
 class IronAcer:
@@ -36,7 +36,7 @@ class IronAcer:
                  gather_data=True):  # Keep as the systemctl service expects it.
         self.surveillance_mode = surveillance_mode
 
-        self.yolo = find.Detector(YOLO_WEIGHTS, (IMGSZ, IMGSZ))
+        self.yolo = find.Detector(weights=YOLO_WEIGHTS, imgsz=640)
 
         self.motion_detector = motion_detection.MotionDetection(
             detection_region=DETECTION_REGION, motion_thresh=MOTION_THRESH)
@@ -59,9 +59,9 @@ class IronAcer:
         while True:
             with open('/sys/class/thermal/thermal_zone0/temp') as f:
                 temp = int(f.read().strip()) / 1000
-                if temp > 80:
+                if temp > 85:
                     self.bot.send_message(f'Warning: CPU temperature is {temp}')
-            time.sleep(5)
+            time.sleep(60*60)
 
     def main(self):
         """
@@ -83,9 +83,6 @@ class IronAcer:
                     time.sleep(60)
                     continue
 
-                frames.__next__()  # Clear buffer twice to fix the black image at start up problem.
-                frames.__next__()
-                self.bot.send_photo(utils.add_label_to_frame(frames.__next__(), [DETECTION_REGION]))  # Telegram start up msg.
                 for frame in frames:
                     self.bot.latest_frame = frame
 

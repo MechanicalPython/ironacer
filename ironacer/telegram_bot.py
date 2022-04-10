@@ -16,6 +16,8 @@ from ironacer import ROOT, DETECTION_REGION
 from ironacer import utils, strike
 
 # todo - record the time before and after /fire.
+#  temp alert spamming problem.
+#  set detect region problem.
 
 
 class TelegramBot:
@@ -24,8 +26,12 @@ class TelegramBot:
 
     # Bot Commands
     help
-    view - takes a photo of the current view with detection region box.
-    saved - get number of saved images in detected/image
+    /view: take a photo.
+    /saved: get number of saved photos
+    /set_detect x,y,x,y: set detection region
+    /fire x: fire water for x seconds. Default 2 seconds.
+    /update: update from github and reboot.
+    /download: downloads all images in ironacer/detected as multiple 45MB zips.
 
     # Methods
     send_message - takes text.
@@ -96,11 +102,10 @@ class TelegramBot:
     def fire(self, update, context):
         """Fires water for a given amount of time. Default is 2 seconds."""
         args = update.message.text.split(' ')
-        try:
-            duration = int(args[1])
-        except ValueError:
-            update.message.reply_text('Invalid integer, defaulting to 2 seconds')
+        if len(args) == 1:
             duration = 2
+        else:
+            duration = int(args[1])
         self.claymore.start()
         time.sleep(duration)
         self.claymore.stop()

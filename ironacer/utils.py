@@ -223,5 +223,4 @@ def comparison():
 
 
 if __name__ == '__main__':
-    comparison()
-    # unzip_and_merge('/Users/Matt/Downloads/')
+    unzip_and_merge('/Users/Matt/Downloads/')
