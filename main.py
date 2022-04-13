@@ -7,8 +7,10 @@ Notes:
 """
 import argparse
 import datetime
+import os
 import threading
 import time
+import cv2
 
 import suntime
 
@@ -90,27 +92,16 @@ class IronAcer:
                     if is_motion:
                         is_squirrel, inference_result = self.yolo.inference(frame)
                         if is_squirrel:
-                            utils.save_frame(frame, inference_result, 'Yolo')
-                            squirrel_cooldown = 10
-                            # vid_writer = cv2.VideoWriter('temp.mp4', cv2.VideoWriter_fourcc(*'mp4v'), 10, (IMGSZ, IMGSZ))
-                            # self.claymore.start()
-                        else:
-                            squirrel_cooldown -= 1
-                    else:
-                        squirrel_cooldown -= 1
-
-                    if 10 > squirrel_cooldown > 0:
-                        utils.save_frame(frame, inference_result, 'Motion')
-                        # vid_writer.write(utils.add_label_to_frame(frame, inference_result, 'Yolo'))
-                    if squirrel_cooldown == 0:
-                        # self.claymore.stop()
-                        # vid_writer.release()
-                        # with open('temp.mp4') as f:
-                        #     self.bot.send_video(f)
-                        # os.remove('temp.mp4')
-                        squirrel_cooldown = -1
-                    if squirrel_cooldown < -3:
-                        squirrel_cooldown = -1
+                            self.claymore.start()
+                            vid_writer = cv2.VideoWriter('temp.mp4', cv2.VideoWriter_fourcc(*'mp4v'), 10, (IMGSZ, IMGSZ))
+                            for i in range(0, 10):
+                                frame = frames.__next__()
+                                vid_writer.write(utils.add_label_to_frame(frame, inference_result, 'Yolo'))
+                            vid_writer.release()
+                            self.claymore.stop()
+                            with open('temp.mp4') as f:
+                                self.bot.send_video(f)
+                            os.remove('temp.mp4')
 
                     if not self.is_daytime():
                         self.bot.send_message(self.bot.detected_info())
