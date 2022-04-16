@@ -77,7 +77,6 @@ class IronAcer:
         telegram_thread = threading.Thread(target=self.bot.main, daemon=True)
         telegram_thread.start()
 
-        squirrel_cooldown = -1
         with stream.LoadCamera(resolution=(IMGSZ, IMGSZ)) as frames:
             while True:
                 # If it is nighttime, just go to sleep like you should.
