@@ -34,8 +34,7 @@ class IronAcer:
     """
 
     def __init__(self,
-                 surveillance_mode=False,  # Don't run the strike functions.
-                 gather_data=True):  # Keep as the systemctl service expects it.
+                 surveillance_mode=False):  # Don't run the strike functions.
         self.surveillance_mode = surveillance_mode
 
         self.yolo = find.Detector(weights=YOLO_WEIGHTS, imgsz=640)
@@ -92,15 +91,18 @@ class IronAcer:
                         is_squirrel, inference_result = self.yolo.inference(frame)
                         if is_squirrel:
                             self.claymore.start()
-                            vid_writer = cv2.VideoWriter('temp.mp4', cv2.VideoWriter_fourcc(*'mp4v'), 10, (IMGSZ, IMGSZ))
-                            for i in range(0, 10):
+                            utils.save_frame(frame, inference_result, 'Yolo')
+                            # vid_writer = cv2.VideoWriter('temp.mp4', cv2.VideoWriter_fourcc(*'mp4v'), 10, (IMGSZ, IMGSZ))
+                            for i in range(0, 3):
                                 frame = frames.__next__()
-                                vid_writer.write(utils.add_label_to_frame(frame, inference_result, 'Yolo'))
-                            vid_writer.release()
+                                utils.save_frame(frame, inference_result, 'Motion')
+                                # vid_writer.write(utils.add_label_to_frame(frame, inference_result, 'Yolo'))
+                            # vid_writer.release()
                             self.claymore.stop()
-                            with open('temp.mp4') as f:
-                                self.bot.send_video(f)
-                            os.remove('temp.mp4')
+
+                            # with open('temp.mp4') as f:
+                            #     self.bot.send_video(f)
+                            # os.remove('temp.mp4')
 
                     if not self.is_daytime():
                         self.bot.send_message(self.bot.detected_info())
@@ -110,7 +112,6 @@ class IronAcer:
 def arg_parse():
     parser = argparse.ArgumentParser()
     parser.add_argument('--surveillance_mode', action='store_true', help='Flag to not fire water.')
-    parser.add_argument('--gather_data', action='store_true', help='Only gather data with motion detection')
     return parser.parse_args()
 
 
