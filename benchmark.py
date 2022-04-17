@@ -4,7 +4,7 @@ import time
 
 def bench_yolo():
 
-    yolo = find.Detector(weights='./best.pt')
+    yolo = find.Detector(weights='./best.pt', imgsz=640)
     with stream.LoadCamera() as frames:
         for frame in frames:
             t = time.time()
