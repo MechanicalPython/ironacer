@@ -209,19 +209,7 @@ def comparison():
         new_im.save(f'../comparison/{image}')
 
 
-def bench_yolo():
-    import time
-    from stream import LoadCamera
-    from find import Detector
-    yolo = Detector(weights='../best.pt')
 
-    with LoadCamera() as stream:
-        for frame in stream:
-            t = time.time()
-            is_squirrel, results = yolo.inference(frame)  # results = [[x, y, x, y, motion],.. ]
-            if results is None:
-                continue
-            print(time.time() - t)
 
 
 if __name__ == '__main__':
