@@ -4,6 +4,7 @@ from ironacer import DETECTION_REGION, ROOT, MOTION_THRESH
 import datetime
 from zipfile import ZipFile
 import shutil
+from ironacer import find
 
 
 def unzip_and_merge(path):
@@ -133,37 +134,23 @@ def show_frame(frame, rects=None):
         return False
 
 
-def demonstrate_motion_detection():
+def demonstrate(detection):
     #  Demonstrate motion detection on macbook webcam.
     from stream import LoadCamera
     from motion_detection import MotionDetection
     motion_detector = MotionDetection(detection_region=DETECTION_REGION, motion_thresh=MOTION_THRESH)
+    yolo = find.Detector(weights='../best.pt')
 
     with LoadCamera() as stream:
         for frame in stream:
-            is_motion, results = motion_detector.detect(frame)  # results = [[x, y, x, y, motion],.. ]
+            if detection == 'yolo':
+                is_squirrel, results = yolo.inference(frame)  # results = [[x, y, x, y, motion],.. ]
+            else:
+                is_motion, results = motion_detector.detect(frame)  # results = [[x, y, x, y, motion],.. ]
             if results is None:
                 continue
             frame = add_label_to_frame(frame, results)
             frame = add_label_to_frame(frame, [DETECTION_REGION])  # Append to add the label.
-            cv2.imshow("frame", frame)
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                break
-        cv2.destroyAllWindows()
-
-
-def demonstrate_yolo():
-    #  Demonstrate motion detection on macbook webcam.
-    from stream import LoadCamera
-    from find import Detector
-    yolo = Detector(weights='../best.pt')
-
-    with LoadCamera() as stream:
-        for frame in stream:
-            is_squirrel, results = yolo.inference(frame)  # results = [[x, y, x, y, motion],.. ]
-            if is_squirrel:
-
-                frame = add_label_to_frame(frame, results, yolo=True)
             cv2.imshow("frame", frame)
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
@@ -222,5 +209,20 @@ def comparison():
         new_im.save(f'../comparison/{image}')
 
 
+def bench_yolo():
+    import time
+    from stream import LoadCamera
+    from find import Detector
+    yolo = Detector(weights='../best.pt')
+
+    with LoadCamera() as stream:
+        for frame in stream:
+            t = time.time()
+            is_squirrel, results = yolo.inference(frame)  # results = [[x, y, x, y, motion],.. ]
+            if results is None:
+                continue
+            print(time.time() - t)
+
+
 if __name__ == '__main__':
-    unzip_and_merge('/Users/Matt/Downloads/')
+    bench_yolo()
