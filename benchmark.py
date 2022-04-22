@@ -4,7 +4,8 @@ import sys
 
 
 def bench_yolo(weights, imgsz):
-    yolo = find.Detector(weights=weights, imgsz=imgsz)
+    # todo - give average and sd inference time,
+    yolo = find.Detector(weights=weights, imgsz=int(imgsz))
     with stream.LoadCamera() as frames:
         for frame in frames:
             t = time.time()
