@@ -91,6 +91,7 @@ class TelegramBot:
         # todo - how to update in real time?
         #  Git problem. local changes and then push to github?
         """Input is /set_detect x,y,x,y
+        Not yet live.
         """
         args = update.message.text.split(' ')[1]
         parser = configparser.ConfigParser()
@@ -134,7 +135,8 @@ class TelegramBot:
                 self.send_message(f'Send video set to false')
             else:
                 self.send_message(f'Invalid args. Only true or false are accepted. ')
-        self.send_message(f'Invalid argument length.')
+        else:
+            self.send_message(f'Invalid argument length. No changes made.')
 
     def zip_and_send(self, path=f'{ROOT}/detected/', max_zip_size=45):
         zf = zipfile.ZipFile(f"{ROOT}/detected.zip", 'w')
