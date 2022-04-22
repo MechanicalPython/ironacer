@@ -4,6 +4,9 @@ Notes:
     then I'll do something about it.
 
 
+Images and Labels
+All labels are stored
+
 """
 import argparse
 import datetime
@@ -20,7 +23,7 @@ from ironacer import strike, telegram_bot, stream, find, motion_detection, utils
 
 # todo
 #  run telegram, inference, and motion detection on separate threads to speed it up.
-#  Benchmark fps while running yolo on the pi.
+#  video on and off mode. standard if squirrel take 10 frames type.
 
 
 class IronAcer:
@@ -91,11 +94,11 @@ class IronAcer:
                         is_squirrel, inference_result = self.yolo.inference(frame)
                         if is_squirrel:
                             self.claymore.start()
-                            utils.save_frame(frame, inference_result, 'Yolo')
+                            utils.save_frame_and_label(frame, inference_result, 'Yolo')
                             # vid_writer = cv2.VideoWriter('temp.mp4', cv2.VideoWriter_fourcc(*'mp4v'), 10, (IMGSZ, IMGSZ))
                             for i in range(0, 3):
                                 frame = frames.__next__()
-                                utils.save_frame(frame, inference_result, 'Motion')
+                                utils.save_frame_and_label(frame, inference_result, 'Motion')
                                 # vid_writer.write(utils.add_label_to_frame(frame, inference_result, 'Yolo'))
                             # vid_writer.release()
                             self.claymore.stop()
