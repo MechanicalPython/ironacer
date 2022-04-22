@@ -74,7 +74,9 @@ class TelegramBot:
                                   '/set_detect x,y,x,y: set detection region\n'
                                   '/fire x: fire water for x seconds\n'
                                   '/update: update from github and reboot.\n'
-                                  '/download: downloads all images in ./detected as zips.')
+                                  '/download: downloads all images in ./detected as zips.\n'
+                                  '/set_video: {true/false}: send video or not.'
+                                  )
 
     def view(self, update, context):
         """Accepts self.latest_frame which is a cv2 np.array()"""
@@ -116,6 +118,23 @@ class TelegramBot:
 
     def download(self, update, context):
         self.zip_and_send()
+
+    def set_video_setting(self, update, context):
+        parser = configparser.ConfigParser()
+        parser.read(f'{ROOT}/settings.cfg')
+
+        args = update.message.text.split(' ')
+        if len(args) == 2:
+            if args[1].lower() == 'true':
+                parser.set('Settings', 'SEND_VIDEO', args)
+                with open(f'{ROOT}/settings.cfg', 'w') as configfile:
+                    parser.write(configfile)
+                self.send_message(f'Send video set to true')
+            elif args[1].lower() == 'false':
+                self.send_message(f'Send video set to false')
+            else:
+                self.send_message(f'Invalid args. Only true or false are accepted. ')
+        self.send_message(f'Invalid argument length.')
 
     def zip_and_send(self, path=f'{ROOT}/detected/', max_zip_size=45):
         zf = zipfile.ZipFile(f"{ROOT}/detected.zip", 'w')
@@ -187,6 +206,7 @@ class TelegramBot:
         self.dispatcher.add_handler(CommandHandler('fire', self.fire))
         self.dispatcher.add_handler(CommandHandler('update', self.update))
         self.dispatcher.add_handler(CommandHandler('download', self.download))
+        self.dispatcher.add_handler(CommandHandler('set_video', self.set_video_setting))
 
         self.dispatcher.add_error_handler(self.error)
 

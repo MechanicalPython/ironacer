@@ -14,10 +14,10 @@ import os
 import threading
 import time
 import cv2
-
 import suntime
+import configparser
 
-from ironacer import DETECTION_REGION, YOLO_WEIGHTS, IMGSZ, MOTION_THRESH
+from ironacer import DETECTION_REGION, YOLO_WEIGHTS, IMGSZ, MOTION_THRESH, ROOT
 from ironacer import strike, telegram_bot, stream, find, motion_detection, utils
 
 
@@ -55,6 +55,16 @@ class IronAcer:
         sunrise = self.sun.get_sunrise_time().replace(tzinfo=None)
         sunset = self.sun.get_local_sunset_time().replace(tzinfo=None)
         return sunrise < datetime.datetime.now() < sunset
+
+    @staticmethod
+    def send_video():
+        parser = configparser.ConfigParser()
+        parser.read(f'{ROOT}/settings.cfg')
+        send_video = f"{ROOT}/{parser.get('Settings', 'SEND_VIDEO')}"
+        if send_video == 'true':
+            return True
+        else:
+            return False
 
     def cpu_temp(self):
         """
@@ -95,17 +105,18 @@ class IronAcer:
                         if is_squirrel:
                             self.claymore.start()
                             utils.save_frame_and_label(frame, inference_result, 'Yolo')
-                            # vid_writer = cv2.VideoWriter('temp.mp4', cv2.VideoWriter_fourcc(*'mp4v'), 10, (IMGSZ, IMGSZ))
-                            for i in range(0, 3):
-                                frame = frames.__next__()
-                                utils.save_frame_and_label(frame, inference_result, 'Motion')
-                                # vid_writer.write(utils.add_label_to_frame(frame, inference_result, 'Yolo'))
-                            # vid_writer.release()
-                            self.claymore.stop()
 
-                            # with open('temp.mp4') as f:
-                            #     self.bot.send_video(f)
-                            # os.remove('temp.mp4')
+                            if self.send_video():
+                                vid_writer = cv2.VideoWriter('temp.mp4', cv2.VideoWriter_fourcc(*'mp4v'), 10, (IMGSZ, IMGSZ))
+                                for i in range(0, 10):
+                                    frame = frames.__next__()
+                                    vid_writer.write(utils.add_label_to_frame(frame, inference_result, 'Yolo'))
+                                vid_writer.release()
+                                self.claymore.stop()
+
+                                with open('temp.mp4') as f:
+                                    self.bot.send_video(f)
+                                os.remove('temp.mp4')
 
                     if not self.is_daytime():
                         self.bot.send_message(self.bot.detected_info())
