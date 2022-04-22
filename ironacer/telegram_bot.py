@@ -137,7 +137,6 @@ class TelegramBot:
             # Write changes.
             with open(f'{ROOT}/settings.cfg', 'w') as configfile:
                 parser.write(configfile)
-            self.send_message(f'Send video set to true')
         else:
             self.send_message(f'Invalid argument length. No changes made.')
 
