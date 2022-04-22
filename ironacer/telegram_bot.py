@@ -127,14 +127,17 @@ class TelegramBot:
         args = update.message.text.split(' ')
         if len(args) == 2:
             if args[1].lower() == 'true':
-                parser.set('Settings', 'SEND_VIDEO', args)
-                with open(f'{ROOT}/settings.cfg', 'w') as configfile:
-                    parser.write(configfile)
+                parser.set('Settings', 'SEND_VIDEO', args[1].lower())
                 self.send_message(f'Send video set to true')
             elif args[1].lower() == 'false':
+                parser.set('Settings', 'SEND_VIDEO', args[1].lower())
                 self.send_message(f'Send video set to false')
             else:
                 self.send_message(f'Invalid args. Only true or false are accepted. ')
+            # Write changes.
+            with open(f'{ROOT}/settings.cfg', 'w') as configfile:
+                parser.write(configfile)
+            self.send_message(f'Send video set to true')
         else:
             self.send_message(f'Invalid argument length. No changes made.')
 
