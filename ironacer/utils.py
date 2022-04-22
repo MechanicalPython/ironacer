@@ -28,7 +28,7 @@ def unzip_and_merge(path):
             shutil.rmtree(f'{path}temp/')
 
 
-def make_video(images_dir, video_path, fps):
+def make_video_from_dir(images_dir, video_path, fps):
     """Should just need a frame and det.
     return None when the video is not ready. Return video path when ready to send out.
 
@@ -48,7 +48,26 @@ def make_video(images_dir, video_path, fps):
     return video_path
 
 
-def save_frame(frame, xyxyl, origin):
+def inference_dir(dir):
+    import shutil
+    stream = os.listdir(dir)
+    stream = [f'{i}' for i in stream if i.endswith('jpg')]
+    stream.sort()
+    detect = find.Detector(weights='../best.pt', imgsz=640, conf_thres=0.50)
+    tracker = 0
+    for image_path in stream:
+        frame = cv2.imread(f'{dir}image/{image_path}')
+        is_squirrel, results = detect.inference(frame)
+        print(f'{is_squirrel}: {tracker}/{len(stream)}')
+        tracker += 1
+
+        if is_squirrel:
+            index = stream.index(image_path)
+            for image in stream[index - 4:index + 1]:
+                shutil.copy(f'{dir}image/{image}', f'{dir}found/{image}')
+
+
+def save_frame_and_label(frame, xyxyl, origin):
     """Saves the inputted frame and label in ironacer/detected/image and ironacer/detected/label.
     label = x, y, x, y, label.
     xyxyl = [[x, y, x, y, l], ..]
@@ -158,21 +177,27 @@ def demonstrate(detection):
 
 
 def list_images_and_labels(path):
-    """Return read image and labels from detected directory."""
+    """Return read image and labels from detected directory.
+    If there is not a match, just skip it. """
     images = os.listdir(f'{path}image/')
+    images = [i for i in images if 'Yolo' in i]
     images.sort()
     for image in [f for f in images if f.endswith('.jpg')]:
-        if 'Motion' not in image:
+        if not image.endswith('.jpg'):
             continue
+
         serial_number = image.replace('.jpg', '')
         print(serial_number)
         # Reading frame(image) from video
         frame = cv2.imread(f'{path}image/{serial_number}.jpg')
-        labels = open(f'{path}label/{serial_number}.txt', 'r').read().strip().split('\n')
+        try:
+            labels = open(f'{path}label/{serial_number}.txt', 'r').read().strip().split('\n')
+        except FileNotFoundError:
+            continue
         yield frame, labels, serial_number
 
 
-def motion_detect_img_dir(path='detected/'):
+def motion_detect_img_dir(path):
     """Saves labeled images to new directory to analyse easily."""
     if not os.path.exists(f'{path}labeled_images'):
         os.mkdir(f'{path}labeled_images')
@@ -180,19 +205,21 @@ def motion_detect_img_dir(path='detected/'):
     for frame, labels, serial_number in list_images_and_labels(path):
         for label in labels:
             x, y, w, h, amount_of_motion = label.split(' ')
-            x, y, w, h, amount_of_motion = int(x), int(y), int(w), int(h), str(amount_of_motion)
+            x, y, w, h, amount_of_motion = float(x), float(y), float(w), float(h), str(amount_of_motion)
+            x, y, w, h = int(x), int(y), int(w), int(h)
             # making green rectangle around the moving object
             cv2.rectangle(frame, (x, y), (w, h), (0, 255, 0), 3)
             cv2.putText(frame, amount_of_motion, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (36, 255, 12), 2)
         cv2.imwrite(f'{path}labeled_images/{serial_number}.jpg', frame)
 
 
-def comparison():
-    import sys
+def comparison(dir1, dir2):
+    if not os.path.exists(f'../comparison/'):
+        os.mkdir(f'../comparison/')
     from PIL import Image
-    for image in os.listdir('../yolov5/runs/detect/exp2/'):
-        im1 = Image.open(f'../yolov5/runs/detect/exp2/{image}')
-        im2 = Image.open(f'../yolov5/runs/detect/exp3/{image}')
+    for image in os.listdir(f'{dir1}'):
+        im1 = Image.open(f'{dir1}{image}')
+        im2 = Image.open(f'{dir2}{image}')
         images = [im1, im2]
         widths, heights = zip(*(i.size for i in images))
 
@@ -209,8 +236,7 @@ def comparison():
         new_im.save(f'../comparison/{image}')
 
 
-
-
-
 if __name__ == '__main__':
-    bench_yolo()
+    motion_detect_img_dir('/Users/matt/detected/')
+    # unzip_and_merge('/Users/matt/Downloads/')
+    # comparison('/Users/matt/pyprojects/ironacer/yolov5/runs/detect/exp2/', '/Users/matt/pyprojects/ironacer/yolov5/runs/detect/exp3/')

@@ -8,3 +8,6 @@ data.yaml
 /detected/
 /*yolov5pytorch/
 /icloud_app_psk.cfg
+.DS_Store
+ironacer/__pycache__/
+
