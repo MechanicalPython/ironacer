@@ -8,9 +8,6 @@ for 1280 and 640 respectively.
 
 """
 
-
-import os
-import cv2
 import torch
 import torch.backends.cudnn as cudnn
 import sys
@@ -28,7 +25,7 @@ from yolov5.utils.torch_utils import select_device
 class Detector:
     """Class to detect and read a stream from a pi camera to then run yolo inference on each frame."""
 
-    def __init__(self, weights='best.pt', imgsz=1280, conf_thres=0.25):
+    def __init__(self, weights='best.pt', imgsz=1280, conf_thres=0.50):
         self.weights = weights
         self.imgsz = (imgsz, imgsz)  # inference size (height, width)
 
@@ -47,14 +44,12 @@ class Detector:
         self.dnn = False  # use OpenCV DNN for ONNX inference
         self.model = DetectMultiBackend(self.weights, device=self.device, dnn=self.dnn)
         self.stride, self.names, self.pt, jit, self.onnx, engine = self.model.stride, self.model.names, self.model.pt, self.model.jit, self.model.onnx, self.model.engine
-        self.half &= (
-                                 self.pt or jit or engine) and self.device.type != 'cpu'  # half precision only supported by PyTorch on CUDA
+        self.half &= (self.pt or jit or engine) and self.device.type != 'cpu'  # half precision only supported by PyTorch on CUDA
 
         if self.pt or jit:
             self.model.model.half() if self.half else self.model.model.float()
         cudnn.benchmark = True  # set True to speed up constant image size inference
         self.model.warmup(imgsz=(1, 3, *self.imgsz))  # warmup
-
 
     @torch.no_grad()
     def inference(self, img0):
@@ -102,22 +97,4 @@ class Detector:
                 results.append([xyxy, confidence, cls])
         return isSquirrel, results
 
-
-if __name__ == '__main__':
-    import shutil
-    stream = os.listdir('/Users/Matt/Downloads/image/')
-    stream = [f'{i}' for i in stream if i.endswith('jpg')]
-    stream.sort()
-    detect = Detector(weights='../best.pt', imgsz=640)
-    tracker = 0
-    for image_path in stream:
-        frame = cv2.imread(f'/Users/Matt/Downloads/image/{image_path}')
-        is_squirrel, results = detect.inference(frame)
-        print(f'{is_squirrel}: {tracker}/{len(stream)}')
-        tracker += 1
-
-        if is_squirrel:
-            index = stream.index(image_path)
-            for image in stream[index-4:index+1]:
-                shutil.copy(f'/Users/Matt/Downloads/image/{image}', f'/Users/Matt/Downloads/found/{image}')
 
