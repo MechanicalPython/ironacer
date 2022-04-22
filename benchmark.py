@@ -1,10 +1,10 @@
 from ironacer import find, stream
 import time
+import sys
 
 
-def bench_yolo():
-
-    yolo = find.Detector(weights='./best.pt', imgsz=640)
+def bench_yolo(weights, imgsz):
+    yolo = find.Detector(weights=weights, imgsz=imgsz)
     with stream.LoadCamera() as frames:
         for frame in frames:
             t = time.time()
@@ -15,5 +15,7 @@ def bench_yolo():
 
 
 if __name__ == '__main__':
-    bench_yolo()
+    # takes exactly 2 args.
+    filename, weight, imgsz = sys.argv
+    bench_yolo(weight, imgsz)
 
