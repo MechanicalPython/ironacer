@@ -237,6 +237,6 @@ def comparison(dir1, dir2):
 
 
 if __name__ == '__main__':
-    motion_detect_img_dir('/Users/matt/detected/')
-    # unzip_and_merge('/Users/matt/Downloads/')
+    # motion_detect_img_dir('/Users/matt/detected/')
+    unzip_and_merge('/Users/matt/Downloads/')
     # comparison('/Users/matt/pyprojects/ironacer/yolov5/runs/detect/exp2/', '/Users/matt/pyprojects/ironacer/yolov5/runs/detect/exp3/')

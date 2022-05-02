@@ -18,6 +18,7 @@ from ironacer import utils, strike
 # todo - record the time before and after /fire.
 #  temp alert spamming problem.
 #  set detect region problem.
+#  get current settings.cfg
 
 
 class TelegramBot:

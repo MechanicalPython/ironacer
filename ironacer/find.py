@@ -25,7 +25,7 @@ from yolov5.utils.torch_utils import select_device
 class Detector:
     """Class to detect and read a stream from a pi camera to then run yolo inference on each frame."""
 
-    def __init__(self, weights='best.pt', imgsz=1280, conf_thres=0.50):
+    def __init__(self, weights='best.pt', imgsz=1280, conf_thres=0.25):
         self.weights = weights
         self.imgsz = (imgsz, imgsz)  # inference size (height, width)
 

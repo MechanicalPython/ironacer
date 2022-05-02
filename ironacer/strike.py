@@ -1,10 +1,8 @@
 """
 Strike.py - employ the anti-squirrel measures.
 """
-
-
+import time
 import RPi.GPIO as GPIO
-from time import sleep
 
 
 class Relay:
@@ -39,5 +37,11 @@ class Claymore:
         if self.is_on:
             self.firing_pin.off()
             self.is_on = False
+
+    def timed_exposure(self, duration):
+        self.start()
+        time.sleep(duration)
+        self.stop()
+
 
 

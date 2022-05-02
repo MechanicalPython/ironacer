@@ -103,17 +103,17 @@ class IronAcer:
                     if is_motion:
                         is_squirrel, inference_result = self.yolo.inference(frame)
                         if is_squirrel:
-                            self.claymore.start()
+                            if not self.surveillance_mode:
+                                threading.Thread(target=self.claymore.timed_exposure, args=(5,)).start()
+
                             utils.save_frame_and_label(frame, inference_result, 'Yolo')
 
                             if self.send_video():
                                 vid_writer = cv2.VideoWriter('temp.mp4', cv2.VideoWriter_fourcc(*'mp4v'), 10, (IMGSZ, IMGSZ))
-                                for i in range(0, 10):
+                                for i in range(0, 30):
                                     frame = frames.__next__()
                                     vid_writer.write(utils.add_label_to_frame(frame, inference_result, 'Yolo'))
                                 vid_writer.release()
-                                self.claymore.stop()
-
                                 with open('temp.mp4') as f:
                                     self.bot.send_video(f)
                                 os.remove('temp.mp4')
@@ -132,5 +132,6 @@ def arg_parse():
 if __name__ == '__main__':
     opt = arg_parse()
     IA = IronAcer(**vars(opt))
+    print(IA.send_video())
     # IA.bot.chat_id = 1706759043  # Change it to private chat for testing.
     IA.main()
