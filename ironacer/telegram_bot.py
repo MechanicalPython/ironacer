@@ -147,7 +147,7 @@ class TelegramBot:
         total_size = 0  # Bytes. divide by 1000000 to get MB.
         for dirname, subdirs, files in os.walk(path):
             for filename in files:
-                if not (filename.endswith('.jpg') or filename.endswith('.txt')):  # Filter out .DS_Store
+                if not (filename.endswith('.jpg') or filename.endswith('.txt') or filename.endswith('.log')):  # Filter out .DS_Store
                     continue
 
                 file_size = os.path.getsize(f'{dirname}/{filename}') / 1000000  # Convert to MB.
