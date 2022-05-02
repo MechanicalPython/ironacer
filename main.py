@@ -89,7 +89,7 @@ class IronAcer:
         telegram_thread = threading.Thread(target=self.bot.main, daemon=True)
         telegram_thread.start()
 
-        logger = logging.getLogger(f"{ROOT}/detected/timing.log")
+        logging.basicConfig(filename=f"{ROOT}/detected/timing.log", level=logging.INFO)
 
         with stream.LoadCamera(resolution=(IMGSZ, IMGSZ)) as frames:
             while True:
@@ -107,7 +107,7 @@ class IronAcer:
                         start = time.time()
                         is_squirrel, inference_result = self.yolo.inference(frame)
                         end = time.time()
-                        logger.info(f'{datetime.datetime.now()}: yolo - {end - start}')
+                        logging.info(f'{datetime.datetime.now()}: yolo - {end - start}')
 
                         if is_squirrel:
                             if not self.surveillance_mode:
