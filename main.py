@@ -16,6 +16,7 @@ import time
 import cv2
 import suntime
 import configparser
+import logging
 
 from ironacer import DETECTION_REGION, YOLO_WEIGHTS, IMGSZ, MOTION_THRESH, ROOT
 from ironacer import strike, telegram_bot, stream, find, motion_detection, utils
@@ -23,7 +24,6 @@ from ironacer import strike, telegram_bot, stream, find, motion_detection, utils
 
 # todo
 #  run telegram, inference, and motion detection on separate threads to speed it up.
-#  video on and off mode. standard if squirrel take 10 frames type.
 
 
 class IronAcer:
@@ -89,6 +89,8 @@ class IronAcer:
         telegram_thread = threading.Thread(target=self.bot.main, daemon=True)
         telegram_thread.start()
 
+        logger = logging.getLogger(f"{ROOT}/detected/timing.log")
+
         with stream.LoadCamera(resolution=(IMGSZ, IMGSZ)) as frames:
             while True:
                 # If it is nighttime, just go to sleep like you should.
@@ -101,7 +103,12 @@ class IronAcer:
 
                     is_motion, motion_detection_result = self.motion_detector.detect(frame)
                     if is_motion:
+
+                        start = time.time()
                         is_squirrel, inference_result = self.yolo.inference(frame)
+                        end = time.time()
+                        logger.info(f'{datetime.datetime.now()}: yolo - {end - start}')
+
                         if is_squirrel:
                             if not self.surveillance_mode:
                                 threading.Thread(target=self.claymore.timed_exposure, args=(5,)).start()
@@ -132,6 +139,5 @@ def arg_parse():
 if __name__ == '__main__':
     opt = arg_parse()
     IA = IronAcer(**vars(opt))
-    print(IA.send_video())
     # IA.bot.chat_id = 1706759043  # Change it to private chat for testing.
     IA.main()

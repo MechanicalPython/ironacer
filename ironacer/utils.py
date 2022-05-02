@@ -28,6 +28,16 @@ def unzip_and_merge(path):
             shutil.rmtree(f'{path}temp/')
 
 
+def timer(func):
+    def f(*args, **kwargs):
+        start = datetime.datetime.now()
+        rv = func(*args, **kwargs)
+        end = datetime.datetime.now()
+        print(f'{end} - {func.__name__}: {end - start}')
+        return rv
+    return f
+
+
 def make_video_from_dir(images_dir, video_path, fps):
     """Should just need a frame and det.
     return None when the video is not ready. Return video path when ready to send out.
