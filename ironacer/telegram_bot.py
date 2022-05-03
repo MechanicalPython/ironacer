@@ -58,15 +58,13 @@ class TelegramBot:
         self.claymore = strike.Claymore()
 
     @staticmethod
-    def detected_info():
-        img_dir = f'{ROOT}/detected/image/'
-        label_dir = f'{ROOT}/detected/label/'
-        images_size = sum([os.path.getsize(f'{img_dir}{f}') for f in os.listdir(img_dir)])/1000000
-        labels_size = sum([os.path.getsize(f'{label_dir}{f}') for f in os.listdir(label_dir)])/1000000
-        total = round(images_size + labels_size, 2)
-        return f"{total}MB total\n" \
-               f"{len([i for i in os.listdir(img_dir) if 'yolo' in i.lower()])} yolo images and " \
-               f"{len([i for i in os.listdir(img_dir) if 'motion' in i.lower()])} motion images"
+    def get_dir_size(directory):
+        total = 0
+        for root, d, files in os.walk(directory):
+            for file in files:
+                total += os.path.getsize(f'{root}/{file}')
+        total = round(total/1000000, 2)
+        return total
 
     @staticmethod
     def help(update, context):
@@ -86,7 +84,9 @@ class TelegramBot:
         update.message.reply_photo(frame, timeout=300)
 
     def saved(self, update, context):
-        update.message.reply_text(self.detected_info())
+        number_of_images = len([i for i in os.listdir(f'{ROOT}/detected/image/') if '.jpg' in i.lower()])
+        size = self.get_dir_size(f'{ROOT}/detected/')
+        update.message.reply_text(f'{number_of_images} images at {size} MBs')
 
     def set_detect(self, update, context):
         # todo - how to update in real time?

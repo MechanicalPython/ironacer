@@ -126,7 +126,7 @@ class IronAcer:
                                 os.remove('temp.mp4')
 
                     if not self.is_daytime():
-                        self.bot.send_message(self.bot.detected_info())
+                        self.bot.send_message(self.bot.get_dir_size())
                         break
 
 
