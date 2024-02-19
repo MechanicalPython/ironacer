@@ -19,6 +19,10 @@ class ServoController:
         GPIO.setup(self.pin, GPIO.OUT)
         self.p = GPIO.PWM(self.pin, 50)
 
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.p.stop()
+        GPIO.cleanup()
+
     def rotate(self, degrees):
         """Rotate the servo arm a number of degrees.
         Can only rotate through 180 degrees, from 3 (0) anti-clockwise to 13 (180). 8 is 90"""

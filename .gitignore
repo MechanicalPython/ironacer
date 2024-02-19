@@ -9,7 +9,6 @@ data.yaml
 /*yolov5pytorch/
 /icloud_app_psk.cfg
 .DS_Store
-ironacer/__pycache__/
-
+*/__pycache__/
 /yolov5/Ironacer.v3-batch-3.yolov5pytorch/
 /new_data/

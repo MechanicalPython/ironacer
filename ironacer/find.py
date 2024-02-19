@@ -22,6 +22,10 @@ from yolov5.utils.general import (non_max_suppression, scale_coords)
 from yolov5.utils.torch_utils import select_device
 
 
+class SpatialDetector:
+    pass
+
+
 class Detector:
     """Class to detect and read a stream from a pi camera to then run yolo inference on each frame."""
 
